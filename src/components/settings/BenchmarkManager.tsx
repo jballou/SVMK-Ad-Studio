@@ -6,6 +6,8 @@ import { Plus, Trash2 } from "lucide-react";
 import { createBenchmark, removeBenchmark } from "@/app/actions";
 import { Button } from "@/components/ui/button-1";
 import { Card, DataTable } from "@/components/ui/primitives";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { verifiedPlatformFor } from "@/lib/benchmarks/verified";
 import type { BenchmarkRow } from "@/lib/db/repo";
 import { fmtDate } from "@/lib/format";
 import { PLATFORM_LABEL } from "@/lib/ui/colors";
@@ -58,7 +60,7 @@ export function BenchmarkManager({ rows }: { rows: BenchmarkRow[] }) {
                 <td className="px-3 uppercase">{b.metric}</td>
                 <td className="px-3 capitalize">{b.tier}</td>
                 <td className="px-3 text-right tabular-nums">{b.direction === "higher" ? "≥" : "≤"} {b.metric === "cpc" ? `$${b.value}` : `${b.value}%`}</td>
-                <td className="px-3 text-brand-neutral-750">{b.source}</td>
+                <td className="px-3 text-brand-neutral-750"><span className="inline-flex items-center gap-1">{b.source}{verifiedPlatformFor(b.source) && <VerifiedBadge platform="LinkedIn" />}</span></td>
                 <td className="px-3 text-brand-neutral-650">{fmtDate(b.asOf)}</td>
                 <td className="py-2 pl-3 text-right"><Button variant="ghost" size="sm" mode="icon" disabled={pending} onClick={() => remove(b.id)} aria-label={`Delete ${b.platform} ${b.funnel} ${b.metric} benchmark`}><Trash2 /></Button></td>
               </tr>
