@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SVMK Ad Studio
 
-## Getting Started
+Remix, preview, track and score static paid ads from Figma templates and a copy deck.
+v1 scope: static ads for LinkedIn, Meta, Google Display and newsletter.
 
-First, run the development server:
+## Figma naming scheme
+- Page = campaign, section = concept, frame = one size.
+- Frame: `AD | {ConceptKey} | {W}x{H}` (e.g. `AD | YourBrand | 1200x1200`).
+- Editable slot layers are prefixed `#`: `#headline`, `#subhead`, `#stat`, `#cta`, `#hero`, `#logo`, `#bg`.
+  Optional char limit: `#headline[40]`. Layers without `#` are locked.
+- Platform ad name / export filename: `{ConceptKey}{MMYYYY}_{W}x{H}` (join key for performance data).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Layout
+- `src/lib/figma`: frame/slot/ad-name parsing
+- `src/lib/specs`: placement spec data (`verifiedOn: null` = not yet checked against platform docs)
+- `src/lib/scorecard`: 45-pt scoring, bands, learning-phase gate
+- `src/db/schema.ts`: Drizzle schema (Postgres)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Build order
+1. Scaffold + schema (done)
+2. Figma sync  3. Copy deck import + LinkedIn mockup  4. Meta placement matrix + mockups
+5. Gallery, tagging, status  6. Metrics CSV, benchmarks, scorecards  7. API connectors, in-image remix
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Dev
+`npm run dev`, `npm test`, `npm run typecheck`. Copy `.env.example` to `.env.local`.
