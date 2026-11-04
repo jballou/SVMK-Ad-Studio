@@ -1,4 +1,4 @@
-import { BarChart3, ClipboardCheck, Download, Images, LayoutDashboard, Layers, Library, Settings, Sparkles, type LucideIcon } from "lucide-react";
+import { BarChart3, ClipboardCheck, Download, Images, LayoutDashboard, Layers, Library, Settings, SquareDashedPlus, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -14,7 +14,7 @@ export const NAV: { heading: string; items: NavItem[] }[] = [
     { href: "/gallery", label: "Ad gallery", icon: Images },
   ] },
   { heading: "Create", items: [
-    { href: "/batches/new", label: "New batch", icon: Sparkles },
+    { href: "/batches/new", label: "New batch", icon: SquareDashedPlus },
     { href: "/batches", label: "Batches", icon: Layers },
   ] },
   { heading: "Performance", items: [
