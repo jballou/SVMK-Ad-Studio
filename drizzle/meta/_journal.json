@@ -8,6 +8,13 @@
       "when": 1793752194682,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793753404632,
+      "tag": "0001_dummy_data_tables",
+      "breakpoints": true
     }
   ]
 }

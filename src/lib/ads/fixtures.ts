@@ -11,7 +11,7 @@ const mk = (
   tags: { persona, funnel, geo: ["US"] },
 });
 
-export const SEED_ADS: AdRecord[] = [
+export const FIXTURE_ADS: AdRecord[] = [
   mk("HumansMatter", "082026", 1200, 1200, "linkedin", "linkedin-single-image", "live", "2026-08-12", ["CX"], "Awareness"),
   mk("HumansMatter", "082026", 1200, 628, "linkedin", "linkedin-single-image", "live", "2026-08-12", ["CX"], "Awareness"),
   mk("HumansMatter", "082026", 1080, 1350, "meta", "instagram-feed", "paused", "2026-08-12", ["CX"], "Awareness"),

@@ -13,7 +13,26 @@ export interface AdRecord {
   launchedAt?: string; // ISO date
   pausedAt?: string;
   imageUrl?: string;
-  tags: { persona: string[]; funnel?: string; icp?: string[]; geo?: string[] };
+  tags: { persona: string[]; funnel?: string; icp?: string[]; geo?: string[]; offer?: string };
+  campaign?: string;
+  copy?: AdCopy;
+  art?: AdArtSpec;
+}
+
+export interface AdCopy {
+  headline: string; // in-image headline
+  intro: string; // platform intro / primary text
+  platformHeadline: string; // headline below the creative
+  cta: string;
+  landing: string;
+}
+
+/** Drives the generated creative placeholder (see AdArt). */
+export interface AdArtSpec {
+  bg: string;
+  fg: string;
+  accent: string;
+  layout: "left" | "center" | "bottom";
 }
 
 export type SortKey = "launched" | "name" | "platform" | "status";

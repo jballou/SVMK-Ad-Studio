@@ -8,6 +8,8 @@ export const concepts = pgTable("concepts", {
   campaign: text("campaign"),
   figmaFileKey: text("figma_file_key"),
   tags: jsonb("tags").$type<{ persona?: string[]; funnel?: string; icp?: string[]; geo?: string[]; [k: string]: unknown }>().default({}),
+  copy: jsonb("copy").$type<import("@/lib/ads/types").AdCopy>(),
+  art: jsonb("art").$type<import("@/lib/ads/types").AdArtSpec>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -92,3 +94,24 @@ export const scorecards = pgTable("scorecards", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => [uniqueIndex("scorecards_ad_period").on(t.adId, t.period)]);
+
+export const experiments = pgTable("experiments", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  variable: text("variable").notNull(), // headline | imagery | cta | offer | layout
+  hypothesis: text("hypothesis").notNull(),
+  adA: text("ad_a").notNull(), // ad names
+  adB: text("ad_b").notNull(),
+  status: text("status").$type<"running" | "concluded">().notNull(),
+  startedAt: date("started_at").notNull(),
+});
+
+export const batches = pgTable("batches", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  status: text("status").$type<"generated" | "exported" | "draft">().notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  config: jsonb("config").$type<{ concepts: string[]; placements: string[]; deck?: string }>().notNull(),
+  adCount: integer("ad_count").notNull(),
+});

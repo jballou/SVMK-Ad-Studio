@@ -27,6 +27,9 @@ export async function listAds(db: Db): Promise<AdRecord[]> {
     pausedAt: ad.pausedAt ?? undefined,
     imageUrl: creative.imageUrl ?? undefined,
     tags: { ...(ad.tags as AdRecord["tags"]), persona: (ad.tags as Partial<AdRecord["tags"]>)?.persona ?? [] },
+    campaign: concept.campaign ?? undefined,
+    copy: concept.copy ?? undefined,
+    art: concept.art ?? undefined,
   }));
 }
 
@@ -104,4 +107,82 @@ export async function saveChecks(db: Db, name: string, period: string, checks: M
 export function periodFor(isoDate: string): string {
   const [y, m] = isoDate.split("-").map(Number);
   return `${y}-Q${Math.ceil(m / 3)}`;
+}
+
+export interface DailyPoint {
+  adName: string;
+  day: string;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+}
+
+/** Every daily metric row (the dummy dataset is a few thousand rows). */
+export async function getDailyMetrics(db: Db): Promise<DailyPoint[]> {
+  const rows = await db
+    .select({ adName: t.ads.name, day: t.metricsDaily.day, spend: t.metricsDaily.spend, impressions: t.metricsDaily.impressions, clicks: t.metricsDaily.clicks, conversions: t.metricsDaily.conversions })
+    .from(t.metricsDaily)
+    .innerJoin(t.ads, eq(t.metricsDaily.adId, t.ads.id))
+    .orderBy(t.metricsDaily.day);
+  return rows;
+}
+
+export async function listExperiments(db: Db) {
+  return db.select().from(t.experiments).orderBy(sql`${t.experiments.startedAt} desc`);
+}
+
+export async function listBatches(db: Db) {
+  return db.select().from(t.batches).orderBy(sql`${t.batches.createdAt} desc`);
+}
+
+export async function updateAdTags(db: Db, name: string, tags: AdRecord["tags"]): Promise<boolean> {
+  const res = await db.update(t.ads).set({ tags }).where(eq(t.ads.name, name)).returning({ id: t.ads.id });
+  return res.length > 0;
+}
+
+export interface NewBatchAd {
+  conceptKey: string;
+  placement: string;
+  platform: string;
+  width: number;
+  height: number;
+  name: string;
+  tags: AdRecord["tags"];
+}
+
+/** Creates a draft batch: ensures each concept has creatives and inserts draft ads for the chosen sizes. */
+export async function createBatch(
+  db: Db,
+  input: { name: string; createdBy: string; ads: NewBatchAd[]; concepts: { key: string; campaign?: string; copy?: AdRecord["copy"]; art?: AdRecord["art"]; tags: AdRecord["tags"] }[]; placements: string[] },
+): Promise<{ batchId: number; created: number; skipped: string[] }> {
+  return db.transaction(async (tx) => {
+    const conceptIds = new Map<string, number>();
+    for (const c of input.concepts) {
+      const [row] = await tx
+        .insert(t.concepts)
+        .values({ conceptKey: c.key, campaign: c.campaign, copy: c.copy, art: c.art, tags: c.tags })
+        .onConflictDoUpdate({ target: t.concepts.conceptKey, set: { campaign: c.campaign ?? sql`${t.concepts.campaign}` } })
+        .returning({ id: t.concepts.id });
+      conceptIds.set(c.key, row.id);
+    }
+    let created = 0;
+    const skipped: string[] = [];
+    for (const a of input.ads) {
+      const [exists] = await tx.select({ id: t.ads.id }).from(t.ads).where(eq(t.ads.name, a.name));
+      if (exists) { skipped.push(a.name); continue; }
+      const [creative] = await tx
+        .insert(t.creatives)
+        .values({ conceptId: conceptIds.get(a.conceptKey)!, figmaNodeId: `batch:${a.conceptKey}:${a.width}x${a.height}`, width: a.width, height: a.height })
+        .onConflictDoUpdate({ target: [t.creatives.conceptId, t.creatives.width, t.creatives.height], set: { syncedAt: new Date() } })
+        .returning({ id: t.creatives.id });
+      await tx.insert(t.ads).values({ creativeId: creative.id, name: a.name, platform: a.platform, placement: a.placement, status: "draft", tags: a.tags });
+      created++;
+    }
+    const [batch] = await tx
+      .insert(t.batches)
+      .values({ name: input.name, status: "generated", createdBy: input.createdBy, adCount: created, config: { concepts: input.concepts.map((c) => c.key), placements: input.placements } })
+      .returning({ id: t.batches.id });
+    return { batchId: batch.id, created, skipped };
+  });
 }
