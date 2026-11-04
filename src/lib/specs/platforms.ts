@@ -16,6 +16,12 @@ export interface Placement {
   safeZone?: { top: number; bottom: number };
   copyLimits?: CopyLimit[];
   mockup: string;
+  /** Accepted width/height range. Outside it the platform crops or rejects. */
+  ratioRange?: { min: number; max: number };
+  /** Ratio the platform crops over-tall/over-wide assets to. */
+  cropTo?: number;
+  notes?: string;
+  sourceUrl?: string;
   verifiedOn: string | null;
 }
 
@@ -29,30 +35,58 @@ export const PLACEMENTS: Placement[] = [
     mockup: "linkedin-feed",
     verifiedOn: null,
   },
+  // Meta rows below other than Threads come from third-party guides that disagree with each
+  // other; Meta's own Ads Guide pages were not reachable. Verify before treating as authoritative.
   {
-    key: "meta-feed",
+    key: "facebook-feed",
     platform: "meta",
-    label: "Facebook / Instagram feed",
+    label: "Facebook feed",
     sizes: [{ w: 1080, h: 1080 }, { w: 1080, h: 1350 }],
-    mockup: "meta-feed",
+    ratioRange: { min: 0.8, max: 1.91 },
+    mockup: "facebook-feed",
+    verifiedOn: null,
+  },
+  {
+    key: "instagram-feed",
+    platform: "meta",
+    label: "Instagram feed",
+    sizes: [{ w: 1080, h: 1080 }, { w: 1080, h: 1350 }],
+    ratioRange: { min: 0.8, max: 1.91 },
+    notes: "Profile grid crops feed posts to 3:4; keep key content centered.",
+    mockup: "instagram-feed",
     verifiedOn: null,
   },
   {
     key: "meta-stories-reels",
     platform: "meta",
-    label: "Stories / Reels (9:16)",
+    label: "Facebook / Instagram Stories & Reels (9:16)",
     sizes: [{ w: 1080, h: 1920 }],
-    safeZone: { top: 0.14, bottom: 0.2 },
+    ratioRange: { min: 0.5625, max: 0.5625 },
+    // Sources disagree (older ~14% top / ~18% bottom; a 2026 report says 14% / 35%). Using the stricter pair.
+    safeZone: { top: 0.14, bottom: 0.35 },
     mockup: "meta-stories",
     verifiedOn: null,
   },
   {
-    key: "meta-link-landscape",
+    key: "facebook-link-landscape",
     platform: "meta",
     label: "Facebook right column / link (1.91:1)",
     sizes: [{ w: 1200, h: 628 }],
-    mockup: "meta-link",
+    ratioRange: { min: 1.0, max: 1.91 },
+    mockup: "facebook-feed",
     verifiedOn: null,
+  },
+  {
+    key: "threads-feed",
+    platform: "meta",
+    label: "Threads feed",
+    sizes: [{ w: 1080, h: 1080 }, { w: 1080, h: 1350 }, { w: 1200, h: 628 }],
+    ratioRange: { min: 0.8, max: 1.91 },
+    cropTo: 0.8,
+    notes: "Taller than 4:5 is cropped and vertically centered to 4:5. Static carousels are 1:1 only.",
+    sourceUrl: "https://developers.facebook.com/blog/post/2025/10/28/new-formats-and-optimization-for-ads-in-threads",
+    mockup: "threads-feed",
+    verifiedOn: "2026-11-03",
   },
   {
     key: "display-standard",
