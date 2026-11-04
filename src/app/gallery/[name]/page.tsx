@@ -41,7 +41,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
   const r = rates(t);
   const fatigue = assessFatigue(ad, points, ws.asOf);
   const checks = await getChecks(ws.db, periodFor(ws.today));
-  const card = scoreAll(ws.ads, totalsByAd(ws.daily), ws.benchmarks, checks, ws.today).get(name);
+  const card = scoreAll(ws.ads, totalsByAd(ws.daily), ws.benchmarks, checks, ws.today, ws.gate).get(name);
   const siblings = ws.ads.filter((a) => a.conceptKey === ad.conceptKey && a.name !== name);
   const placement = PLACEMENTS.find((p) => p.key === ad.placement);
   const copy = ad.copy;
@@ -141,7 +141,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
             </dl>
           ) : <p className="text-sm text-brand-neutral-650">No copy linked.</p>}
         </Card>
-        <Card title="Tags" description="Persona, funnel stage, and targeting used in filters and reports"><TagEditor key={JSON.stringify(ad.tags)} name={ad.name} tags={ad.tags} /></Card>
+        <Card title="Tags" description="Persona, funnel stage, and targeting used in filters and reports"><TagEditor key={JSON.stringify(ad.tags)} name={ad.name} tags={ad.tags} taxonomy={ws.taxonomy} /></Card>
       </div>
       <p className="mt-6 text-xs text-brand-neutral-550">Launched {fmtDate(ad.launchedAt)}{ad.pausedAt ? ` · paused ${fmtDate(ad.pausedAt)}` : ""}</p>
     </>

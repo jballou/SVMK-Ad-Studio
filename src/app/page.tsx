@@ -34,7 +34,7 @@ async function Content() {
 
   const totals = totalsByAd(daily);
   const checks = await getChecks(ws.db, periodFor(today));
-  const cards = scoreAll(ads, totals, benchmarks, checks, today);
+  const cards = scoreAll(ads, totals, benchmarks, checks, today, ws.gate);
   const batches = (await listBatches(ws.db)).slice(0, 5);
 
   const live = ads.filter((a) => a.status === "live");

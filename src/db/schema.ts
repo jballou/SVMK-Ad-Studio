@@ -115,3 +115,9 @@ export const batches = pgTable("batches", {
   config: jsonb("config").$type<{ concepts: string[]; placements: string[]; deck?: string }>().notNull(),
   adCount: integer("ad_count").notNull(),
 });
+
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

@@ -6,7 +6,7 @@ import * as schema from "@/db/schema";
 import type { Db } from "@/db";
 import { seedIfEmpty } from "@/db/seed";
 import { generateDummyData } from "@/lib/dummy/generate";
-import { createBatch, getBenchmarks, getChecks, getDailyMetrics, getTotals, importMetricRows, listAds, listBatches, listExperiments, periodFor, saveChecks, setAdStatus, updateAdTags } from "./repo";
+import { addBenchmark, createBatch, deleteBenchmark, getBenchmarks, getGate, getTaxonomy, listBenchmarkRows, saveGate, saveTaxonomy, getChecks, getDailyMetrics, getTotals, importMetricRows, listAds, listBatches, listExperiments, periodFor, saveChecks, setAdStatus, updateAdTags } from "./repo";
 
 vi.mock("server-only", () => ({}));
 
@@ -104,5 +104,25 @@ describe("createBatch", () => {
     expect(created).toHaveLength(2);
     expect(created.every((a) => a.status === "draft")).toBe(true);
     expect((await listBatches(db)).some((b) => b.name === "Test batch")).toBe(true);
+  });
+});
+
+describe("settings and benchmarks", () => {
+  it("falls back to defaults, then persists the gate and taxonomy", async () => {
+    expect(await getGate(db)).toEqual({ minDays: 14, minImpressions: 10_000 });
+    await saveGate(db, { minDays: 21, minImpressions: 25_000 });
+    expect(await getGate(db)).toEqual({ minDays: 21, minImpressions: 25_000 });
+    const tax = await getTaxonomy(db);
+    expect(tax.funnels).toContain("Awareness");
+    await saveTaxonomy(db, { ...tax, personas: ["CX", "Partner"] });
+    expect((await getTaxonomy(db)).personas).toEqual(["CX", "Partner"]);
+  });
+  it("adds and deletes benchmarks", async () => {
+    const before = (await listBenchmarkRows(db)).length;
+    const id = await addBenchmark(db, { platform: "linkedin", funnel: "Awareness", metric: "cvr", value: 3, direction: "higher", tier: "secondary", source: "test", asOf: "2026-11-03" });
+    expect((await listBenchmarkRows(db)).length).toBe(before + 1);
+    expect(await deleteBenchmark(db, id)).toBe(true);
+    expect(await deleteBenchmark(db, id)).toBe(false);
+    expect((await listBenchmarkRows(db)).length).toBe(before);
   });
 });

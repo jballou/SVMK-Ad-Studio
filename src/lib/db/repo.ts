@@ -4,6 +4,7 @@ import * as t from "@/db/schema";
 import type { AdRecord, AdStatus } from "@/lib/ads/types";
 import type { MetricRow, Totals } from "@/lib/metrics/csv";
 import type { Benchmark, ManualChecks } from "@/lib/scorecard/build";
+import { DEFAULT_GATE, DEFAULT_TAXONOMY, SETTING_KEYS, type LearningGate, type Taxonomy } from "@/lib/settings";
 
 // All functions take the db so tests can pass an in-memory instance.
 // An ad's id in the UI is its name (`{ConceptKey}{MMYYYY}_{W}x{H}`), which is unique.
@@ -185,4 +186,38 @@ export async function createBatch(
       .returning({ id: t.batches.id });
     return { batchId: batch.id, created, skipped };
   });
+}
+
+async function getSetting<T>(db: Db, key: string, fallback: T): Promise<T> {
+  const [row] = await db.select().from(t.appSettings).where(eq(t.appSettings.key, key));
+  return row ? ({ ...fallback, ...(row.value as object) } as T) : fallback;
+}
+
+async function putSetting(db: Db, key: string, value: object) {
+  await db.insert(t.appSettings).values({ key, value }).onConflictDoUpdate({ target: t.appSettings.key, set: { value, updatedAt: new Date() } });
+}
+
+export const getGate = (db: Db) => getSetting<LearningGate>(db, SETTING_KEYS.gate, DEFAULT_GATE);
+export const saveGate = (db: Db, gate: LearningGate) => putSetting(db, SETTING_KEYS.gate, gate);
+export const getTaxonomy = (db: Db) => getSetting<Taxonomy>(db, SETTING_KEYS.taxonomy, DEFAULT_TAXONOMY);
+export const saveTaxonomy = (db: Db, tax: Taxonomy) => putSetting(db, SETTING_KEYS.taxonomy, tax);
+
+export interface BenchmarkRow extends Benchmark {
+  id: number;
+  asOf?: string;
+}
+
+export async function listBenchmarkRows(db: Db): Promise<BenchmarkRow[]> {
+  const rows = await db.select().from(t.benchmarks).orderBy(t.benchmarks.platform, t.benchmarks.funnel, t.benchmarks.tier);
+  return rows.map((b) => ({ id: b.id, platform: b.platform, funnel: b.funnel, metric: b.metric as Benchmark["metric"], value: b.value, direction: b.direction, tier: b.tier, source: b.source ?? undefined, asOf: b.asOf ?? undefined }));
+}
+
+export async function addBenchmark(db: Db, b: Omit<Benchmark, "source"> & { source: string; asOf: string }): Promise<number> {
+  const [row] = await db.insert(t.benchmarks).values(b).returning({ id: t.benchmarks.id });
+  return row.id;
+}
+
+export async function deleteBenchmark(db: Db, id: number): Promise<boolean> {
+  const res = await db.delete(t.benchmarks).where(eq(t.benchmarks.id, id)).returning({ id: t.benchmarks.id });
+  return res.length > 0;
 }

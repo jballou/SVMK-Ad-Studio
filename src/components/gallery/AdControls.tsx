@@ -6,6 +6,7 @@ import { Plus, X } from "lucide-react";
 import { saveAdTags, updateAdStatus } from "@/app/actions";
 import { Button } from "@/components/ui/button-1";
 import type { AdStatus } from "@/lib/ads/types";
+import type { Taxonomy } from "@/lib/settings";
 import { STATUSES } from "@/lib/ads/types";
 
 export function StatusControl({ name, status }: { name: string; status: AdStatus }) {
@@ -43,13 +44,13 @@ export function StatusControl({ name, status }: { name: string; status: AdStatus
 
 type Tags = { persona: string[]; funnel?: string; icp?: string[]; geo?: string[]; offer?: string };
 
-const GROUPS: { key: "persona" | "icp" | "geo"; label: string; options: string[] }[] = [
-  { key: "persona", label: "Persona", options: ["CX", "Marketing", "EX", "IT", "Enterprise"] },
-  { key: "icp", label: "ICP", options: ["Enterprise", "Mid-market", "SMB"] },
-  { key: "geo", label: "Geo", options: ["US", "UK", "CA", "AU"] },
-];
 
-export function TagEditor({ name, tags }: { name: string; tags: Tags }) {
+export function TagEditor({ name, tags, taxonomy }: { name: string; tags: Tags; taxonomy: Taxonomy }) {
+  const GROUPS: { key: "persona" | "icp" | "geo"; label: string; options: string[] }[] = [
+    { key: "persona", label: "Persona", options: taxonomy.personas },
+    { key: "icp", label: "ICP", options: taxonomy.icps },
+    { key: "geo", label: "Geo", options: taxonomy.geos },
+  ];
   const router = useRouter();
   const [current, setCurrent] = useState<Tags>(tags);
   const [pending, start] = useTransition();
@@ -102,12 +103,12 @@ export function TagEditor({ name, tags }: { name: string; tags: Tags }) {
       <div className="grid grid-cols-2 gap-3">
         <label className="text-xs font-medium text-brand-neutral-650">Funnel stage
           <select value={current.funnel ?? ""} onChange={(e) => save({ ...current, funnel: e.target.value || undefined })} className="mt-1 h-9 w-full rounded-lg border border-brand-neutral-250 bg-white px-2 text-sm">
-            <option value="">None</option>{["Awareness", "Consideration", "Intent"].map((f) => <option key={f}>{f}</option>)}
+            <option value="">None</option>{taxonomy.funnels.map((f) => <option key={f}>{f}</option>)}
           </select>
         </label>
         <label className="text-xs font-medium text-brand-neutral-650">Offer
           <select value={current.offer ?? ""} onChange={(e) => save({ ...current, offer: e.target.value || undefined })} className="mt-1 h-9 w-full rounded-lg border border-brand-neutral-250 bg-white px-2 text-sm">
-            <option value="">None</option>{["Brand", "Demo", "Free trial", "Report", "Guide", "Webinar"].map((f) => <option key={f}>{f}</option>)}
+            <option value="">None</option>{taxonomy.offers.map((f) => <option key={f}>{f}</option>)}
           </select>
         </label>
       </div>

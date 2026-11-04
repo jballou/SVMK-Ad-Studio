@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { createBatch, importMetricRows, listAds, periodFor, saveChecks, setAdStatus, updateAdTags, type ImportSummary } from "@/lib/db/repo";
+import { addBenchmark, createBatch, deleteBenchmark, importMetricRows, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, updateAdTags, type ImportSummary } from "@/lib/db/repo";
 import { planBatch } from "@/lib/batches/plan";
 import { artFor, conceptByKey } from "@/lib/dummy/library";
 
@@ -127,4 +127,51 @@ export async function generateBatch(input: unknown): Promise<BatchResult> {
   revalidatePath("/batches");
   revalidatePath("/");
   return { ok: true, batchId: res.batchId, created: res.created, skipped: res.skipped, names: plan.map((p) => p.name) };
+}
+
+const gateInput = z.object({ minDays: z.number().int().min(1).max(90), minImpressions: z.number().int().min(100).max(10_000_000) });
+
+export async function saveLearningGate(input: unknown): Promise<{ ok: boolean }> {
+  const parsed = gateInput.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  await saveGate(await getDb(), parsed.data);
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+const list = z.array(z.string().trim().min(1).max(40)).max(30);
+const taxonomyInput = z.object({ personas: list, funnels: list, icps: list, geos: list, offers: list });
+
+export async function saveTaxonomySettings(input: unknown): Promise<{ ok: boolean }> {
+  const parsed = taxonomyInput.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  await saveTaxonomy(await getDb(), parsed.data);
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+const benchmarkInput = z.object({
+  platform: z.enum(["linkedin", "meta", "display", "newsletter"]),
+  funnel: z.enum(["Awareness", "Consideration", "Intent"]),
+  metric: z.enum(["ctr", "cpc", "cvr"]),
+  value: z.number().positive().max(100_000),
+  tier: z.enum(["primary", "secondary"]),
+  source: z.string().trim().min(1).max(80),
+});
+
+export async function createBenchmark(input: unknown): Promise<{ ok: boolean; error?: string }> {
+  const parsed = benchmarkInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the values and try again." };
+  const b = parsed.data;
+  await addBenchmark(await getDb(), { ...b, direction: b.metric === "cpc" ? "lower" : "higher", asOf: new Date().toLocaleDateString("en-CA") });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function removeBenchmark(id: unknown): Promise<{ ok: boolean }> {
+  const parsed = z.number().int().positive().safeParse(id);
+  if (!parsed.success) return { ok: false };
+  const ok = await deleteBenchmark(await getDb(), parsed.data);
+  revalidatePath("/", "layout");
+  return { ok };
 }
