@@ -16,7 +16,7 @@ export function MetaStory({ imageUrl, brand = "SurveyMonkey", cta = "Learn more"
       ) : (
         <div className="flex h-full items-center justify-center text-xs text-neutral-500">1080×1920</div>
       )}
-      <div className="absolute inset-x-0 top-0 flex items-center gap-2 p-3 text-white" style={{ height: `${safeZone.top * 100}%` }}>
+      <div className="absolute inset-x-0 top-0 flex items-center gap-2 bg-gradient-to-b from-black/50 to-transparent p-3 text-white" style={{ height: `${safeZone.top * 100}%` }}>
         <div className="h-7 w-7 rounded-full bg-emerald-600" aria-hidden />
         <span className="text-xs font-semibold">{brand}</span>
         <span className="text-[10px] opacity-80">Sponsored</span>
