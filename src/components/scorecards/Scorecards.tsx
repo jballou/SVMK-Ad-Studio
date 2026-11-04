@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleCheck, CircleX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { importMetrics as importMetricsAction, saveManualChecks } from "@/app/actions";
@@ -26,7 +27,11 @@ const BAND_STYLE: Record<Band, string> = {
   "refresh-pause": "bg-red-100 text-red-900",
 };
 
-const mark = (v: boolean | null) => (v === null ? "—" : v ? "✓" : "✗");
+function Mark({ result }: { result: boolean | null }) {
+  if (result === null) return <span aria-hidden>—</span>;
+  const Icon = result ? CircleCheck : CircleX;
+  return <Icon aria-hidden className={`size-4 shrink-0 ${result ? "text-brand-green-600" : "text-brand-red-500"}`} />;
+}
 const markLabel = (v: boolean | null) => (v === null ? "not applicable" : v ? "met" : "not met");
 
 export function Scorecards({ ads, benchmarks, totals, checks, today }: { ads: AdRecord[]; benchmarks: Benchmark[]; totals: Record<string, Totals>; checks: Record<string, ManualChecks>; today: string }) {
@@ -119,8 +124,10 @@ export function Scorecards({ ads, benchmarks, totals, checks, today }: { ads: Ad
                           <span className="flex-1 text-neutral-800">{c.label}</span>
                         )}
                         {card.state === "scored" && (
-                          <span className="w-16 text-right text-xs tabular-nums text-neutral-600" aria-label={markLabel(result)}>
-                            {mark(result)} {result === null ? "" : `${result ? MAX_POINTS[c.key] : 0}/${MAX_POINTS[c.key]}`}
+                          <span className="flex w-20 items-center justify-end gap-1 text-xs tabular-nums text-neutral-600">
+                            <Mark result={result} />
+                            <span className="sr-only">{markLabel(result)}</span>
+                            {result === null ? "" : `${result ? MAX_POINTS[c.key] : 0}/${MAX_POINTS[c.key]}`}
                           </span>
                         )}
                       </li>
