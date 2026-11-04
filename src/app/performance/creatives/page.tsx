@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { AdArt } from "@/components/ads/AdArt";
+import { AdThumb } from "@/components/ads/AdThumb";
 import { HBar } from "@/components/charts/HBar";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { Card, DataTable } from "@/components/ui/primitives";
@@ -66,7 +66,7 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
                 <tr key={k}>
                   <td className="py-2.5 pr-3">
                     <div className="flex items-center gap-3">
-                      {dimKey === "concept" && first && <span className="w-12 shrink-0 overflow-hidden rounded border border-brand-neutral-200"><AdArt art={first.art} copy={first.copy} width={first.width} height={first.height} showCta={false} /></span>}
+                      {dimKey === "concept" && first && <AdThumb ad={first} w={56} h={44} />}
                       <span><span className="font-medium">{k}</span>{dimKey === "concept" && first?.copy && <span className="block max-w-xs truncate text-xs text-brand-neutral-650">{first.copy.headline}</span>}</span>
                     </div>
                   </td>

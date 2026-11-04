@@ -71,7 +71,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
       </header>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card title="Preview" description="The creative inside the platform UI. Platform text comes from the copy deck."><PreviewSwitcher ad={ad} /></Card>
           {siblings.length > 0 && (
             <Card title={`Other sizes of ${ad.conceptKey}`} description="Same concept, other platforms and sizes">
@@ -87,7 +87,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {points.length > 0 ? (
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

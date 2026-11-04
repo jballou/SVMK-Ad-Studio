@@ -19,10 +19,13 @@ async function init(): Promise<Db> {
     // Hosted Postgres: migrations are applied deliberately with `npm run db:migrate`.
     return drizzlePg(postgres(url, { max: 5 }), { schema }) as unknown as Db;
   }
-  if (process.env.VERCEL) throw new Error("DATABASE_URL is required on Vercel (the embedded dev database is local-only)");
-  // Local dev: embedded Postgres (PGlite) persisted under .data/, migrated and seeded on first use.
-  mkdirSync(".data", { recursive: true });
-  const db = drizzlePglite(new PGlite(".data/pglite"), { schema });
+  // Local dev persists to .data/. On Vercel the filesystem is read-only, so without DATABASE_URL we fall back to an
+  // in-memory database seeded with the dummy data: fine for demos, but changes reset on every cold start and are
+  // not shared between serverless instances. Set DATABASE_URL for anything real.
+  const ephemeral = !!process.env.VERCEL;
+  if (ephemeral) console.warn("DATABASE_URL is not set: using an in-memory demo database. Changes will not persist.");
+  if (!ephemeral) mkdirSync(".data", { recursive: true });
+  const db = drizzlePglite(ephemeral ? new PGlite() : new PGlite(".data/pglite"), { schema });
   await migratePglite(db, { migrationsFolder: "./drizzle" });
   await seedIfEmpty(db as unknown as Db);
   return db as unknown as Db;

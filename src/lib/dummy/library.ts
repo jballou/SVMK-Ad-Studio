@@ -67,9 +67,13 @@ export const COPY_DECKS: CopyDeck[] = TEMPLATE_FILES.map((t, i) => {
     adBase: c.key, funnel: c.funnel, headline: c.headline, platformHeadline: c.platformHeadline, intro: c.intro, cta: c.cta, landing: c.landing,
   }));
   if (t.campaign === "SA Campaign Phase 2") {
-    // Deliberately flawed rows so validation has something to show.
-    rows.push({ adBase: "GetInsightsAlt", funnel: "Intent", headline: "Unlock more ROI with real-time insights.", platformHeadline: "Get the insights you need to maximize ROI across every team in your organization today", intro: "Get real-time, meaningful insights with SurveyMonkey's AI-powered, secure platform. Book your demo today and see how 80% of Enterprise customers see measurable ROI within 12 months of rollout.", cta: "Book a demo", landing: "/welcome/contact-sales/" });
-    rows.push({ adBase: "TakeBrand", funnel: "Intent", headline: "Take your brand from ordinary to unforgettable.", platformHeadline: "", intro: "Every interaction is an opportunity. Discover what resonates with your audience.", cta: "Book a demo", landing: "/welcome/contact-sales/" });
+    // Deliberately flawed rows so validation has something to show: one missing headline, one over-long intro,
+    // and one row that matches no Figma concept.
+    for (const r of rows) {
+      if (r.adBase === "TakeBrand") r.platformHeadline = "";
+      if (r.adBase === "EasySet") r.intro += " Level up your feedback game today with a platform your whole team can start using in minutes.";
+    }
+    rows.push({ adBase: "GetInsightsAlt", funnel: "Intent", headline: "Unlock more ROI with real-time insights.", platformHeadline: "Get the insights you need to maximize ROI across every team in your organization today", intro: "Get real-time, meaningful insights with SurveyMonkey's AI-powered, secure platform.", cta: "Book a demo", landing: "/welcome/contact-sales/" });
   }
   return {
     id: `deck-${t.id}`,

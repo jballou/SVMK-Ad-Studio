@@ -176,7 +176,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
             </div>
             {orphanRows.length > 0 && (
               <div className="mt-4 rounded-lg bg-brand-yellow-100 p-3 text-sm text-brand-yellow-800">
-                <p className="flex items-center gap-2 font-medium"><AlertTriangle className="size-4" aria-hidden />{orphanRows.length} deck row{orphanRows.length === 1 ? "" : "s"} have no matching Figma concept</p>
+                <p className="flex items-center gap-2 font-medium"><AlertTriangle className="size-4" aria-hidden />{orphanRows.length} deck row{orphanRows.length === 1 ? " has" : "s have"} no matching Figma concept</p>
                 <p className="mt-1 text-xs">{orphanRows.map((r) => r.adBase).join(", ")}. Rename the frame or the Ad Name so they match.</p>
               </div>
             )}

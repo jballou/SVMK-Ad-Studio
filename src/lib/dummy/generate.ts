@@ -232,19 +232,21 @@ function makeBatches(ads: DummyAd[]): DummyBatch[] {
 }
 
 function makeBenchmarks(): DummyBenchmark[] {
+  // Targets sit a little under each platform's typical performance so roughly a third of ads clear them.
   const CTR: Record<string, [number, number, number]> = {
-    linkedin: [0.5, 0.55, 0.6], meta: [0.85, 0.95, 1.0], display: [0.12, 0.14, 0.15], newsletter: [0.8, 0.9, 1.0],
+    linkedin: [0.4, 0.45, 0.5], meta: [0.7, 0.75, 0.8], display: [0.1, 0.11, 0.12], newsletter: [0.65, 0.7, 0.75],
   };
   const CPC: Record<string, [number, number, number]> = {
-    linkedin: [9, 8, 8], meta: [1.4, 1.3, 1.3], display: [3.4, 3.2, 3.0], newsletter: [3.2, 3.0, 3.0],
+    linkedin: [11, 10, 10], meta: [1.8, 1.7, 1.7], display: [4.2, 4, 4], newsletter: [4, 3.8, 3.8],
   };
+  const CVR: Record<string, [number, number]> = { linkedin: [2.4, 3.6], meta: [1.8, 2.6], display: [1, 1.5], newsletter: [3, 4.5] };
   const funnels = ["Awareness", "Consideration", "Intent"] as const;
   const out: DummyBenchmark[] = [];
   for (const p of Object.keys(CTR)) {
     funnels.forEach((f, i) => {
       out.push({ platform: p, funnel: f, metric: "ctr", value: CTR[p][i], direction: "higher", tier: "primary", source: "Abacus (sample)" });
       out.push({ platform: p, funnel: f, metric: "cpc", value: CPC[p][i], direction: "lower", tier: "secondary", source: "Abacus (sample)" });
-      if (i > 0) out.push({ platform: p, funnel: f, metric: "cvr", value: 2.5 * i, direction: "higher", tier: "secondary", source: "Abacus (sample)" });
+      if (i > 0) out.push({ platform: p, funnel: f, metric: "cvr", value: CVR[p][i - 1], direction: "higher", tier: "secondary", source: "Abacus (sample)" });
     });
   }
   return out;

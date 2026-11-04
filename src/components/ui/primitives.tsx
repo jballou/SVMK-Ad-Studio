@@ -16,7 +16,7 @@ export function PageHeader({ title, description, actions }: { title: string; des
 
 export function Card({ title, description, actions, children, className = "", padded = true }: { title?: string; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; padded?: boolean }) {
   return (
-    <section className={`rounded-xl border border-brand-neutral-200 bg-white ${className}`}>
+    <section className={`min-w-0 rounded-xl border border-brand-neutral-200 bg-white ${className}`}>
       {(title || actions) && (
         <div className="flex items-start justify-between gap-3 border-b border-brand-neutral-150 px-5 py-3.5">
           <div className="min-w-0">

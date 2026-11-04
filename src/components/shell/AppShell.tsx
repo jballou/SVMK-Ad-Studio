@@ -95,7 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <div className="lg:pl-60">
+      <div className="min-w-0 lg:pl-60">
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-brand-neutral-200 bg-white/90 px-4 py-2.5 backdrop-blur sm:px-6">
           <Button variant="ghost" size="icon" mode="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu"><Menu /></Button>
           <form action="/gallery" role="search" className="relative max-w-md flex-1">

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { CircleCheck, CircleX, Upload } from "lucide-react";
 import { importMetrics as importMetricsAction, saveManualChecks } from "@/app/actions";
-import { AdArt } from "@/components/ads/AdArt";
+import { AdThumb } from "@/components/ads/AdThumb";
 import { BandChip, PlatformBadge, StatusChip, TooEarlyChip } from "@/components/ads/badges";
 import { Button } from "@/components/ui/button-1";
 import { Card, EmptyState, Stat } from "@/components/ui/primitives";
@@ -132,9 +132,9 @@ export function Scorecards({ ads, benchmarks, totals, checks, today, gate, perio
 
       <div className="grid gap-4 xl:grid-cols-2">
         {visible.map(({ ad, card }) => (
-          <article key={ad.id} className="space-y-3 rounded-xl border border-brand-neutral-200 bg-white p-4">
+          <article key={ad.id} className="min-w-0 space-y-3 rounded-xl border border-brand-neutral-200 bg-white p-4">
             <header className="flex items-start gap-3">
-              <Link href={`/gallery/${ad.name}`} className="w-16 shrink-0 overflow-hidden rounded border border-brand-neutral-200" aria-label={`Open ${ad.name}`}><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={false} /></Link>
+              <Link href={`/gallery/${ad.name}`} className="shrink-0" aria-label={`Open ${ad.name}`}><AdThumb ad={ad} w={72} h={56} /></Link>
               <div className="min-w-0 flex-1">
                 <h3 className="truncate text-sm font-semibold"><Link href={`/gallery/${ad.name}`} className="hover:underline">{ad.name}</Link></h3>
                 <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1"><PlatformBadge platform={ad.platform} /><StatusChip status={ad.status} /><span className="text-xs text-brand-neutral-650">{ad.tags.funnel} · {daysLive(ad, today)} days live</span></p>

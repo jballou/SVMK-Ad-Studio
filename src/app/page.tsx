@@ -2,7 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AlertTriangle, ArrowRight, Trophy, Upload, Plus } from "lucide-react";
-import { AdArt } from "@/components/ads/AdArt";
+import { AdThumb } from "@/components/ads/AdThumb";
 import { BandChip, PlatformBadge, TooEarlyChip } from "@/components/ads/badges";
 import { HBar } from "@/components/charts/HBar";
 import { LineChart } from "@/components/charts/LineChart";
@@ -105,7 +105,7 @@ async function Content() {
             {top.map(({ ad, idx }) => (
               <li key={ad.id}>
                 <Link href={`/gallery/${ad.name}`} className="flex items-center gap-3 px-5 py-3 hover:bg-brand-neutral-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-periwinkle-500">
-                  <span className="w-16 shrink-0"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={false} /></span>
+                  <AdThumb ad={ad} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{ad.name}</span>
                     <span className="mt-0.5 flex items-center gap-2"><PlatformBadge platform={ad.platform} /><span className="text-xs text-brand-neutral-650">{ad.tags.funnel}</span></span>

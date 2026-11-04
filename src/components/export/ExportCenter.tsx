@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, FileSpreadsheet, Package, X } from "lucide-react";
-import { AdArt } from "@/components/ads/AdArt";
+import { AdThumb } from "@/components/ads/AdThumb";
 import { PlatformBadge, StatusChip } from "@/components/ads/badges";
 import { Button } from "@/components/ui/button-1";
 import { Chip } from "@/components/ui/chip";
@@ -91,7 +91,7 @@ export function ExportCenter({ ads, initial }: { ads: AdRecord[]; initial: strin
               <li key={a.id}>
                 <label className="flex cursor-pointer items-center gap-3 px-4 py-2.5 hover:bg-brand-neutral-50">
                   <input type="checkbox" checked={picked.has(a.name)} onChange={() => toggle(a.name)} className="size-4 accent-brand-green-600" />
-                  <span className="w-12 shrink-0 overflow-hidden rounded border border-brand-neutral-200"><AdArt art={a.art} copy={a.copy} width={a.width} height={a.height} showCta={false} /></span>
+                  <AdThumb ad={a} w={56} h={44} />
                   <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{a.name}</span><span className="flex items-center gap-2"><PlatformBadge platform={a.platform} /><span className="text-xs text-brand-neutral-650">{a.width}×{a.height}</span></span></span>
                   <StatusChip status={a.status} />
                 </label>
