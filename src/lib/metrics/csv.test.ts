@@ -36,3 +36,12 @@ describe("totals and derived metrics", () => {
     expect(derive({ spend: 1, impressions: 0, clicks: 0, conversions: 0 }, "cpc")).toBeUndefined();
   });
 });
+
+describe("video columns", () => {
+  it("reads video starts/completions when present and leaves them off otherwise", () => {
+    const withVideo = importMetrics("Date,Ad Name,Impressions,Video Starts,Video Completions\n2026-10-01,A,1000,400,120");
+    expect(withVideo.rows[0]).toMatchObject({ videoStarts: 400, videoCompletions: 120 });
+    const without = importMetrics("Date,Ad Name,Impressions\n2026-10-01,A,1000");
+    expect(without.rows[0].videoStarts).toBeUndefined();
+  });
+});

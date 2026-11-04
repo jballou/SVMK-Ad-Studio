@@ -14,6 +14,9 @@ export interface DummyAd {
   width: number;
   height: number;
   status: AdStatus;
+  /** Creative Score dimensions. Funnel maps Awareness->Awareness, Consideration->Interest, Intent->Conversion. */
+  adType: string;
+  stage: "Awareness" | "Interest" | "Conversion";
   launchedAt?: string;
   pausedAt?: string;
   geo: string[];
@@ -62,6 +65,16 @@ export interface DummyBenchmark {
   source: string;
 }
 
+export interface DummyScoreBenchmark {
+  platform: string;
+  adType: string;
+  stage: "Awareness" | "Interest" | "Conversion";
+  geo: string | null;
+  kpis: Record<string, number>;
+  dataStatus: "verified" | "placeholder";
+  source: string;
+}
+
 export interface DummyData {
   today: string;
   concepts: ConceptSeed[];
@@ -70,6 +83,7 @@ export interface DummyData {
   experiments: DummyExperiment[];
   batches: DummyBatch[];
   benchmarks: DummyBenchmark[];
+  scoreBenchmarks: DummyScoreBenchmark[];
 }
 
 const SLOTS: Record<PlatformKey, { placement: string; sizes: [number, number][] }[]> = {
@@ -89,6 +103,7 @@ const MODEL: Record<PlatformKey, { cpm: number; ctr: number; cvr: number; daily:
   display: { cpm: 4.5, ctr: 0.0014, cvr: 0.012, daily: 85_000 },
   newsletter: { cpm: 28, ctr: 0.009, cvr: 0.04, daily: 11_000 },
 };
+const STAGE_FOR = { Awareness: "Awareness", Consideration: "Interest", Intent: "Conversion" } as const;
 const FUNNEL_CVR = { Awareness: 0.6, Consideration: 1, Intent: 1.5 } as const;
 
 function pickStatus(r: Rng, age: number, quality: number): AdStatus {
@@ -155,7 +170,7 @@ export function generateDummyData(seed = 20261103): DummyData {
           const checks = launch
             ? { campaignActive: status === "live" || r() < 0.2, landingPageClear: r() < 0.85, ctaMatch: r() < 0.9, icpMatch: r() < 0.8 }
             : undefined;
-          const ad: DummyAd = { name, conceptKey: concept.key, platform, placement: slot.placement, width: w, height: h, status, launchedAt: launch, pausedAt, geo, quality, checks };
+          const ad: DummyAd = { name, conceptKey: concept.key, platform, placement: slot.placement, width: w, height: h, status, adType: platform === "display" ? "Display" : "Static", stage: STAGE_FOR[concept.funnel], launchedAt: launch, pausedAt, geo, quality, checks };
           ads.push(ad);
           daily.push(...dailyFor(r, ad, concept.funnel, today));
         }
@@ -163,7 +178,7 @@ export function generateDummyData(seed = 20261103): DummyData {
     }
   });
 
-  return { today, concepts: CONCEPTS, ads, daily, experiments: makeExperiments(r, ads), batches: makeBatches(ads), benchmarks: makeBenchmarks() };
+  return { today, concepts: CONCEPTS, ads, daily, experiments: makeExperiments(r, ads), batches: makeBatches(ads), benchmarks: makeBenchmarks(), scoreBenchmarks: makeScoreBenchmarks() };
 }
 
 const VARIABLES = [
@@ -229,6 +244,26 @@ function makeBatches(ads: DummyAd[]): DummyBatch[] {
       createdAt: `${addDays(launch, -6)}T16:20:00Z`,
     };
   });
+}
+
+function makeScoreBenchmarks(): DummyScoreBenchmark[] {
+  // Placeholder targets a little under each platform's modelled performance, so scores cluster around 100.
+  const stageCvr = { Awareness: FUNNEL_CVR.Awareness, Interest: FUNNEL_CVR.Consideration, Conversion: FUNNEL_CVR.Intent } as const;
+  const r4 = (n: number) => Math.round(n * 1e4) / 1e4;
+  const out: DummyScoreBenchmark[] = [];
+  for (const platform of Object.keys(MODEL) as PlatformKey[]) {
+    const m = MODEL[platform];
+    const adType = platform === "display" ? "Display" : "Static";
+    for (const stage of ["Awareness", "Interest", "Conversion"] as const) {
+      const convRate = m.cvr * stageCvr[stage] * 0.9;
+      const kpis: Record<string, number> =
+        stage === "Awareness" ? { cpm: r4(m.cpm * 1.05), ctr: r4(m.ctr * 0.9), convRate: r4(convRate) }
+        : stage === "Interest" ? { ctr: r4(m.ctr * 0.9), convRate: r4(convRate) }
+        : { convPer1k: r4(m.ctr * convRate * 1000), convRate: r4(convRate) };
+      out.push({ platform, adType, stage, geo: null, kpis, dataStatus: "placeholder", source: "Sample (placeholder)" });
+    }
+  }
+  return out;
 }
 
 function makeBenchmarks(): DummyBenchmark[] {

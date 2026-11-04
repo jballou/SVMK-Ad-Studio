@@ -6,7 +6,7 @@ import * as schema from "@/db/schema";
 import type { Db } from "@/db";
 import { seedIfEmpty } from "@/db/seed";
 import { generateDummyData } from "@/lib/dummy/generate";
-import { addBenchmark, createBatch, deleteBenchmark, getBenchmarks, getGate, getTaxonomy, listBenchmarkRows, saveGate, saveTaxonomy, getChecks, getDailyMetrics, getTotals, importMetricRows, listAds, listBatches, listExperiments, periodFor, saveChecks, setAdStatus, updateAdTags } from "./repo";
+import { deleteScoreBenchmark, getRawInputs, getScoreConfig, listScoreBenchmarks, saveScoreConfig, upsertScoreBenchmark, addBenchmark, createBatch, deleteBenchmark, getBenchmarks, getGate, getTaxonomy, listBenchmarkRows, saveGate, saveTaxonomy, getChecks, getDailyMetrics, getTotals, importMetricRows, listAds, listBatches, listExperiments, periodFor, saveChecks, setAdStatus, updateAdTags } from "./repo";
 
 vi.mock("server-only", () => ({}));
 
@@ -124,5 +124,53 @@ describe("settings and benchmarks", () => {
     expect(await deleteBenchmark(db, id)).toBe(true);
     expect(await deleteBenchmark(db, id)).toBe(false);
     expect((await listBenchmarkRows(db)).length).toBe(before);
+  });
+});
+
+describe("Creative Score data model", () => {
+  it("seeds ad type, stage and geo, and placeholder score benchmarks", async () => {
+    const ads = await listAds(db);
+    const a = ads.find((x) => x.name === live().name)!;
+    expect(a.adType).toBe("Static");
+    expect(["Awareness", "Interest", "Conversion"]).toContain(a.stage);
+    expect(a.geo).toBe("US");
+    const rows = await listScoreBenchmarks(db);
+    expect(rows).toHaveLength(data.scoreBenchmarks.length);
+    expect(rows.every((r) => r.status === "placeholder")).toBe(true);
+  });
+
+  it("upserts benchmarks per geo without touching the all-geos row, and deletes", async () => {
+    const base = { platform: "linkedin", adType: "Static", stage: "Awareness" as const, kpis: { cpm: 20 }, status: "placeholder" as const };
+    const before = await listScoreBenchmarks(db);
+    const allGeos = before.find((r) => r.platform === "linkedin" && r.stage === "Awareness" && r.geo == null)!;
+    const uk = await upsertScoreBenchmark(db, { ...base, geo: "UK" });
+    const uk2 = await upsertScoreBenchmark(db, { ...base, geo: "UK", kpis: { cpm: 18 }, status: "verified" });
+    expect(uk2).toBe(uk);
+    const all2 = await upsertScoreBenchmark(db, { ...base, geo: null, kpis: allGeos.kpis });
+    expect(all2).toBe(allGeos.id);
+    const after = await listScoreBenchmarks(db);
+    expect(after).toHaveLength(before.length + 1);
+    expect(after.find((r) => r.id === uk)).toMatchObject({ geo: "UK", kpis: { cpm: 18 }, status: "verified" });
+    expect(await deleteScoreBenchmark(db, uk)).toBe(true);
+    expect(await listScoreBenchmarks(db)).toHaveLength(before.length);
+  });
+
+  it("score config defaults, and saved edits persist", async () => {
+    expect((await getScoreConfig(db)).minImpressions).toBe(10_000);
+    const cfg = await getScoreConfig(db);
+    await saveScoreConfig(db, { ...cfg, minImpressions: 5_000 });
+    expect((await getScoreConfig(db)).minImpressions).toBe(5_000);
+  });
+
+  it("stores video metrics and keeps them null when a CSV has none", async () => {
+    const [a, b] = data.ads.filter((x) => x.status === "live").slice(0, 2);
+    await importMetricRows(db, [
+      { adName: a.name, day: "2026-10-30", spend: 10, impressions: 1000, clicks: 5, conversions: 1, videoStarts: 400, videoCompletions: 100 },
+      { adName: b.name, day: "2026-10-30", spend: 10, impressions: 1000, clicks: 5, conversions: 1 },
+    ]);
+    const raw = await getRawInputs(db);
+    expect(raw[a.name].videoStarts).toBe(400);
+    expect(raw[a.name].videoCompletions).toBe(100);
+    expect(raw[b.name].videoStarts).toBeNull();
   });
 });

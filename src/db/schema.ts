@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { boolean, date, integer, jsonb, pgEnum, pgTable, primaryKey, real, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const adStatus = pgEnum("ad_status", ["draft", "live", "paused", "retired"]);
@@ -53,6 +54,11 @@ export const ads = pgTable("ads", {
   name: text("name").notNull().unique(),
   platform: text("platform").notNull(),
   placement: text("placement").notNull(),
+  // Creative Score dimensions. adType: Static | Carousel | Display | Native | InMail | Video | CTV | ...
+  // stage: Awareness | Interest | Conversion | Re-engage. geo is the ad's primary geo (null = all/unspecified).
+  adType: text("ad_type").default("Static").notNull(),
+  stage: text("stage"),
+  geo: text("geo"),
   status: adStatus("status").default("draft").notNull(),
   launchedAt: date("launched_at"),
   pausedAt: date("paused_at"),
@@ -69,6 +75,8 @@ export const metricsDaily = pgTable(
     impressions: integer("impressions").default(0).notNull(),
     clicks: integer("clicks").default(0).notNull(),
     conversions: integer("conversions").default(0).notNull(),
+    videoStarts: integer("video_starts"),
+    videoCompletions: integer("video_completions"),
     extra: jsonb("extra").$type<Record<string, number>>().default({}),
     source: text("source").notNull(), // csv | meta | linkedin | google
   },
@@ -86,6 +94,27 @@ export const benchmarks = pgTable("benchmarks", {
   source: text("source"),
   asOf: date("as_of"),
 });
+
+// Creative Score benchmarks: one row per Platform x Ad type x Funnel stage x Geo (geo null = all geos).
+// kpis holds cpm ($), and vtr/completion/ctr/convRate as fractions, convPer1k as a count; a missing
+// key means that KPI does not apply. Separate from `benchmarks`, which feeds the readiness scorecard.
+export const scoreBenchmarks = pgTable(
+  "score_benchmarks",
+  {
+    id: serial("id").primaryKey(),
+    platform: text("platform").notNull(),
+    adType: text("ad_type").notNull(),
+    stage: text("stage").notNull(),
+    geo: text("geo"),
+    kpis: jsonb("kpis").$type<Record<string, number>>().notNull(),
+    dataStatus: text("data_status").$type<"verified" | "placeholder" | "no-delivery">().default("placeholder").notNull(),
+    sampleAds: integer("sample_ads"),
+    source: text("source"),
+    periodStart: date("period_start"),
+    periodEnd: date("period_end"),
+  },
+  (t) => [uniqueIndex("score_benchmarks_key").on(t.platform, t.adType, t.stage, sql`coalesce(${t.geo}, '')`)],
+);
 
 export const scorecards = pgTable("scorecards", {
   id: serial("id").primaryKey(),

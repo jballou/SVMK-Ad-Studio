@@ -10,6 +10,11 @@ export interface AdRecord {
   width: number;
   height: number;
   status: AdStatus;
+  /** Creative Score dimensions. */
+  /** Defaults to "Static" when absent. */
+  adType?: string;
+  stage?: string;
+  geo?: string;
   launchedAt?: string; // ISO date
   pausedAt?: string;
   imageUrl?: string;

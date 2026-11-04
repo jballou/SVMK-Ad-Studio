@@ -6,6 +6,9 @@ export interface MetricRow {
   impressions: number;
   clicks: number;
   conversions: number;
+  /** Video metrics are optional; absent columns stay null (not zero). */
+  videoStarts?: number;
+  videoCompletions?: number;
 }
 
 export interface CsvImport {
@@ -47,6 +50,8 @@ const HEADERS: Record<keyof MetricRow, RegExp> = {
   impressions: /^impressions$/i,
   clicks: /^(clicks|link clicks|clicks \(all\))$/i,
   conversions: /^(conversions|leads|results|total conversions)$/i,
+  videoStarts: /^video[ _]?(starts|views)$/i,
+  videoCompletions: /^video[ _]?(completions|completed views|completes)$/i,
 };
 
 const num = (s: string | undefined) => {
@@ -81,7 +86,10 @@ export function importMetrics(text: string, knownNames: string[] = []): CsvImpor
     if (!day) return void errors.push({ line, message: `Unrecognized date "${r[idx.day]}"` });
     if (Number.isNaN(impressions)) return void errors.push({ line, message: "Impressions is not a number" });
     const opt = (k: keyof MetricRow) => (idx[k] >= 0 ? num(r[idx[k]]) || 0 : 0);
-    rows.push({ adName: (r[idx.adName] ?? "").trim(), day, spend: opt("spend"), impressions, clicks: opt("clicks"), conversions: opt("conversions") });
+    const row: MetricRow = { adName: (r[idx.adName] ?? "").trim(), day, spend: opt("spend"), impressions, clicks: opt("clicks"), conversions: opt("conversions") };
+    if (idx.videoStarts >= 0) row.videoStarts = opt("videoStarts");
+    if (idx.videoCompletions >= 0) row.videoCompletions = opt("videoCompletions");
+    rows.push(row);
   });
   const known = new Set(knownNames);
   const unmatchedNames = knownNames.length ? [...new Set(rows.map((r) => r.adName).filter((n) => !known.has(n)))] : [];

@@ -1,9 +1,11 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type { Db } from "@/db";
 import * as t from "@/db/schema";
 import type { AdRecord, AdStatus } from "@/lib/ads/types";
 import type { MetricRow, Totals } from "@/lib/metrics/csv";
 import type { Benchmark, ManualChecks } from "@/lib/scorecard/build";
+import { DEFAULT_CONFIG, type Benchmark as ScoreBenchmark, type FunnelStage, type KpiKey, type RawInputs, type ScoreConfig } from "@/lib/scoring/creative-score";
 import { DEFAULT_GATE, DEFAULT_TAXONOMY, SETTING_KEYS, type LearningGate, type Taxonomy } from "@/lib/settings";
 
 // All functions take the db so tests can pass an in-memory instance.
@@ -24,6 +26,9 @@ export async function listAds(db: Db): Promise<AdRecord[]> {
     width: creative.width,
     height: creative.height,
     status: ad.status,
+    adType: ad.adType,
+    stage: ad.stage ?? undefined,
+    geo: ad.geo ?? undefined,
     launchedAt: ad.launchedAt ?? undefined,
     pausedAt: ad.pausedAt ?? undefined,
     imageUrl: creative.imageUrl ?? undefined,
@@ -59,6 +64,27 @@ export async function getTotals(db: Db): Promise<Record<string, Totals>> {
   return Object.fromEntries(rows.map(({ name, ...totals }) => [name, totals]));
 }
 
+const sumOrNull = (col: AnyPgColumn) =>
+  sql<number | null>`sum(${col})`.mapWith((v) => (v == null ? null : Number(v)));
+
+/** Raw inputs per ad (including video metrics) for the Creative Score. */
+export async function getRawInputs(db: Db): Promise<Record<string, RawInputs>> {
+  const rows = await db
+    .select({
+      name: t.ads.name,
+      spend: sql<number>`coalesce(sum(${t.metricsDaily.spend}), 0)`.mapWith(Number),
+      impressions: sql<number>`coalesce(sum(${t.metricsDaily.impressions}), 0)`.mapWith(Number),
+      clicks: sql<number>`coalesce(sum(${t.metricsDaily.clicks}), 0)`.mapWith(Number),
+      conversions: sql<number>`coalesce(sum(${t.metricsDaily.conversions}), 0)`.mapWith(Number),
+      videoStarts: sumOrNull(t.metricsDaily.videoStarts),
+      videoCompletions: sumOrNull(t.metricsDaily.videoCompletions),
+    })
+    .from(t.metricsDaily)
+    .innerJoin(t.ads, eq(t.metricsDaily.adId, t.ads.id))
+    .groupBy(t.ads.name);
+  return Object.fromEntries(rows.map(({ name, ...raw }) => [name, raw]));
+}
+
 export interface ImportSummary {
   imported: number;
   unmatchedNames: string[];
@@ -74,7 +100,7 @@ export async function importMetricRows(db: Db, rows: MetricRow[], source = "csv"
   await db.transaction(async (tx) => {
     if (ads.length) await tx.delete(t.metricsDaily).where(and(inArray(t.metricsDaily.adId, ads.map((a) => a.id)), eq(t.metricsDaily.source, "sample")));
     for (const r of matched) {
-      const v = { adId: idByName.get(r.adName)!, day: r.day, spend: r.spend, impressions: r.impressions, clicks: r.clicks, conversions: r.conversions, source };
+      const v = { adId: idByName.get(r.adName)!, day: r.day, spend: r.spend, impressions: r.impressions, clicks: r.clicks, conversions: r.conversions, videoStarts: r.videoStarts ?? null, videoCompletions: r.videoCompletions ?? null, source };
       await tx.insert(t.metricsDaily).values(v).onConflictDoUpdate({ target: [t.metricsDaily.adId, t.metricsDaily.day], set: v });
     }
   });
@@ -249,4 +275,55 @@ export async function setAssetApproved(db: Db, id: string, approved: boolean): P
 export async function deleteAssetRow(db: Db, id: string): Promise<AssetRow | undefined> {
   const [r] = await db.delete(t.assets).where(eq(t.assets.id, id)).returning();
   return r;
+}
+
+// ---- Creative Score settings and benchmarks ----
+
+export const getScoreConfig = (db: Db) => getSetting<ScoreConfig>(db, "score_config", DEFAULT_CONFIG);
+export const saveScoreConfig = (db: Db, cfg: ScoreConfig) => putSetting(db, "score_config", cfg);
+
+export interface ScoreBenchmarkRow extends ScoreBenchmark {
+  id: number;
+  periodStart?: string;
+  periodEnd?: string;
+}
+
+const toScoreBenchmark = (b: typeof t.scoreBenchmarks.$inferSelect): ScoreBenchmarkRow => ({
+  id: b.id,
+  platform: b.platform,
+  adType: b.adType,
+  stage: b.stage as FunnelStage,
+  geo: b.geo,
+  kpis: b.kpis as Partial<Record<KpiKey, number>>,
+  status: b.dataStatus,
+  sampleAds: b.sampleAds ?? undefined,
+  source: b.source ?? undefined,
+  periodStart: b.periodStart ?? undefined,
+  periodEnd: b.periodEnd ?? undefined,
+});
+
+export async function listScoreBenchmarks(db: Db): Promise<ScoreBenchmarkRow[]> {
+  const rows = await db.select().from(t.scoreBenchmarks).orderBy(t.scoreBenchmarks.platform, t.scoreBenchmarks.adType, t.scoreBenchmarks.stage, t.scoreBenchmarks.geo);
+  return rows.map(toScoreBenchmark);
+}
+
+/** Insert or replace the row for (platform, ad type, stage, geo). */
+export async function upsertScoreBenchmark(db: Db, b: Omit<ScoreBenchmarkRow, "id">): Promise<number> {
+  const geoMatch = b.geo == null ? sql`${t.scoreBenchmarks.geo} is null` : eq(t.scoreBenchmarks.geo, b.geo);
+  const values = {
+    platform: b.platform, adType: b.adType, stage: b.stage, geo: b.geo, kpis: b.kpis as Record<string, number>,
+    dataStatus: b.status, sampleAds: b.sampleAds ?? null, source: b.source ?? null, periodStart: b.periodStart ?? null, periodEnd: b.periodEnd ?? null,
+  };
+  return db.transaction(async (tx) => {
+    const [existing] = await tx.select({ id: t.scoreBenchmarks.id }).from(t.scoreBenchmarks)
+      .where(and(eq(t.scoreBenchmarks.platform, b.platform), eq(t.scoreBenchmarks.adType, b.adType), eq(t.scoreBenchmarks.stage, b.stage), geoMatch));
+    if (existing) { await tx.update(t.scoreBenchmarks).set(values).where(eq(t.scoreBenchmarks.id, existing.id)); return existing.id; }
+    const [row] = await tx.insert(t.scoreBenchmarks).values(values).returning({ id: t.scoreBenchmarks.id });
+    return row.id;
+  });
+}
+
+export async function deleteScoreBenchmark(db: Db, id: number): Promise<boolean> {
+  const res = await db.delete(t.scoreBenchmarks).where(eq(t.scoreBenchmarks.id, id)).returning({ id: t.scoreBenchmarks.id });
+  return res.length > 0;
 }
