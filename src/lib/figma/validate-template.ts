@@ -56,6 +56,8 @@ function validateFrame(f: DiscoveredFrame): SizeReport {
   if (f.legacy) add("warn", "name-legacy", `Rename to "AD | ${f.conceptKey} | ${f.width}x${f.height}" so Ad Studio reads it without the legacy fallback.`);
   if (!/[A-Za-z]$/.test(f.conceptKey)) add("error", "key-ends-digit", `The concept key "${f.conceptKey}" ends in a digit, which makes ad names like ${f.conceptKey}112026_${f.width}x${f.height} ambiguous. End the key with a letter (e.g. "Enterprise80" → "80Enterprise").`);
   if (placements.length === 0) add("warn", "unknown-size", `${f.width}×${f.height} isn't a size Ad Studio generates, so this frame is ignored when building batches.`);
+  const real = f.node.absoluteBoundingBox;
+  if (real && (Math.abs(real.width - f.width) > 1 || Math.abs(real.height - f.height) > 1)) add("error", "size-mismatch", `The name says ${f.width}x${f.height} but the frame is ${Math.round(real.width)}x${Math.round(real.height)}. Resize the frame or fix the name; exports use the real size.`);
   if (f.node.clipsContent === false) add("warn", "no-clip", "Turn on Clip content so the exported PNG matches what you see in the frame.");
 
   // Slots.

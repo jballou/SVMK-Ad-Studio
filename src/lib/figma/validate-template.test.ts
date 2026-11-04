@@ -72,6 +72,12 @@ describe("validateTemplate", () => {
     expect(codes(legacy, "name-legacy")).toHaveLength(1);
   });
 
+  it("errors when the name's size doesn't match the frame", () => {
+    const f = frame("A", 1200, 1200, clean);
+    f.absoluteBoundingBox = box(0, 0, 1200, 628);
+    expect(codes(validateTemplate(page(f)), "size-mismatch")[0].severity).toBe("error");
+  });
+
   it("warns about sizes it doesn't generate", () => {
     expect(codes(validateTemplate(page(frame("A", 1234, 777, clean))), "unknown-size")).toHaveLength(1);
   });
