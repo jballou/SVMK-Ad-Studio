@@ -5,7 +5,12 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { addBenchmark, createBatch, deleteBenchmark, importMetricRows, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, updateAdTags, type ImportSummary } from "@/lib/db/repo";
 import { planBatch } from "@/lib/batches/plan";
-import { artFor, conceptByKey } from "@/lib/dummy/library";
+import { artFor, conceptByKey, conceptImagery, designForConcept } from "@/lib/dummy/library";
+import { resolveComposition } from "@/lib/composition/defaults";
+import { hasErrors, qaComposition } from "@/lib/composition/qa";
+import type { Design } from "@/lib/composition/types";
+import { THEMES } from "@/lib/dummy/concepts";
+import { getAsset, getPreset } from "@/lib/imagery/library";
 
 const today = () => new Date().toLocaleDateString("en-CA");
 
@@ -84,6 +89,25 @@ const copyInput = z.object({
   landing: z.string().max(200),
 });
 
+const transformInput = z.object({ x: z.number().min(-0.5).max(1.5), y: z.number().min(-0.5).max(1.5), scale: z.number().min(0.04).max(1.7) });
+const kindEnum = z.enum(["background", "photo", "product"]);
+const imageRef = z.union([
+  z.object({ source: z.literal("gallery"), id: z.string().refine((id) => !!getAsset(id), "Unknown approved image") }),
+  z.object({ source: z.literal("upload"), name: z.string().max(200), naturalW: z.number().int().min(1).max(30000), naturalH: z.number().int().min(1).max(30000) }),
+]);
+const layerInput = z.object({ visible: z.boolean(), image: imageRef.optional(), preset: z.string().max(40).refine((p) => !!getPreset(p), "Unknown background preset").optional() });
+const designInput = z.object({
+  content: z.object({
+    order: z.array(kindEnum).length(3).refine((o) => new Set(o).size === 3, "Layers must be unique"),
+    layers: z.object({ background: layerInput, photo: layerInput, product: layerInput }),
+    text: z.object({
+      headline: z.string().max(200), headlineScale: z.number().min(0.5).max(1.6), align: z.enum(["left", "center"]), color: z.enum(["auto", "dark", "light"]),
+      scrim: z.boolean(), cta: z.string().max(40), ctaOverride: z.record(z.string(), z.boolean()),
+    }),
+  }),
+  transforms: z.record(z.string(), z.object({ background: transformInput.optional(), photo: transformInput.optional(), product: transformInput.optional() })),
+});
+
 const batchInput = z.object({
   name: z.string().min(3).max(80),
   month: z.number().int().min(1).max(12),
@@ -91,6 +115,7 @@ const batchInput = z.object({
   conceptKeys: z.array(z.string()).min(1).max(30),
   placementKeys: z.array(z.string()).min(1).max(12),
   copy: z.record(z.string(), copyInput).optional(),
+  designs: z.record(z.string(), designInput).optional(),
 });
 
 export interface BatchResult {
@@ -106,7 +131,7 @@ export interface BatchResult {
 export async function generateBatch(input: unknown): Promise<BatchResult> {
   const parsed = batchInput.safeParse(input);
   if (!parsed.success) return { ok: false, created: 0, skipped: [], names: [], error: "Check the batch name, month and selections." };
-  const { name, month, year, conceptKeys, placementKeys, copy } = parsed.data;
+  const { name, month, year, conceptKeys, placementKeys, copy, designs } = parsed.data;
   const db = await getDb();
   const existing = new Set((await listAds(db)).map((a) => a.name));
   const plan = planBatch({ conceptKeys, placementKeys, month, year, existing });
@@ -119,9 +144,26 @@ export async function generateBatch(input: unknown): Promise<BatchResult> {
     return [{ key, campaign: c.campaign, tags, art: artFor(c), copy: copy?.[key] ?? { headline: c.headline, platformHeadline: c.platformHeadline, intro: c.intro, cta: c.cta, landing: c.landing } }];
   });
   const tagsByKey = new Map(concepts.map((c) => [c.key, c.tags]));
+
+  // Compose and check every new ad on the server too, so a batch can't skip the editor's QA.
+  const compositions = new Map<string, ReturnType<typeof resolveComposition>>();
+  const problems: string[] = [];
+  for (const p of plan.filter((x) => !x.exists)) {
+    const seed = conceptByKey(p.conceptKey);
+    if (!seed) continue;
+    const supports = conceptImagery(seed);
+    const given = designs?.[p.conceptKey];
+    const design: Design = given ? { ...given, supports } : designForConcept(seed, copy?.[p.conceptKey]?.headline);
+    const comp = resolveComposition(design, p.width, p.height, p.placement);
+    compositions.set(p.name, comp);
+    const issues = qaComposition(comp, { placementKey: p.placement, width: p.width, height: p.height, supports, themeBg: THEMES[seed.theme].bg });
+    if (hasErrors(issues)) problems.push(`${p.conceptKey} ${p.width}×${p.height}: ${issues.find((i) => i.severity === "error")!.message}`);
+  }
+  if (problems.length) return { ok: false, created: 0, skipped: [], names: [], error: `Fix these before generating: ${problems.slice(0, 3).join(" ")}${problems.length > 3 ? ` (+${problems.length - 3} more)` : ""}` };
+
   const res = await createBatch(db, {
     name, createdBy: "Jarrod B.", placements: placementKeys, concepts,
-    ads: plan.filter((p) => tagsByKey.has(p.conceptKey)).map((p) => ({ conceptKey: p.conceptKey, placement: p.placement, platform: p.platform, width: p.width, height: p.height, name: p.name, tags: { ...tagsByKey.get(p.conceptKey)!, geo: ["US"] } })),
+    ads: plan.filter((p) => tagsByKey.has(p.conceptKey)).map((p) => ({ conceptKey: p.conceptKey, placement: p.placement, platform: p.platform, width: p.width, height: p.height, name: p.name, tags: { ...tagsByKey.get(p.conceptKey)!, geo: ["US"] }, composition: compositions.get(p.name) })),
   });
   revalidatePath("/gallery");
   revalidatePath("/batches");

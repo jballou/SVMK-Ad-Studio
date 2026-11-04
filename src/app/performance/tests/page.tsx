@@ -18,7 +18,7 @@ function Side({ ad, ctr, impressions, win, label }: { ad: AdRecord; ctr: number;
   return (
     <Link href={`/gallery/${ad.name}`} className={`block rounded-lg border p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500 ${win ? "border-brand-green-400 bg-brand-green-100/40" : "border-brand-neutral-200"}`}>
       <div className="flex items-start gap-3">
-        <span className="w-20 shrink-0 overflow-hidden rounded border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={false} /></span>
+        <span className="w-20 shrink-0 overflow-hidden rounded border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={false} composition={ad.composition} placementKey={ad.placement} /></span>
         <div className="min-w-0">
           <p className="text-xs font-semibold text-brand-neutral-650">Variant {label}{win && <span className="ml-1.5 text-brand-green-600">Winner</span>}</p>
           <p className="truncate text-sm font-medium" title={ad.name}>{ad.conceptKey}</p>

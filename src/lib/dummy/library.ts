@@ -1,3 +1,5 @@
+import { defaultDesign } from "@/lib/composition/defaults";
+import type { Design } from "@/lib/composition/types";
 import { CONCEPTS, THEMES, type ConceptSeed } from "./concepts";
 
 export interface TemplateFile {
@@ -87,3 +89,16 @@ export const COPY_DECKS: CopyDeck[] = TEMPLATE_FILES.map((t, i) => {
 });
 
 export const DECK_LIMITS = { platformHeadline: 70, intro: 150 } as const;
+
+/** Which imagery layers a concept's Figma template supports (at most two). */
+export function conceptImagery(c: ConceptSeed): { photo: boolean; product: boolean } {
+  if (c.offer === "Report" || c.offer === "Guide") return { photo: false, product: true };
+  if (c.personas.includes("EX")) return { photo: true, product: c.funnel !== "Awareness" };
+  if (c.funnel === "Awareness") return { photo: true, product: false };
+  if (c.funnel === "Consideration") return { photo: false, product: true };
+  return { photo: true, product: true };
+}
+
+export function designForConcept(c: ConceptSeed, headline = c.headline): Design {
+  return defaultDesign({ key: c.key, personas: c.personas, supports: conceptImagery(c), headline, cta: c.cta, align: c.layout === "center" ? "center" : "left" });
+}

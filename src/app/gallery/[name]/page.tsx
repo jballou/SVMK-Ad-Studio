@@ -78,7 +78,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
               <ul className="flex flex-wrap items-end gap-3">
                 {siblings.map((s) => (
                   <li key={s.id} className="w-24"><Link href={`/gallery/${s.name}`} className="block space-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500">
-                    <span className="block overflow-hidden rounded border border-brand-neutral-200"><AdArt art={s.art} copy={s.copy} width={s.width} height={s.height} showCta={false} /></span>
+                    <span className="block overflow-hidden rounded border border-brand-neutral-200"><AdArt art={s.art} copy={s.copy} width={s.width} height={s.height} showCta={false} composition={s.composition} placementKey={s.placement} /></span>
                     <span className="block truncate text-[11px] text-brand-neutral-650" title={s.name}>{s.width}×{s.height} · {s.platform}</span>
                   </Link></li>
                 ))}

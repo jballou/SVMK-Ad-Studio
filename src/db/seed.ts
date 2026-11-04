@@ -3,6 +3,8 @@ import type { Db } from "./index";
 import * as t from "./schema";
 import { THEMES } from "@/lib/dummy/concepts";
 import { generateDummyData } from "@/lib/dummy/generate";
+import { resolveComposition } from "@/lib/composition/defaults";
+import { designForConcept } from "@/lib/dummy/library";
 import { periodFor } from "@/lib/db/repo";
 
 /** Realistic dummy data for local development. Metric rows are tagged source "sample" so they can be purged. */
@@ -28,6 +30,7 @@ export async function seedIfEmpty(db: Db) {
   }
 
   const conceptByKey = new Map(data.concepts.map((c) => [c.key, c]));
+  const designs = new Map(data.concepts.map((c) => [c.key, designForConcept(c)]));
   const adIds = new Map<string, number>();
   for (const a of data.ads) {
     const concept = conceptByKey.get(a.conceptKey)!;
@@ -42,6 +45,7 @@ export async function seedIfEmpty(db: Db) {
         creativeId: creative.id, name: a.name, platform: a.platform, placement: a.placement, status: a.status,
         launchedAt: a.launchedAt ?? null, pausedAt: a.pausedAt ?? null,
         tags: { persona: concept.personas, funnel: concept.funnel, icp: concept.icp, geo: a.geo, offer: concept.offer },
+        composition: resolveComposition(designs.get(a.conceptKey)!, a.width, a.height, a.placement),
       })
       .returning({ id: t.ads.id });
     adIds.set(a.name, ad.id);

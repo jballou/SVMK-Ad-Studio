@@ -18,7 +18,7 @@ export function Card({ title, description, actions, children, className = "", pa
   return (
     <section className={`min-w-0 rounded-xl border border-brand-neutral-200 bg-white ${className}`}>
       {(title || actions) && (
-        <div className="flex items-start justify-between gap-3 border-b border-brand-neutral-150 px-5 py-3.5">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-brand-neutral-150 px-5 py-3.5">
           <div className="min-w-0">
             {title && <h2 className="text-sm font-semibold text-brand-neutral-900">{title}</h2>}
             {description && <p className="mt-0.5 text-xs text-brand-neutral-650">{description}</p>}

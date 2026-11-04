@@ -53,7 +53,7 @@ function Tags({ ad, max = 5 }: { ad: AdRecord; max?: number }) {
 function Thumb({ ad, max }: { ad: AdRecord; max: number }) {
   const r = ad.width / ad.height;
   const w = r >= 1 ? max : Math.round(max * r);
-  return <div style={{ width: w }} className="overflow-hidden rounded-md border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={max > 90} /></div>;
+  return <div style={{ width: w }} className="overflow-hidden rounded-md border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={max > 90} composition={ad.composition} placementKey={ad.placement} /></div>;
 }
 
 export function Gallery({ initial, stats, initialFilters = {} }: { initial: AdRecord[]; stats: Record<string, AdStat>; initialFilters?: { q?: string; status?: string; platform?: string } }) {

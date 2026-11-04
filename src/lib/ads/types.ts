@@ -17,7 +17,10 @@ export interface AdRecord {
   campaign?: string;
   copy?: AdCopy;
   art?: AdArtSpec;
+  composition?: Composition;
 }
+
+import type { Composition } from "@/lib/composition/types";
 
 export interface AdCopy {
   headline: string; // in-image headline

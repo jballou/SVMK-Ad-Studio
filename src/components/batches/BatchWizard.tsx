@@ -5,12 +5,15 @@ import { useMemo, useState, useTransition } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, CircleCheck, CircleX, FileSpreadsheet, Frame, Sparkles } from "lucide-react";
 import { generateBatch, type BatchResult } from "@/app/actions";
 import { AdArt } from "@/components/ads/AdArt";
-import { PlacementPreview } from "@/components/ads/PlacementPreview";
+import { DesignEditor, qaForDesign, type SizeOption } from "@/components/design/DesignEditor";
+import { stripUploads } from "@/lib/composition/edit";
+import type { Design } from "@/lib/composition/types";
+import { counts } from "@/lib/composition/qa";
 import { Button } from "@/components/ui/button-1";
 import { Chip } from "@/components/ui/chip";
 import { Card } from "@/components/ui/primitives";
 import { checkCopy, planBatch } from "@/lib/batches/plan";
-import { artFor, conceptByKey, COPY_DECKS, DECK_LIMITS, TEMPLATE_FILES, type DeckRowData } from "@/lib/dummy/library";
+import { artFor, conceptByKey, COPY_DECKS, DECK_LIMITS, designForConcept, TEMPLATE_FILES, type DeckRowData } from "@/lib/dummy/library";
 import { fmtDate } from "@/lib/format";
 import { PLACEMENTS, type PlatformKey } from "@/lib/specs/platforms";
 import { PLATFORM_LABEL } from "@/lib/ui/colors";
@@ -29,7 +32,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
   const [edits, setEdits] = useState<Record<string, Partial<CopyEdit>>>({});
   const [placements, setPlacements] = useState<string[]>(["linkedin-single-image", "instagram-feed"]);
   const [previewConcept, setPreviewConcept] = useState<string>("");
-  const [previewPlacement, setPreviewPlacement] = useState<string>("");
+  const [designs, setDesigns] = useState<Record<string, Design>>({});
   const [month, setMonth] = useState(defaultMonth);
   const [name, setName] = useState("");
   const [pending, start] = useTransition();
@@ -52,12 +55,39 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
   const fresh = plan.filter((p) => !p.exists);
 
   const pc = previewConcept && picked.includes(previewConcept) ? previewConcept : picked[0];
-  const pp = previewPlacement && placements.includes(previewPlacement) ? previewPlacement : placements[0];
   const previewRow = pc ? rowFor(pc) : undefined;
-  const previewDef = PLACEMENTS.find((p) => p.key === pp);
+  const sizes = useMemo<SizeOption[]>(() => {
+    const seen = new Set<string>();
+    const out: SizeOption[] = [];
+    for (const k of placements) {
+      const p = PLACEMENTS.find((x) => x.key === k);
+      if (!p) continue;
+      for (const sz of p.sizes) {
+        const id = `${sz.w}x${sz.h}`;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        out.push({ placementKey: p.key, width: sz.w, height: sz.h, label: p.label });
+      }
+    }
+    return out;
+  }, [placements]);
+  const designFor = (key: string): Design => designs[key] ?? designForConcept(conceptByKey(key)!, rowFor(key)?.headline);
+  const qa = useMemo(() => {
+    const m = new Map<string, { errors: number; warnings: number }>();
+    for (const k of picked) {
+      const c = conceptByKey(k);
+      if (!c) continue;
+      const all = [...qaForDesign(c, designs[k] ?? designForConcept(c, rowFor(k)?.headline), sizes).values()].flat();
+      m.set(k, counts(all));
+    }
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [picked, designs, sizes, edits, deckId]);
+  const designErrors = [...qa.values()].reduce((n, c) => n + c.errors, 0);
+  const designWarnings = [...qa.values()].reduce((n, c) => n + c.warnings, 0);
 
-  const canNext = step === 0 ? picked.length > 0 : step === 1 ? copyErrors === 0 : step === 2 ? placements.length > 0 : true;
-  const reason = step === 0 ? "Select at least one concept." : step === 1 ? `Fix ${copyErrors} copy error${copyErrors === 1 ? "" : "s"} to continue.` : step === 2 ? "Select at least one placement." : "";
+  const canNext = step === 0 ? picked.length > 0 : step === 1 ? copyErrors === 0 : step === 2 ? placements.length > 0 : step === 3 ? designErrors === 0 : true;
+  const reason = step === 0 ? "Select at least one concept." : step === 1 ? `Fix ${copyErrors} copy error${copyErrors === 1 ? "" : "s"} to continue.` : step === 2 ? "Select at least one placement." : step === 3 ? `Fix ${designErrors} design error${designErrors === 1 ? "" : "s"} to continue.` : "";
 
   const chooseTemplate = (id: string) => {
     const t = TEMPLATE_FILES.find((x) => x.id === id)!;
@@ -65,6 +95,8 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
     setPicked(t.concepts.slice(0, 3));
     setDeckId(`deck-${id}`);
     setEdits({});
+    setDesigns({});
+    setPreviewConcept("");
   };
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
@@ -73,7 +105,8 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
     start(async () => {
       const copy = Object.fromEntries(rows.map((r) => [r.adBase, { headline: r.headline, platformHeadline: r.platformHeadline, intro: r.intro, cta: r.cta, landing: r.landing }]));
       try {
-        setResult(await generateBatch({ name: batchName, month: m, year: y, conceptKeys: picked, placementKeys: placements, copy }));
+        const designPayload = Object.fromEntries(picked.map((k) => [k, stripUploads(designFor(k))]));
+        setResult(await generateBatch({ name: batchName, month: m, year: y, conceptKeys: picked, placementKeys: placements, copy, designs: designPayload }));
       } catch {
         setResult({ ok: false, created: 0, skipped: [], names: [], error: "Something went wrong while generating. Nothing was saved." });
       }
@@ -98,7 +131,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+    <div className={`grid gap-6 ${step === 3 ? "" : "lg:grid-cols-[minmax(0,1fr)_300px]"}`}>
       <div className="min-w-0 space-y-6">
         <ol className="flex flex-wrap gap-2" aria-label="Steps">
           {STEPS.map((s, i) => (
@@ -149,7 +182,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
         {step === 1 && (
           <Card title="Link the copy deck" description="Headline and intro text are checked against each platform's character limits." actions={<Chip variant="completed" chevron={false} className="!px-2.5 !py-1 !text-xs">Synced {fmtDate(deck.syncedAt)}</Chip>}>
             <label className="mb-4 block text-xs font-medium text-brand-neutral-650">Spreadsheet
-              <select value={deckId} onChange={(e) => { setDeckId(e.target.value); setEdits({}); }} className={`${field} mt-1 max-w-md`}>
+              <select value={deckId} onChange={(e) => { setDeckId(e.target.value); setEdits({}); setDesigns({}); }} className={`${field} mt-1 max-w-md`}>
                 {COPY_DECKS.map((d) => <option key={d.id} value={d.id}>{d.name} · tab “{d.tab}”</option>)}
               </select>
             </label>
@@ -203,27 +236,15 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
           </Card>
         )}
 
-        {step === 3 && (
-          <Card title="Preview" description="Each creative inside its platform UI, using the copy from your deck.">
-            <div className="mb-4 flex flex-wrap gap-3">
-              <label className="text-xs font-medium text-brand-neutral-650">Concept<select value={pc} onChange={(e) => setPreviewConcept(e.target.value)} className={`${field} mt-1 block w-48`}>{picked.map((k) => <option key={k}>{k}</option>)}</select></label>
-              <label className="text-xs font-medium text-brand-neutral-650">Placement<select value={pp} onChange={(e) => setPreviewPlacement(e.target.value)} className={`${field} mt-1 block w-64`}>{placements.map((k) => <option key={k} value={k}>{PLACEMENTS.find((p) => p.key === k)?.label}</option>)}</select></label>
-            </div>
-            {previewRow && previewDef && (
-              <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
-                <div className="flex justify-center rounded-xl bg-brand-neutral-100 p-5">
-                  <PlacementPreview ad={{ art: artFor(conceptByKey(pc)!), copy: { headline: previewRow.headline, intro: previewRow.intro, platformHeadline: previewRow.platformHeadline, cta: previewRow.cta, landing: previewRow.landing }, width: previewDef.sizes[0].w, height: previewDef.sizes[0].h, placement: pp }} />
-                </div>
-                <div>
-                  <p className="mb-2 text-xs font-medium text-brand-neutral-650">All sizes for this placement</p>
-                  <ul className="flex flex-wrap items-end gap-3">
-                    {previewDef.sizes.map((s) => (
-                      <li key={`${s.w}x${s.h}`} className="w-28"><span className="block overflow-hidden rounded border border-brand-neutral-200"><AdArt art={artFor(conceptByKey(pc)!)} copy={previewRow} width={s.w} height={s.h} showCta={false} /></span><span className="block text-center text-[11px] text-brand-neutral-650">{s.w}×{s.h}</span></li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
+        {step === 3 && pc && previewRow && (
+          <Card title="Preview and design" description="Edit each concept's imagery and text, then check it in the platform UI. Checks run for every size you selected." actions={
+            <label className="flex items-center gap-2 text-xs font-medium text-brand-neutral-650">Concept
+              <select value={pc} onChange={(e) => setPreviewConcept(e.target.value)} className={`${field} w-48 shrink-0`}>
+                {picked.map((k) => { const n = qa.get(k); return <option key={k} value={k}>{k}{n?.errors ? ` (${n.errors} error${n.errors === 1 ? "" : "s"})` : n?.warnings ? ` (${n.warnings} warning${n.warnings === 1 ? "" : "s"})` : ""}</option>; })}
+              </select>
+            </label>
+          }>
+            <DesignEditor key={pc} concept={conceptByKey(pc)!} design={designFor(pc)} onChange={(d) => setDesigns((s) => ({ ...s, [pc]: d }))} sizes={sizes} platformCopy={{ intro: previewRow.intro, platformHeadline: previewRow.platformHeadline, landing: previewRow.landing }} />
           </Card>
         )}
 
@@ -244,6 +265,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
                 </tbody>
               </table>
             </div>
+            <p className={`mt-3 text-sm ${designErrors ? "text-brand-red-500" : designWarnings ? "text-brand-orange-600" : "text-brand-green-700"}`}>{designErrors ? `${designErrors} design error${designErrors === 1 ? "" : "s"} must be fixed in the Preview step.` : designWarnings ? `${designWarnings} design warning${designWarnings === 1 ? "" : "s"} across all sizes. You can generate, but review them first.` : "Creative checks passed for every size."}</p>
             {result && !result.ok && <p role="alert" className="mt-3 rounded-lg bg-brand-red-100 px-3 py-2 text-sm text-brand-red-700">{result.error}</p>}
           </Card>
         )}
@@ -252,12 +274,12 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
           <Button variant="outline" onClick={() => setStep((s) => s - 1)} disabled={step === 0}><ArrowLeft /> Back</Button>
           <div className="flex items-center gap-3">
             {!canNext && <span className="text-xs text-brand-neutral-650" role="status">{reason}</span>}
-            {step < 4 ? <Button onClick={() => setStep((s) => s + 1)} disabled={!canNext}>Next <ArrowRight /></Button> : <Button onClick={submit} disabled={pending || fresh.length === 0}><Sparkles /> {pending ? "Generating…" : `Generate ${fresh.length} ad${fresh.length === 1 ? "" : "s"}`}</Button>}
+            {step < 4 ? <Button onClick={() => setStep((s) => s + 1)} disabled={!canNext}>Next <ArrowRight /></Button> : <Button onClick={submit} disabled={pending || fresh.length === 0 || designErrors > 0}><Sparkles /> {pending ? "Generating…" : `Generate ${fresh.length} ad${fresh.length === 1 ? "" : "s"}`}</Button>}
           </div>
         </div>
       </div>
 
-      <aside aria-label="Batch summary" className="h-fit rounded-xl border border-brand-neutral-200 bg-white p-4 text-sm lg:sticky lg:top-20">
+      {step !== 3 && <aside aria-label="Batch summary" className="h-fit rounded-xl border border-brand-neutral-200 bg-white p-4 text-sm lg:sticky lg:top-20">
         <h2 className="text-sm font-semibold">Batch summary</h2>
         <dl className="mt-3 space-y-2.5">
           <div><dt className="text-xs text-brand-neutral-650">Template</dt><dd className="font-medium">{template.name}</dd></div>
@@ -267,7 +289,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
           <div className="border-t border-brand-neutral-150 pt-2.5"><dt className="text-xs text-brand-neutral-650">Ads to create</dt><dd className="text-2xl font-semibold tabular-nums">{fresh.length}</dd>{plan.length > fresh.length && <p className="text-xs text-brand-orange-600">{plan.length - fresh.length} already exist</p>}</div>
           {copyErrors > 0 && <p className="text-xs text-brand-red-500">{copyErrors} copy error{copyErrors === 1 ? "" : "s"} to fix</p>}
         </dl>
-      </aside>
+      </aside>}
     </div>
   );
 }

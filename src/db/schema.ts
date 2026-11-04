@@ -57,6 +57,7 @@ export const ads = pgTable("ads", {
   launchedAt: date("launched_at"),
   pausedAt: date("paused_at"),
   tags: jsonb("tags").$type<Record<string, unknown>>().default({}),
+  composition: jsonb("composition").$type<import("@/lib/composition/types").Composition>(),
 });
 
 export const metricsDaily = pgTable(

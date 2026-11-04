@@ -31,6 +31,7 @@ export async function listAds(db: Db): Promise<AdRecord[]> {
     campaign: concept.campaign ?? undefined,
     copy: concept.copy ?? undefined,
     art: concept.art ?? undefined,
+    composition: ad.composition ?? undefined,
   }));
 }
 
@@ -150,6 +151,7 @@ export interface NewBatchAd {
   height: number;
   name: string;
   tags: AdRecord["tags"];
+  composition?: AdRecord["composition"];
 }
 
 /** Creates a draft batch: ensures each concept has creatives and inserts draft ads for the chosen sizes. */
@@ -177,7 +179,7 @@ export async function createBatch(
         .values({ conceptId: conceptIds.get(a.conceptKey)!, figmaNodeId: `batch:${a.conceptKey}:${a.width}x${a.height}`, width: a.width, height: a.height })
         .onConflictDoUpdate({ target: [t.creatives.conceptId, t.creatives.width, t.creatives.height], set: { syncedAt: new Date() } })
         .returning({ id: t.creatives.id });
-      await tx.insert(t.ads).values({ creativeId: creative.id, name: a.name, platform: a.platform, placement: a.placement, status: "draft", tags: a.tags });
+      await tx.insert(t.ads).values({ creativeId: creative.id, name: a.name, platform: a.platform, placement: a.placement, status: "draft", tags: a.tags, composition: a.composition });
       created++;
     }
     const [batch] = await tx

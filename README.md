@@ -11,13 +11,19 @@ Scope: static ads for LinkedIn, Meta (Facebook, Instagram, Threads), Google Disp
 | Dashboard | `/` | 30-day KPIs vs prior period, CTR by platform, scorecard health, top performers, fatigue alerts, refresh candidates, recent batches |
 | Ad gallery | `/gallery` | Grid / gallery / list views, search, filters (platform, status, persona, funnel), sort, bulk select to export, inline status changes |
 | Ad detail | `/gallery/[name]` | Creative inside its platform UI (all Meta placements), metrics, rolling CTR, scorecard, copy with char limits, editable tags, pause/resume |
-| New batch | `/batches/new` | 5-step wizard: Figma template and concepts, copy deck (validated, editable), placements, preview, review and generate |
+| New batch | `/batches/new` | 5-step wizard: Figma template and concepts, copy deck (validated, editable), placements, **visual design editor**, review and generate |
 | Batches | `/batches` | History of generated batches |
 | Analytics | `/performance/*` | Overview with winners/losers; platforms, placements and sizes; creatives and tag breakdowns; A/B tests with significance; fatigue |
 | Scorecards | `/scorecards` | 45-point scoring, bands, "Too early" learning gate, manual checks, CSV import |
 | Export | `/export` | Select ads, format/resolution/folder structure, real CSV manifest download, simulated package build, history |
 | Library | `/library` | Figma templates with sync, copy decks with validation, naming scheme, placement specs |
 | Settings | `/settings/*` | Integrations and what each needs, benchmarks (editable), scorecard rules (learning gate), tag taxonomy, team |
+
+## Design editor (batch step 4)
+- Layers: Background (preset fills), Photo and Product. Each can be turned on or off and reordered; a concept's template enables up to two of the imagery layers. Headline, CTA and the locked brand mark sit on top.
+- Imagery comes from the approved library (generated placeholders for now) or an upload. Drag to move, arrow keys or the nudge pad to fine-tune, slider or +/- to resize. Positions are per size, with "apply to similar sizes".
+- QA rules run for every size (`src/lib/composition/qa.ts`) and again on the server when a batch is generated. Examples: LinkedIn/Meta add their own CTA so the image shouldn't carry one; Display and newsletter must; Stories/Reels safe zones; contrast; text fit; hidden or cropped layers; unapproved or low-resolution uploads. Errors block the batch; warnings don't. Many issues have a one-click fix, and most can be fixed across all sizes at once.
+- Compositions are stored per ad (`ads.composition`) and rendered everywhere by `CompositionArt`. Uploaded files are not stored yet (a placeholder is shown until image storage is connected).
 
 ## Figma naming scheme
 - Page = campaign, section = concept, frame = one size.
