@@ -1,6 +1,7 @@
 import "server-only";
 import { exportPngs, FigmaError, getNodeTree, parseFigmaUrl } from "@/lib/figma/client";
 import { AssetError, MAX_BYTES } from "@/lib/assets/validate";
+import { validateTemplate, type TemplateReport } from "@/lib/figma/validate-template";
 
 export const figmaConfigured = () => !!process.env.FIGMA_TOKEN;
 
@@ -79,4 +80,18 @@ export async function downloadFigma(url: string): Promise<{ bytes: Uint8Array; t
     friendly(e);
   }
   throw new AssetError("Figma couldn't render that layer.", 502);
+}
+
+/** Fetches a Figma page or section and checks it against the template conventions. */
+export async function checkTemplate(url: string, opts: { allowLegacy?: boolean } = {}): Promise<TemplateReport & { fileKey: string; nodeName: string }> {
+  const t = token();
+  const { fileKey, nodeId } = parseFigmaUrl(url);
+  if (!/^[0-9a-zA-Z]{10,}$/.test(fileKey)) throw new AssetError("That doesn't look like a Figma link.");
+  if (!nodeId) throw new AssetError("The link needs a node-id. Select the page's section or frame in Figma and copy its link.");
+  try {
+    const root = await getNodeTree(fileKey, nodeId, t);
+    return { ...validateTemplate(root, opts), fileKey, nodeName: root.name };
+  } catch (e) {
+    friendly(e);
+  }
 }

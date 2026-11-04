@@ -136,3 +136,48 @@ describe("editing helpers", () => {
     expect(stripUploads(up).content.layers.photo.image).toEqual({ source: "upload", name: "a.png", naturalW: 10, naturalH: 20 });
   });
 });
+
+import { LOGO_COLOR, logoContrast, overusesGreen900, recommendedLogo } from "./logo";
+import { setLogo } from "./edit";
+
+describe("logo variants", () => {
+  const lightBg = ["#F7F5F3"];
+  const darkBg = ["#242423", "#464543"];
+  it("recommends green unless it can't be seen, then white", () => {
+    expect(recommendedLogo(lightBg)).toBe("green");
+    expect(recommendedLogo(darkBg)).toBe("white"); // the lighter stop (#464543) drops green below 3:1
+    expect(recommendedLogo(["#105638"])).toBe("white"); // deep green background swallows the green logo
+    expect(logoContrast("green", ["#FFFFFF"])).toBeGreaterThanOrEqual(3);
+    expect(LOGO_COLOR).toEqual({ green: "#089B5E", white: "#FFFFFF", "green-900": "#0F2E21" });
+  });
+  it("defaults to green wherever it reads, and white on a deep green concept", () => {
+    const dark = CONCEPTS.find((c) => THEMES[c.theme].bg === "#105638")!;
+    const ink = CONCEPTS.find((c) => THEMES[c.theme].bg === "#242423")!;
+    expect(designForConcept(ink).content.logo).toBe("green"); // green still has 4.5:1 on near-black
+    const light = CONCEPTS.find((c) => THEMES[c.theme].bg === "#EDEDFD")!;
+    expect(designForConcept(light).content.logo).toBe("green");
+    expect(designForConcept(dark).content.logo).toBe("white");
+  });
+  const d = designForConcept(CONCEPTS.find((c) => THEMES[c.theme].bg === "#EDEDFD")!);
+  const ctxFor = (c: (typeof CONCEPTS)[number]) => ({ placementKey: "facebook-feed", width: 1080, height: 1080, supports: conceptImagery(c), themeBg: THEMES[c.theme].bg });
+  it("errors when the logo can't be seen and offers the recommended fix", () => {
+    const concept = CONCEPTS.find((c) => THEMES[c.theme].bg === "#EDEDFD")!;
+    const bad = setLogo(d, "white");
+    const issues = qaComposition(resolveComposition(bad, 1080, 1080, "facebook-feed"), ctxFor(concept));
+    const err = issues.find((i) => i.id === "logo-contrast");
+    expect(err).toMatchObject({ severity: "error", fix: { id: "recommended-logo" } });
+    const fixed = applyFix(bad, "recommended-logo", { width: 1080, height: 1080, placementKey: "facebook-feed", themeBg: "#EDEDFD" });
+    expect(fixed.content.logo).toBe("green");
+  });
+  it("warns, but does not block, when Green 900 is used", () => {
+    const concept = CONCEPTS.find((c) => THEMES[c.theme].bg === "#EDEDFD")!;
+    const issues = qaComposition(resolveComposition(setLogo(d, "green-900"), 1080, 1080, "facebook-feed"), ctxFor(concept));
+    expect(issues.find((i) => i.id === "logo-green-900")).toMatchObject({ severity: "warn" });
+    expect(hasErrors(issues)).toBe(false);
+  });
+  it("treats Green 900 as sparing only while it's a minority of the batch", () => {
+    expect(overusesGreen900({ green: 6, white: 1, "green-900": 1 })).toBe(false);
+    expect(overusesGreen900({ green: 3, white: 0, "green-900": 3 })).toBe(true);
+    expect(overusesGreen900({ green: 0, white: 0, "green-900": 1 })).toBe(false);
+  });
+});

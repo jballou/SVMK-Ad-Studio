@@ -41,7 +41,9 @@ On the hosted demo (no `DATABASE_URL`) the in-memory database resets, so stored 
 ## Figma naming scheme
 - Page = campaign, section = concept, frame = one size.
 - Frame: `AD | {ConceptKey} | {W}x{H}` (e.g. `AD | YourBrand | 1200x1200`).
-- Editable slot layers are prefixed `#`: `#headline`, `#subhead`, `#stat`, `#cta`, `#hero`, `#logo`, `#bg`. Optional char limit: `#headline[40]`. Layers without `#` are locked.
+- Editable slot layers are prefixed `#`: `#headline`, `#subhead`, `#stat`, `#cta`, `#hero`, `#product`, `#logo`, `#bg`. Optional char limit: `#headline[40]`. Layers without `#` are locked.
+- `#logo` is an instance of a Logo component with a `Color` variant: Green (default), White (for dark backgrounds) or Green 900 (sparingly). Required slots: `#headline`, `#bg`, `#logo`. `#cta` is required on Display and newsletter frames and should be absent on LinkedIn and Meta frames.
+- Check a template with `FIGMA_TOKEN=... npm run figma:check -- "<link to the page or section>"`, or paste the link into Library > Check a Figma template.
 - Platform ad name / export filename: `{ConceptKey}{MMYYYY}_{W}x{H}`. This is the join key for performance data. If the same size runs on two platforms the file (and name) is shared.
 
 ## Layout

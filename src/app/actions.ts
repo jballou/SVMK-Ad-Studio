@@ -103,6 +103,7 @@ const designInput = z.object({
   content: z.object({
     order: z.array(kindEnum).length(3).refine((o) => new Set(o).size === 3, "Layers must be unique"),
     layers: z.object({ background: layerInput, photo: layerInput, product: layerInput }),
+    logo: z.enum(["green", "white", "green-900"]).default("green"),
     text: z.object({
       headline: z.string().max(200), headlineScale: z.number().min(0.5).max(1.6), align: z.enum(["left", "center"]), color: z.enum(["auto", "dark", "light"]),
       scrim: z.boolean(), cta: z.string().max(40), ctaOverride: z.record(z.string(), z.boolean()),

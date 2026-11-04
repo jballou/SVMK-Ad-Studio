@@ -7,7 +7,8 @@ export interface DiscoveredFrame {
   conceptKey: string;
   width: number;
   height: number;
-  slots: (ParsedSlot & { nodeId: string; type: string })[];
+  slots: (ParsedSlot & { nodeId: string; type: string; node: FigmaNode })[];
+  node: FigmaNode;
   /** True when matched via the legacy-name fallback rather than the `AD | Key | WxH` scheme. */
   legacy: boolean;
 }
@@ -29,7 +30,7 @@ function parseLegacy(name: string) {
 function collectSlots(node: FigmaNode, out: DiscoveredFrame["slots"]) {
   for (const c of node.children ?? []) {
     const slot = parseSlotName(c.name);
-    if (slot) out.push({ ...slot, nodeId: c.id, type: c.type });
+    if (slot) out.push({ ...slot, nodeId: c.id, type: c.type, node: c });
     collectSlots(c, out);
   }
 }
@@ -48,7 +49,7 @@ export function discoverFrames(root: FigmaNode, opts: { allowLegacy?: boolean } 
       if (p) {
         const slots: DiscoveredFrame["slots"] = [];
         collectSlots(node, slots);
-        frames.push({ nodeId: node.id, name: node.name, ...p, slots, legacy: !strict });
+        frames.push({ nodeId: node.id, name: node.name, ...p, slots, legacy: !strict, node });
         return;
       }
       const b = node.absoluteBoundingBox;

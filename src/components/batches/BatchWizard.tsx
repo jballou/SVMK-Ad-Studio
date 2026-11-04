@@ -9,6 +9,7 @@ import { DesignEditor, qaForDesign, type SizeOption } from "@/components/design/
 import { stripUploads } from "@/lib/composition/edit";
 import type { Design } from "@/lib/composition/types";
 import { counts } from "@/lib/composition/qa";
+import { overusesGreen900, type LogoVariant } from "@/lib/composition/logo";
 import { Button } from "@/components/ui/button-1";
 import { Chip } from "@/components/ui/chip";
 import { Card } from "@/components/ui/primitives";
@@ -83,6 +84,8 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [picked, designs, sizes, edits, deckId]);
+  const logoCounts = picked.reduce<Record<LogoVariant, number>>((acc, k) => { acc[designFor(k).content.logo ?? "green"]++; return acc; }, { green: 0, white: 0, "green-900": 0 });
+  const green900Heavy = overusesGreen900(logoCounts);
   const designErrors = [...qa.values()].reduce((n, c) => n + c.errors, 0);
   const designWarnings = [...qa.values()].reduce((n, c) => n + c.warnings, 0);
 
@@ -266,6 +269,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
               </table>
             </div>
             <p className={`mt-3 text-sm ${designErrors ? "text-brand-red-500" : designWarnings ? "text-brand-orange-600" : "text-brand-green-700"}`}>{designErrors ? `${designErrors} design error${designErrors === 1 ? "" : "s"} must be fixed in the Preview step.` : designWarnings ? `${designWarnings} design warning${designWarnings === 1 ? "" : "s"} across all sizes. You can generate, but review them first.` : "Creative checks passed for every size."}</p>
+            {green900Heavy && <p className="mt-1 text-sm text-brand-orange-600">{logoCounts["green-900"]} of {picked.length} concepts use the Green 900 logo. It&apos;s meant for occasional use; switch most back to Green (or White on dark backgrounds).</p>}
             {result && !result.ok && <p role="alert" className="mt-3 rounded-lg bg-brand-red-100 px-3 py-2 text-sm text-brand-red-700">{result.error}</p>}
           </Card>
         )}

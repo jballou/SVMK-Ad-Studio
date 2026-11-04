@@ -8,6 +8,11 @@ export interface FigmaNode {
   visible?: boolean;
   absoluteBoundingBox?: { x: number; y: number; width: number; height: number };
   children?: FigmaNode[];
+  /** Present on nodes returned by /files/:key/nodes. */
+  fills?: { type: string; visible?: boolean }[];
+  clipsContent?: boolean;
+  characters?: string;
+  style?: { fontSize?: number; textAutoResize?: string };
 }
 
 export class FigmaError extends Error {

@@ -1,11 +1,12 @@
 import { getAsset, getPreset } from "@/lib/imagery/library";
 import { autoTextColor, INK, PAPER, worstContrast } from "./color";
-import { area, brandBox, headlinePx, imageAspect, insideCanvas, layerBox, overlapOf, shapeOf, textBox, type Box } from "./geometry";
+import { area, headlinePx, imageAspect, insideCanvas, layerBox, overlapOf, shapeOf, textBox, type Box } from "./geometry";
+import { LOGO_INFO, LOGO_MIN_CONTRAST, logoContrast, recommendedLogo } from "./logo";
 import { placementRule } from "./rules";
 import type { Composition, ImageRef, LayerKind } from "./types";
 
 export type Severity = "error" | "warn";
-export type FixId = "remove-cta" | "add-cta" | "enable-scrim" | "auto-color" | "reset-layer" | "hide-layer" | "background-to-bottom" | "reduce-headline-size" | "fit-resolution";
+export type FixId = "recommended-logo" | "remove-cta" | "add-cta" | "enable-scrim" | "auto-color" | "reset-layer" | "hide-layer" | "background-to-bottom" | "reduce-headline-size" | "fit-resolution";
 
 export interface QaIssue {
   id: string;
@@ -62,7 +63,8 @@ export function qaComposition(c: Composition, ctx: QaContext): QaIssue[] {
   else if (head.length > max) add({ id: "headline-long", severity: "warn", target: "headline", message: `Headline is ${head.length} characters; ${max} is the most this size holds comfortably.` });
   const px = headlinePx(w, h, t.headlineScale);
   if (px < 12) add({ id: "font-small", severity: "error", target: "headline", message: `Headline renders at about ${px.toFixed(0)}px, which is too small to read.`, fix: { id: "reduce-headline-size", label: "Set size to 100%" } });
-  const cpl = (tb.w * w) / (px * 0.52);
+  // Serif bold averages ~0.58em per character, and word wrapping wastes roughly an eighth of each line.
+  const cpl = ((tb.w * w) / (px * 0.58)) * 0.88;
   const lines = Math.ceil(head.length / Math.max(1, cpl));
   const needed = lines * px * 1.12 + (t.showCta && shape !== "banner" ? px * 2 : 0);
   if (head && needed > tb.h * h * 1.02) add({ id: "headline-fit", severity: "warn", target: "headline", message: "The headline probably won't fit its area at this size. Shorten it or reduce the size.", fix: t.headlineScale > 0.8 ? { id: "reduce-headline-size", label: "Set size to 100%" } : undefined });
@@ -107,9 +109,13 @@ export function qaComposition(c: Composition, ctx: QaContext): QaIssue[] {
   if (ratio < 3) add({ id: "contrast-low", severity: "error", target: "headline", message: `Headline contrast is ${ratio.toFixed(1)}:1 against the background (3:1 is the minimum for large text).`, fix: t.color !== "auto" ? { id: "auto-color", label: "Use automatic text color" } : undefined });
   else if (ratio < 4.5) add({ id: "contrast-ok-large", severity: "warn", target: "headline", message: `Headline contrast is ${ratio.toFixed(1)}:1: fine for large text, but small text such as the brand name falls short of 4.5:1.`, fix: t.color !== "auto" ? { id: "auto-color", label: "Use automatic text color" } : undefined });
 
-  // Brand mark must stay clear of platform UI.
-  const bm = brandBox(w, h, rule.safe);
-  if (!bm && shape !== "banner") add({ id: "brand-missing", severity: "error", message: "The brand mark is missing." });
+  // Brand mark: needs enough contrast to be seen, and Green 900 is for occasional use.
+  const logo = c.logo ?? "green";
+  const rec = recommendedLogo(bgs);
+  const lc = logoContrast(logo, bgs);
+  if (lc < LOGO_MIN_CONTRAST) add({ id: "logo-contrast", severity: "error", message: `The ${LOGO_INFO[logo].label} logo has only ${lc.toFixed(1)}:1 contrast on this background (needs ${LOGO_MIN_CONTRAST}:1). ${LOGO_INFO[rec].label} would work.`, fix: { id: "recommended-logo", label: `Use the ${LOGO_INFO[rec].label} logo` } });
+  else if (logo === "green-900") add({ id: "logo-green-900", severity: "warn", message: "Green 900 is for occasional use. Use the standard Green logo unless it clashes with this background.", fix: rec === "green" ? { id: "recommended-logo", label: "Use the Green logo" } : undefined });
+  else if (logo === "white" && rec === "green") add({ id: "logo-white-optional", severity: "warn", message: "The white logo is meant for dark backgrounds. The standard Green logo has enough contrast here.", fix: { id: "recommended-logo", label: "Use the Green logo" } });
 
   return out;
 }

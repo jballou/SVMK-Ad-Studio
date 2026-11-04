@@ -1,4 +1,6 @@
 import { resetSize, resolveComposition, withTransform } from "./defaults";
+import { recommendedLogo, type LogoVariant } from "./logo";
+import { backgroundColors } from "./qa";
 import type { FixId } from "./qa";
 import { LAYER_KINDS, type Design, type ImageRef, type LayerKind, type Transform } from "./types";
 
@@ -46,13 +48,21 @@ export function setText(d: Design, patch: Partial<Design["content"]["text"]>): D
   return updateContent(d, (c) => ({ ...c, text: { ...c.text, ...patch } }));
 }
 
+export function setLogo(d: Design, logo: LogoVariant): Design {
+  return updateContent(d, (c) => ({ ...c, logo }));
+}
+
 export function setCtaFor(d: Design, placementKey: string, show: boolean): Design {
   return updateContent(d, (c) => ({ ...c, text: { ...c.text, ctaOverride: { ...c.text.ctaOverride, [placementKey]: show } } }));
 }
 
-export function applyFix(d: Design, fix: FixId, ctx: { width: number; height: number; placementKey: string; target?: string }): Design {
+export function applyFix(d: Design, fix: FixId, ctx: { width: number; height: number; placementKey: string; target?: string; themeBg?: string }): Design {
   const kind = LAYER_KINDS.find((k) => k === ctx.target);
   switch (fix) {
+    case "recommended-logo": {
+      const comp = resolveComposition(d, ctx.width, ctx.height, ctx.placementKey);
+      return setLogo(d, recommendedLogo(backgroundColors(comp, ctx.themeBg ?? "#FFFFFF")));
+    }
     case "remove-cta": return setCtaFor(d, ctx.placementKey, false);
     case "add-cta": return setCtaFor(d, ctx.placementKey, true);
     case "enable-scrim": return setText(d, { scrim: true });

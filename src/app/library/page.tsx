@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AssetManager } from "@/components/settings/AssetManager";
+import { TemplateChecker } from "@/components/settings/TemplateChecker";
 import { TemplateGrid } from "@/components/settings/TemplateGrid";
 import { toDto } from "@/lib/assets/ingest";
 import { getDb } from "@/db";
@@ -20,9 +21,10 @@ const SLOTS: [string, string, string][] = [
   ["#subhead", "Text", "Supporting line"],
   ["#stat", "Text", "Callout number, e.g. “80%”"],
   ["#cta", "Text", "In-image button label"],
-  ["#hero", "Image or rectangle", "Swappable photo or illustration"],
-  ["#logo", "Component instance", "Brand or co-brand lockup"],
-  ["#bg", "Fill", "Background color token"],
+  ["#hero", "Rectangle with image fill", "The photo layer"],
+  ["#product", "Rectangle with image fill", "The product image layer"],
+  ["#logo", "Instance of the Logo component", "Variant Color = Green (default), White or Green 900 (sparingly)"],
+  ["#bg", "Rectangle with a fill", "Background layer"],
 ];
 
 async function Assets() {
@@ -35,7 +37,7 @@ export default function Library() {
     <div className="space-y-8">
       <PageHeader title="Library" description="The Figma templates and copy decks that batches are generated from, and the conventions that connect them." />
 
-      <section aria-labelledby="tpl"><h2 id="tpl" className="mb-3 text-base font-semibold">Figma templates</h2><TemplateGrid templates={TEMPLATE_FILES} /></section>
+      <section aria-labelledby="tpl" className="space-y-4"><h2 id="tpl" className="text-base font-semibold">Figma templates</h2><TemplateGrid templates={TEMPLATE_FILES} /><TemplateChecker /></section>
 
       <section aria-labelledby="imgs">
         <h2 id="imgs" className="mb-1 text-base font-semibold">Uploaded and imported images</h2>

@@ -17,14 +17,14 @@ export function shapeOf(w: number, h: number): Shape {
 export function textBox(w: number, h: number, safe?: Safe): Box {
   const top = safe ? safe.top + 0.02 : 0;
   switch (shapeOf(w, h)) {
-    case "banner": return { x: 0.03, y: 0.1, w: 0.52, h: 0.8 };
+    case "banner": return { x: 0.22, y: 0.1, w: 0.36, h: 0.8 };
     case "landscape": return { x: 0.06, y: 0.12 + top, w: 0.5, h: 0.76 - top };
     default: return { x: 0.07, y: top + 0.12, w: 0.86, h: safe ? 0.2 : 0.34 };
   }
 }
 
-export function brandBox(w: number, h: number, safe?: Safe): Box | undefined {
-  if (shapeOf(w, h) === "banner") return undefined;
+export function brandBox(w: number, h: number, safe?: Safe): Box {
+  if (shapeOf(w, h) === "banner") return { x: 0.03, y: 0.25, w: 0.18, h: 0.5 };
   const top = safe ? safe.top + 0.02 : 0;
   return { x: 0.07, y: top + 0.04, w: 0.22, h: 0.05 };
 }
@@ -32,14 +32,14 @@ export function brandBox(w: number, h: number, safe?: Safe): Box | undefined {
 /** Headline font size in px at 1x, matching the CSS the renderer uses. */
 export function headlinePx(w: number, h: number, scale: number): number {
   const s = shapeOf(w, h);
-  const base = s === "banner" ? Math.min(0.3 * h, 0.045 * w) : s === "landscape" ? 0.09 * h : w / h < 0.5 ? 0.1 * w : 0.062 * Math.min(w, h);
+  const base = s === "banner" ? Math.min(0.26 * h, 0.04 * w) : s === "landscape" ? 0.09 * h : w / h < 0.5 ? 0.1 * w : 0.062 * Math.min(w, h);
   return base * scale;
 }
 
 /** CSS font-size for the headline, in container-query units. */
 export function headlineCss(w: number, h: number, scale: number): string {
   const s = shapeOf(w, h);
-  if (s === "banner") return `min(${30 * scale}cqh, ${4.5 * scale}cqw)`;
+  if (s === "banner") return `min(${26 * scale}cqh, ${4 * scale}cqw)`;
   if (s === "landscape") return `${9 * scale}cqh`;
   return w / h < 0.5 ? `${10 * scale}cqw` : `${6.2 * scale}cqmin`;
 }

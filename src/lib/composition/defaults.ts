@@ -1,5 +1,6 @@
 import { PHOTOS, PRODUCTS, type ImageryAsset } from "@/lib/imagery/library";
 import { imageAspect, shapeOf, textBox } from "./geometry";
+import { recommendedLogo } from "./logo";
 import { ctaDefault, placementRule } from "./rules";
 import { LAYER_KINDS, sizeKey, type Composition, type Design, type ImageRef, type LayerKind, type Transform } from "./types";
 
@@ -25,6 +26,8 @@ export interface DefaultDesignInput {
   cta: string;
   align: "left" | "center";
   bgPreset?: string;
+  /** The concept's own background color; decides whether the default green logo has enough contrast. */
+  themeBg?: string;
 }
 
 export function defaultDesign(i: DefaultDesignInput): Design {
@@ -40,6 +43,7 @@ export function defaultDesign(i: DefaultDesignInput): Design {
         photo: { visible: i.supports.photo, image: photo },
         product: { visible: i.supports.product, image: product },
       },
+      logo: i.themeBg ? recommendedLogo([i.themeBg]) : "green",
       text: { headline: i.headline, headlineScale: 1, align: i.align, color: "auto", scrim: false, cta: i.cta, ctaOverride: {} },
     },
   };
@@ -56,7 +60,7 @@ export function defaultTransform(kind: LayerKind, w: number, h: number, safe: { 
   const fit = (maxS: number, availH: number) => Math.min(maxS, availH / (c.aspect * r));
   const hFrac = (s: number) => s * c.aspect * r;
 
-  if (shape === "banner") return { x: 0.92, y: 0.5, scale: fit(0.1, 0.9) };
+  if (shape === "banner") return { x: 0.93, y: 0.5, scale: fit(0.09, 0.9) };
   if (shape === "landscape") {
     if (kind === "photo") return { x: 0.79, y: 0.5, scale: fit(0.4, 0.9) };
     return both ? { x: 0.6, y: 0.68, scale: fit(0.3, 0.5) } : { x: 0.78, y: 0.5, scale: fit(0.4, 0.8) };
@@ -96,6 +100,7 @@ export function resolveComposition(design: Design, w: number, h: number, placeme
   return {
     order: content.order,
     layers,
+    logo: content.logo ?? "green",
     text: { headline: t.headline, headlineScale: t.headlineScale, align: t.align, color: t.color, scrim: t.scrim, cta: t.cta, showCta: t.ctaOverride[placementKey] ?? ctaDefault(placementKey) },
   };
 }

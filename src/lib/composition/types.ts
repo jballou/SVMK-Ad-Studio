@@ -1,3 +1,5 @@
+import type { LogoVariant } from "./logo";
+
 export type LayerKind = "background" | "photo" | "product";
 export const LAYER_KINDS: LayerKind[] = ["background", "photo", "product"];
 export const LAYER_LABEL: Record<LayerKind, string> = { background: "Background", photo: "Photo", product: "Product" };
@@ -43,6 +45,8 @@ export interface DesignContent {
   order: LayerKind[];
   layers: Record<LayerKind, LayerState>;
   text: TextState;
+  /** Brand mark color. Green by default. */
+  logo: LogoVariant;
 }
 
 export type TransformMap = Record<string, Partial<Record<LayerKind, Transform>>>;
@@ -59,6 +63,7 @@ export interface Design {
 export interface Composition {
   order: LayerKind[];
   layers: Record<LayerKind, LayerState & Transform>;
+  logo: LogoVariant;
   text: { headline: string; headlineScale: number; align: Align; color: TextColor; scrim: boolean; cta: string; showCta: boolean };
 }
 

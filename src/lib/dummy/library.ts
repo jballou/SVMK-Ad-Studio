@@ -100,5 +100,5 @@ export function conceptImagery(c: ConceptSeed): { photo: boolean; product: boole
 }
 
 export function designForConcept(c: ConceptSeed, headline = c.headline): Design {
-  return defaultDesign({ key: c.key, personas: c.personas, supports: conceptImagery(c), headline, cta: c.cta, align: c.layout === "center" ? "center" : "left" });
+  return defaultDesign({ key: c.key, personas: c.personas, supports: conceptImagery(c), headline, cta: c.cta, align: c.layout === "center" ? "center" : "left", themeBg: THEMES[c.theme].bg });
 }

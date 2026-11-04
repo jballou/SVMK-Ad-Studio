@@ -7,8 +7,9 @@ import { assetUrl, getAsset, getPreset } from "@/lib/imagery/library";
 import { imageAspect, layerBox } from "@/lib/composition/geometry";
 import type { AdArtSpec } from "@/lib/ads/types";
 import { PAPER } from "@/lib/composition/color";
+import { LogoMark } from "./LogoMark";
 
-export type Selectable = LayerKind | "headline" | "cta";
+export type Selectable = LayerKind | "headline" | "cta" | "logo";
 
 export interface EditorBindings {
   selected: Selectable | null;
@@ -85,7 +86,12 @@ export function CompositionArt({ composition: c, art, width, height, placementKe
     >
       {items}
       {showScrim && <div aria-hidden className="absolute" style={{ left: 0, top: 0, width: "100%", height: pct(tb.y + tb.h + 0.06), zIndex: z, background: `linear-gradient(to bottom, ${light ? "rgba(36,36,35,0.55)" : "rgba(255,255,255,0.7)"}, transparent)`, ...(shape === "landscape" || shape === "banner" ? { width: pct(tb.x + tb.w + 0.06), height: "100%", background: `linear-gradient(to right, ${light ? "rgba(36,36,35,0.55)" : "rgba(255,255,255,0.7)"}, transparent)` } : {}) }} />}
-      {bm && <span style={{ position: "absolute", left: pct(bm.x), top: pct(bm.y), zIndex: z + 2, fontSize: "3.2cqmin", fontWeight: 700, letterSpacing: "0.02em", color: textColor, opacity: 0.9, lineHeight: 1 }}>SurveyMonkey</span>}
+      <span
+        onClick={editor ? () => editor.onSelect("logo") : undefined}
+        style={{ position: "absolute", left: pct(bm.x), top: pct(bm.y), zIndex: z + 2, display: "inline-flex", ...(shape === "banner" ? { height: pct(bm.h), width: pct(bm.w), alignItems: "center" } : {}), ...(sel === "logo" ? SELECT : {}), cursor: editor ? "pointer" : undefined }}
+      >
+        <LogoMark variant={c.logo ?? "green"} compact={shape === "banner" && width < 500} size={shape === "banner" ? "min(24cqh, 1.9cqw)" : "3.2cqmin"} />
+      </span>
       <div
         onClick={editor ? () => editor.onSelect("headline") : undefined}
         style={{ position: "absolute", left: pct(tb.x), top: pct(tb.y), width: pct(tb.w), height: pct(tb.h), zIndex: z + 1, display: "flex", flexDirection: "column", justifyContent: shape === "landscape" ? "center" : "flex-start", alignItems: centered ? "center" : "flex-start", textAlign: centered ? "center" : "left", gap: "3cqmin", color: textColor, cursor: editor ? "pointer" : undefined }}
@@ -93,7 +99,7 @@ export function CompositionArt({ composition: c, art, width, height, placementKe
         <p style={{ margin: 0, fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700, lineHeight: 1.1, fontSize: headlineCss(width, height, c.text.headlineScale), ...(sel === "headline" ? SELECT : {}) }}>{c.text.headline}</p>
         {c.text.showCta && shape !== "banner" && <span onClick={editor ? (e) => { e.stopPropagation(); editor.onSelect("cta"); } : undefined} style={ctaStyle}>{c.text.cta}</span>}
       </div>
-      {c.text.showCta && shape === "banner" && <span onClick={editor ? () => editor.onSelect("cta") : undefined} style={{ ...ctaStyle, position: "absolute", left: "58%", top: "50%", transform: "translateY(-50%)", zIndex: z + 1 }}>{c.text.cta}</span>}
+      {c.text.showCta && shape === "banner" && <span onClick={editor ? () => editor.onSelect("cta") : undefined} style={{ ...ctaStyle, position: "absolute", left: "62%", top: "50%", transform: "translateY(-50%)", zIndex: z + 1 }}>{c.text.cta}</span>}
       {guides && (
         <div aria-hidden className="pointer-events-none absolute inset-0" style={{ zIndex: z + 5 }}>
           {rule.safe && <>

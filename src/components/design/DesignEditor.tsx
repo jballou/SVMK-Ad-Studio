@@ -6,10 +6,12 @@ import { PlacementPreview } from "@/components/ads/PlacementPreview";
 import { CompositionArt, type Selectable } from "@/components/ads/CompositionArt";
 import { Button } from "@/components/ui/button-1";
 import { Card } from "@/components/ui/primitives";
-import { applyFix, moveLayer, nudge, resize, setCtaFor, setImage, setPreset, setText, setVisible } from "@/lib/composition/edit";
+import { applyFix, moveLayer, nudge, resize, setCtaFor, setImage, setLogo, setPreset, setText, setVisible } from "@/lib/composition/edit";
+import { LOGO_COLOR, LOGO_INFO, LOGO_MIN_CONTRAST, LOGO_VARIANTS, logoContrast, recommendedLogo } from "@/lib/composition/logo";
+import { LogoMark } from "@/components/ads/LogoMark";
 import { resetSize, resolveComposition, withTransform } from "@/lib/composition/defaults";
 import { shapeOf } from "@/lib/composition/geometry";
-import { counts, qaComposition, type QaContext, type QaIssue } from "@/lib/composition/qa";
+import { backgroundColors, counts, qaComposition, type QaContext, type QaIssue } from "@/lib/composition/qa";
 import { placementRule } from "@/lib/composition/rules";
 import { LAYER_LABEL, sizeKey, type Design, type LayerKind } from "@/lib/composition/types";
 import type { ConceptSeed } from "@/lib/dummy/concepts";
@@ -92,12 +94,12 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
     if (fn) { e.preventDefault(); fn(); const n = cur(kind); setNote(`${LAYER_LABEL[kind]} at ${Math.round(n.x * 100)}% across, ${Math.round(n.y * 100)}% down, ${Math.round(n.scale * 100)}% wide`); }
   };
 
-  const fixIssue = (i: QaIssue) => i.fix && onChange(applyFix(design, i.fix.id, { width: w, height: h, placementKey, target: i.target }));
+  const fixIssue = (i: QaIssue) => i.fix && onChange(applyFix(design, i.fix.id, { width: w, height: h, placementKey, target: i.target, themeBg: THEMES[concept.theme].bg }));
   const sizesWith = (i: QaIssue) => sizes.filter((s) => (all.get(sizeKey(s.width, s.height)) ?? []).some((x) => x.id === i.id)).length;
   const fixAll = (i: QaIssue) => {
     if (!i.fix) return;
     let d = design;
-    for (const s of sizes) if ((all.get(sizeKey(s.width, s.height)) ?? []).some((x) => x.id === i.id)) d = applyFix(d, i.fix.id, { width: s.width, height: s.height, placementKey: s.placementKey, target: i.target });
+    for (const s of sizes) if ((all.get(sizeKey(s.width, s.height)) ?? []).some((x) => x.id === i.id)) d = applyFix(d, i.fix.id, { width: s.width, height: s.height, placementKey: s.placementKey, target: i.target, themeBg: THEMES[concept.theme].bg });
     onChange(d);
     setNote(`Applied "${i.fix.label}" at ${sizesWith(i)} sizes.`);
   };
@@ -178,11 +180,11 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
               })}
               <li className={`flex items-center gap-2 px-3 py-2 ${sel === "headline" ? "bg-brand-periwinkle-100/60" : ""}`}><button type="button" onClick={() => setSelected("headline")} aria-pressed={sel === "headline"} className="flex-1 rounded px-1 py-1 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500">Headline<span className="block truncate text-xs font-normal text-brand-neutral-650">{t.headline}</span></button></li>
               <li className={`flex items-center gap-2 px-3 py-2 ${sel === "cta" ? "bg-brand-periwinkle-100/60" : ""}`}><button type="button" onClick={() => setSelected("cta")} aria-pressed={sel === "cta"} className="flex-1 rounded px-1 py-1 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500">CTA button<span className="block text-xs font-normal text-brand-neutral-650">{showCta ? t.cta : rule.uiAddsCta ? "Added by the platform" : "Off"}</span></button></li>
-              <li className="flex items-center gap-2 px-3 py-2 text-sm text-brand-neutral-650"><Lock className="size-3.5" aria-hidden />Brand mark <span className="text-xs">(locked)</span></li>
+              <li className={`flex items-center gap-2 px-3 py-2 ${sel === "logo" ? "bg-brand-periwinkle-100/60" : ""}`}><button type="button" onClick={() => setSelected("logo")} aria-pressed={sel === "logo"} className="flex-1 rounded px-1 py-1 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500">Brand mark<span className="block text-xs font-normal text-brand-neutral-650">{LOGO_INFO[design.content.logo ?? "green"].label} · position locked</span></button><Lock className="size-3.5 text-brand-neutral-550" aria-hidden /></li>
             </ul>
           </Card>
 
-          <Card title={sel === "headline" ? "Headline" : sel === "cta" ? "CTA button" : LAYER_LABEL[sel]}>
+          <Card title={sel === "headline" ? "Headline" : sel === "cta" ? "CTA button" : sel === "logo" ? "Brand mark" : LAYER_LABEL[sel]}>
             {sel === "background" && (
               <div className="space-y-3">
                 <ul className="grid grid-cols-3 gap-2" aria-label="Background presets">
@@ -243,6 +245,33 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={t.scrim} onChange={(e) => onChange(setText(design, { scrim: e.target.checked }))} className="accent-brand-green-600" />Add a scrim behind the text</label>
               </div>
             )}
+
+            {sel === "logo" && (() => {
+              const bgs = backgroundColors(comp, THEMES[concept.theme].bg);
+              const rec = recommendedLogo(bgs);
+              const current = design.content.logo ?? "green";
+              return (
+                <fieldset className="space-y-2">
+                  <legend className="mb-1 text-xs text-brand-neutral-650">The mark&apos;s position is fixed by the template. Choose its color.</legend>
+                  {LOGO_VARIANTS.map((v) => {
+                    const ratio = logoContrast(v, bgs);
+                    const ok = ratio >= LOGO_MIN_CONTRAST;
+                    return (
+                      <label key={v} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-2.5 ${current === v ? "border-brand-green-600 bg-brand-green-100/40" : "border-brand-neutral-200 hover:bg-brand-neutral-50"}`}>
+                        <input type="radio" name="logo" checked={current === v} onChange={() => onChange(setLogo(design, v))} className="accent-brand-green-600" />
+                        <span className="grid h-10 w-24 shrink-0 place-items-center rounded" style={{ background: bgs[0] }}><LogoMark variant={v} compact size="14px" /></span>
+                        <span className="min-w-0 text-sm">
+                          <span className="flex flex-wrap items-center gap-1.5 font-medium">{LOGO_INFO[v].label}{v === "green" && <span className="rounded bg-brand-neutral-150 px-1.5 py-0.5 text-[10px] font-medium text-brand-neutral-750">Default</span>}{v === rec && v !== "green" && <span className="rounded bg-brand-green-100 px-1.5 py-0.5 text-[10px] font-medium text-brand-green-800">Recommended here</span>}</span>
+                          <span className="block text-xs text-brand-neutral-650">{LOGO_INFO[v].use}</span>
+                          <span className={`block text-[11px] ${ok ? "text-brand-neutral-550" : "text-brand-red-500"}`}>{ratio.toFixed(1)}:1 on this background{ok ? "" : ` (needs ${LOGO_MIN_CONTRAST}:1)`}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                  <span className="sr-only" style={{ color: LOGO_COLOR[current] }}>Selected: {LOGO_INFO[current].label}</span>
+                </fieldset>
+              );
+            })()}
 
             {sel === "cta" && (
               <div className="space-y-3">
