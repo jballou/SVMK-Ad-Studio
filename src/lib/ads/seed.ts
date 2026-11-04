@@ -23,5 +23,6 @@ export const SEED_ADS: AdRecord[] = [
   mk("DataDecisions", "082026", 728, 90, "display", "display-standard", "paused", "2026-08-01", ["IT"], "Awareness"),
   mk("GetInsights", "072025", 1200, 628, "linkedin", "linkedin-single-image", "retired", "2025-07-08", ["Enterprise"], "Intent"),
   mk("EasySet", "072025", 720, 900, "linkedin", "linkedin-single-image", "retired", "2025-07-08", ["Enterprise"], "Intent"),
+  mk("FreshLaunch", "102026", 1200, 1200, "linkedin", "linkedin-single-image", "live", "2026-10-28", ["CX"], "Awareness"),
   mk("TakeBrand", "072025", 1200, 1200, "linkedin", "linkedin-single-image", "draft", undefined, ["Enterprise", "Marketing"], "Intent"),
 ];

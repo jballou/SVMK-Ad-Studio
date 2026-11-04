@@ -16,7 +16,7 @@ describe("filterAds", () => {
 describe("sortAds", () => {
   it("sorts by launch date, newest first, unlaunched last", () => {
     const r = sortAds(SEED_ADS, "launched");
-    expect(r[0].launchedAt).toBe("2026-08-19");
+    expect(r[0].launchedAt).toBe("2026-10-28");
     expect(r[r.length - 1].launchedAt).toBeUndefined();
   });
 });
