@@ -162,7 +162,7 @@ export async function createBatch(
       const [row] = await tx
         .insert(t.concepts)
         .values({ conceptKey: c.key, campaign: c.campaign, copy: c.copy, art: c.art, tags: c.tags })
-        .onConflictDoUpdate({ target: t.concepts.conceptKey, set: { campaign: c.campaign ?? sql`${t.concepts.campaign}` } })
+        .onConflictDoUpdate({ target: t.concepts.conceptKey, set: { campaign: c.campaign ?? sql`${t.concepts.campaign}`, copy: c.copy ?? sql`${t.concepts.copy}` } })
         .returning({ id: t.concepts.id });
       conceptIds.set(c.key, row.id);
     }

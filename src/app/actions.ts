@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { importMetricRows, periodFor, saveChecks, setAdStatus, updateAdTags, type ImportSummary } from "@/lib/db/repo";
+import { createBatch, importMetricRows, listAds, periodFor, saveChecks, setAdStatus, updateAdTags, type ImportSummary } from "@/lib/db/repo";
+import { planBatch } from "@/lib/batches/plan";
+import { artFor, conceptByKey } from "@/lib/dummy/library";
 
 const today = () => new Date().toLocaleDateString("en-CA");
 
@@ -72,4 +74,57 @@ export async function saveAdTags(input: unknown): Promise<{ ok: boolean }> {
   revalidatePath(`/gallery/${name}`);
   revalidatePath("/performance", "layout");
   return { ok };
+}
+
+const copyInput = z.object({
+  headline: z.string().min(1).max(200),
+  platformHeadline: z.string().min(1).max(200),
+  intro: z.string().max(400),
+  cta: z.string().max(40),
+  landing: z.string().max(200),
+});
+
+const batchInput = z.object({
+  name: z.string().min(3).max(80),
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(2025).max(2030),
+  conceptKeys: z.array(z.string()).min(1).max(30),
+  placementKeys: z.array(z.string()).min(1).max(12),
+  copy: z.record(z.string(), copyInput).optional(),
+});
+
+export interface BatchResult {
+  ok: boolean;
+  batchId?: number;
+  created: number;
+  skipped: string[];
+  names: string[];
+  error?: string;
+}
+
+/** Re-plans on the server (never trusts the client's list), then creates draft ads and a batch record. */
+export async function generateBatch(input: unknown): Promise<BatchResult> {
+  const parsed = batchInput.safeParse(input);
+  if (!parsed.success) return { ok: false, created: 0, skipped: [], names: [], error: "Check the batch name, month and selections." };
+  const { name, month, year, conceptKeys, placementKeys, copy } = parsed.data;
+  const db = await getDb();
+  const existing = new Set((await listAds(db)).map((a) => a.name));
+  const plan = planBatch({ conceptKeys, placementKeys, month, year, existing });
+  if (plan.length === 0) return { ok: false, created: 0, skipped: [], names: [], error: "Nothing to generate for those selections." };
+
+  const concepts = conceptKeys.flatMap((key) => {
+    const c = conceptByKey(key);
+    if (!c) return [];
+    const tags = { persona: c.personas, funnel: c.funnel, icp: c.icp, offer: c.offer };
+    return [{ key, campaign: c.campaign, tags, art: artFor(c), copy: copy?.[key] ?? { headline: c.headline, platformHeadline: c.platformHeadline, intro: c.intro, cta: c.cta, landing: c.landing } }];
+  });
+  const tagsByKey = new Map(concepts.map((c) => [c.key, c.tags]));
+  const res = await createBatch(db, {
+    name, createdBy: "Jarrod B.", placements: placementKeys, concepts,
+    ads: plan.filter((p) => tagsByKey.has(p.conceptKey)).map((p) => ({ conceptKey: p.conceptKey, placement: p.placement, platform: p.platform, width: p.width, height: p.height, name: p.name, tags: { ...tagsByKey.get(p.conceptKey)!, geo: ["US"] } })),
+  });
+  revalidatePath("/gallery");
+  revalidatePath("/batches");
+  revalidatePath("/");
+  return { ok: true, batchId: res.batchId, created: res.created, skipped: res.skipped, names: plan.map((p) => p.name) };
 }

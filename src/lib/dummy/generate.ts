@@ -176,7 +176,8 @@ const VARIABLES = [
 
 function makeExperiments(r: Rng, ads: DummyAd[]): DummyExperiment[] {
   const conceptOf = new Map(CONCEPTS.map((c) => [c.key, c]));
-  const launched = ads.filter((a) => a.launchedAt);
+  // Live ads first so some tests are still running; deterministic shuffle within each group.
+  const launched = ads.filter((a) => a.launchedAt).map((a) => ({ a, k: (a.status === "live" ? 0 : 1) + r() * 0.99 })).sort((x, y) => x.k - y.k).map((x) => x.a);
   const used = new Set<string>();
   const out: DummyExperiment[] = [];
   for (const a of launched) {
@@ -185,19 +186,21 @@ function makeExperiments(r: Rng, ads: DummyAd[]): DummyExperiment[] {
     const ca = conceptOf.get(a.conceptKey)!;
     const b = launched.find(
       (x) => !used.has(x.name) && x.conceptKey !== a.conceptKey && x.platform === a.platform && x.width === a.width && x.height === a.height &&
-        conceptOf.get(x.conceptKey)!.funnel === ca.funnel && Math.abs(daysBetween(a.launchedAt!, x.launchedAt!)) <= 14,
+        conceptOf.get(x.conceptKey)!.funnel === ca.funnel && Math.abs(daysBetween(a.launchedAt!, x.launchedAt!)) <= 14 &&
+        // Similar underlying quality, so results are a mix of clear winners and ties.
+        Math.abs(Math.log(x.quality / a.quality)) < 0.22,
     );
     if (!b) continue;
     used.add(a.name); used.add(b.name);
+    const [first, second] = r() < 0.5 ? [a, b] : [b, a];
     const [variable, hypothesis] = VARIABLES[out.length % VARIABLES.length];
     out.push({
-      name: `${ca.key} vs ${b.conceptKey} (${a.width}×${a.height})`,
-      variable, hypothesis, adA: a.name, adB: b.name,
+      name: `${first.conceptKey} vs ${second.conceptKey} (${a.width}×${a.height})`,
+      variable, hypothesis, adA: first.name, adB: second.name,
       status: a.status === "live" && b.status === "live" ? "running" : "concluded",
       startedAt: a.launchedAt! > b.launchedAt! ? a.launchedAt! : b.launchedAt!,
     });
   }
-  void r;
   return out;
 }
 
