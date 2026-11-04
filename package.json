@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "figma:discover": "tsx scripts/figma-discover.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
@@ -28,6 +29,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.1.0"
   }
