@@ -3,6 +3,7 @@ import type { Db } from "./index";
 import * as t from "./schema";
 import { THEMES } from "@/lib/dummy/concepts";
 import { generateDummyData } from "@/lib/dummy/generate";
+import { periodFor } from "@/lib/db/repo";
 
 /** Realistic dummy data for local development. Metric rows are tagged source "sample" so they can be purged. */
 export async function seedIfEmpty(db: Db) {
@@ -44,6 +45,7 @@ export async function seedIfEmpty(db: Db) {
       })
       .returning({ id: t.ads.id });
     adIds.set(a.name, ad.id);
+    if (a.checks) await db.insert(t.scorecards).values({ adId: ad.id, period: periodFor(data.today), checks: a.checks });
   }
 
   for (let i = 0; i < data.daily.length; i += 1000) {

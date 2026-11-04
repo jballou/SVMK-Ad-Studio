@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export type MetaVariant = "facebook" | "instagram" | "threads";
 
 export interface MetaPostProps {
@@ -6,6 +8,7 @@ export interface MetaPostProps {
   primaryText: string;
   headline?: string;
   cta?: string;
+  media?: ReactNode;
   imageUrl?: string;
   width: number;
   height: number;
@@ -14,11 +17,14 @@ export interface MetaPostProps {
 const PLATFORM_LABEL: Record<MetaVariant, string> = { facebook: "Facebook", instagram: "Instagram", threads: "Threads" };
 const MAX_RATIO_TALL = 0.8; // Threads crops anything taller than 4:5
 
-function Media({ imageUrl, width, height, crop }: { imageUrl?: string; width: number; height: number; crop?: number }) {
+function Media({ media, imageUrl, width, height, crop }: { media?: ReactNode; imageUrl?: string; width: number; height: number; crop?: number }) {
   const ratio = crop && width / height < crop ? crop : width / height;
   return (
     <div className="w-full overflow-hidden bg-neutral-200" style={{ aspectRatio: `${ratio}` }}>
-      {imageUrl ? (
+      {media ? (
+        // Cropped placements center the creative and let the container clip the overflow.
+        <div className="flex h-full w-full items-center justify-center">{media}</div>
+      ) : imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={imageUrl} alt="" className="h-full w-full object-cover" />
       ) : (
@@ -28,7 +34,7 @@ function Media({ imageUrl, width, height, crop }: { imageUrl?: string; width: nu
   );
 }
 
-export function MetaPost({ variant, brand = "SurveyMonkey", primaryText, headline, cta = "Learn more", imageUrl, width, height }: MetaPostProps) {
+export function MetaPost({ variant, brand = "SurveyMonkey", primaryText, headline, cta = "Learn more", media, imageUrl, width, height }: MetaPostProps) {
   const crop = variant === "threads" ? MAX_RATIO_TALL : undefined;
   return (
     <article className="w-[360px] max-w-full overflow-hidden rounded-lg border border-neutral-300 bg-white text-neutral-900 shadow-sm" aria-label={`${PLATFORM_LABEL[variant]} feed preview`}>
@@ -40,7 +46,7 @@ export function MetaPost({ variant, brand = "SurveyMonkey", primaryText, headlin
         </div>
       </header>
       {variant === "facebook" && <p className="px-3 pb-2 text-sm">{primaryText}</p>}
-      <Media imageUrl={imageUrl} width={width} height={height} crop={crop} />
+      <Media media={media} imageUrl={imageUrl} width={width} height={height} crop={crop} />
       {variant === "instagram" && (
         <div className="flex items-center justify-between bg-blue-600 px-3 py-2 text-sm font-semibold text-white">
           {cta}<span aria-hidden>›</span>

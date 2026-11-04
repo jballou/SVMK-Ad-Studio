@@ -1,24 +1,27 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { Gallery } from "@/components/gallery/Gallery";
-import { getDb } from "@/db";
-import { listAds } from "@/lib/db/repo";
+import { Gallery, type AdStat } from "@/components/gallery/Gallery";
+import { PageHeader } from "@/components/ui/primitives";
+import { rates, totalsByAd } from "@/lib/analytics/aggregate";
+import { loadWorkspace } from "@/lib/db/workspace";
 
-export const metadata = { title: "Gallery · Ad Studio" };
+export const metadata = { title: "Ad gallery · Ad Studio" };
 
-async function Content() {
+async function Content({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; platform?: string }> }) {
   await connection();
-  return <Gallery initial={await listAds(await getDb())} />;
+  const [params, ws] = await Promise.all([searchParams, loadWorkspace()]);
+  const stats: Record<string, AdStat> = {};
+  for (const [name, t] of totalsByAd(ws.daily)) stats[name] = { impressions: t.impressions, ctr: rates(t).ctr };
+  return <Gallery initial={ws.ads} stats={stats} initialFilters={params} />;
 }
 
-export default function GalleryPage() {
+export default function GalleryPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; platform?: string }> }) {
   return (
-    <main className="mx-auto max-w-6xl space-y-4 p-8">
-      <h1 className="text-2xl font-semibold">Ad gallery</h1>
-      <p className="text-sm text-neutral-600">Sample data in a local development database.</p>
-      <Suspense fallback={<p className="text-sm text-neutral-500">Loading…</p>}>
-        <Content />
+    <>
+      <PageHeader title="Ad gallery" description="Every ad across platforms. Browse as thumbnails, a gallery or a list; change status, filter by tags, and select ads to export." />
+      <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading ads…</p>}>
+        <Content searchParams={searchParams} />
       </Suspense>
-    </main>
+    </>
   );
 }

@@ -1,4 +1,7 @@
+import type { ReactNode } from "react";
+
 export interface MetaStoryProps {
+  media?: ReactNode;
   imageUrl?: string;
   brand?: string;
   cta?: string;
@@ -7,10 +10,12 @@ export interface MetaStoryProps {
   showSafeZone?: boolean;
 }
 
-export function MetaStory({ imageUrl, brand = "SurveyMonkey", cta = "Learn more", safeZone = { top: 0.14, bottom: 0.35 }, showSafeZone = true }: MetaStoryProps) {
+export function MetaStory({ media, imageUrl, brand = "SurveyMonkey", cta = "Learn more", safeZone = { top: 0.14, bottom: 0.35 }, showSafeZone = true }: MetaStoryProps) {
   return (
-    <div className="relative w-[270px] overflow-hidden rounded-2xl border border-neutral-300 bg-neutral-200" style={{ aspectRatio: "9 / 16" }} aria-label="Stories and Reels preview">
-      {imageUrl ? (
+    <div className="relative w-[270px] max-w-full overflow-hidden rounded-2xl border border-neutral-300 bg-neutral-200" style={{ aspectRatio: "9 / 16" }} aria-label="Stories and Reels preview">
+      {media ? (
+        <div className="absolute inset-0">{media}</div>
+      ) : imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={imageUrl} alt="" className="h-full w-full object-cover" />
       ) : (

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { importMetricRows, periodFor, saveChecks, setAdStatus, type ImportSummary } from "@/lib/db/repo";
+import { importMetricRows, periodFor, saveChecks, setAdStatus, updateAdTags, type ImportSummary } from "@/lib/db/repo";
 
 const today = () => new Date().toLocaleDateString("en-CA");
 
@@ -52,4 +52,24 @@ export async function importMetrics(input: unknown): Promise<ImportSummary> {
   const res = await importMetricRows(await getDb(), rows, "csv");
   revalidatePath("/scorecards");
   return res;
+}
+
+const tagsInput = z.object({
+  name: z.string().min(1),
+  tags: z.object({
+    persona: z.array(z.string().min(1).max(40)).max(8),
+    funnel: z.string().max(40).optional(),
+    icp: z.array(z.string().min(1).max(40)).max(8).optional(),
+    geo: z.array(z.string().min(1).max(40)).max(8).optional(),
+    offer: z.string().max(40).optional(),
+  }),
+});
+
+export async function saveAdTags(input: unknown): Promise<{ ok: boolean }> {
+  const { name, tags } = tagsInput.parse(input);
+  const ok = await updateAdTags(await getDb(), name, tags);
+  revalidatePath("/gallery");
+  revalidatePath(`/gallery/${name}`);
+  revalidatePath("/performance", "layout");
+  return { ok };
 }

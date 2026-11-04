@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "figma:discover": "tsx scripts/figma-discover.ts",
-    "db:migrate": "tsx scripts/db-migrate.ts"
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:reset": "rm -rf .data"
   },
   "dependencies": {
     "@ark-ui/react": "^5.40.0",

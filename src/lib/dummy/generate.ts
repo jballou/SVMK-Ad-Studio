@@ -19,6 +19,8 @@ export interface DummyAd {
   geo: string[];
   /** Per-ad performance multiplier (hidden from the UI; drives the metric model). */
   quality: number;
+  /** Manual scorecard checks for the current quarter (launched ads only). */
+  checks?: { campaignActive: boolean; landingPageClear: boolean; ctaMatch: boolean; icpMatch: boolean };
 }
 
 export interface DummyDay {
@@ -150,7 +152,10 @@ export function generateDummyData(seed = 20261103): DummyData {
           const mm = launch ? launch.slice(5, 7) : "11";
           const yyyy = launch ? launch.slice(0, 4) : "2026";
           const name = `${concept.key}${mm}${yyyy}_${w}x${h}`;
-          const ad: DummyAd = { name, conceptKey: concept.key, platform, placement: slot.placement, width: w, height: h, status, launchedAt: launch, pausedAt, geo, quality };
+          const checks = launch
+            ? { campaignActive: status === "live" || r() < 0.2, landingPageClear: r() < 0.85, ctaMatch: r() < 0.9, icpMatch: r() < 0.8 }
+            : undefined;
+          const ad: DummyAd = { name, conceptKey: concept.key, platform, placement: slot.placement, width: w, height: h, status, launchedAt: launch, pausedAt, geo, quality, checks };
           ads.push(ad);
           daily.push(...dailyFor(r, ad, concept.funnel, today));
         }
