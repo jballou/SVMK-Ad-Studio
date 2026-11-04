@@ -91,4 +91,4 @@ export const scorecards = pgTable("scorecards", {
   checks: jsonb("checks").$type<Record<string, boolean | null>>().notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (t) => [uniqueIndex("scorecards_ad_period").on(t.adId, t.period)]);

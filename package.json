@@ -10,15 +10,18 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "figma:discover": "tsx scripts/figma-discover.ts"
+    "figma:discover": "tsx scripts/figma-discover.ts",
+    "db:migrate": "tsx scripts/db-migrate.ts"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "drizzle-orm": "^0.45.4",
     "google-auth-library": "^11.3.3",
     "next": "16.4.5",
     "postgres": "^4.0.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {

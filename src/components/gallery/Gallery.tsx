@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { updateAdStatus } from "@/app/actions";
 import { distinct, filterAds, setStatus, sortAds } from "@/lib/ads/query";
 import { STATUSES, type AdRecord, type AdStatus, type SortKey, type ViewMode } from "@/lib/ads/types";
 
-const STORAGE_KEY = "ad-studio:status-overrides";
 const PLATFORM_COLOR: Record<AdRecord["platform"], string> = {
   linkedin: "bg-sky-100 text-sky-900",
   meta: "bg-indigo-100 text-indigo-900",
@@ -63,7 +63,8 @@ function Tags({ ad }: { ad: AdRecord }) {
 }
 
 export function Gallery({ initial }: { initial: AdRecord[] }) {
-  const [overrides, setOverrides] = useState<Record<string, { status: AdStatus; pausedAt?: string }>>({});
+  const [ads, setAds] = useState(initial);
+  const [error, setError] = useState("");
   const [view, setView] = useState<ViewMode>("grid");
   const [sort, setSort] = useState<SortKey>("launched");
   const [q, setQ] = useState("");
@@ -72,30 +73,16 @@ export function Gallery({ initial }: { initial: AdRecord[] }) {
   const [persona, setPersona] = useState("");
   const [funnel, setFunnel] = useState("");
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      // Read after mount so server and first client render match.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setOverrides(JSON.parse(raw));
-    } catch {
-      /* storage unavailable: statuses just won't persist */
-    }
-  }, []);
-
-  const ads = useMemo(
-    () => initial.map((a) => (overrides[a.id] ? { ...a, ...overrides[a.id] } : a)),
-    [initial, overrides],
-  );
-
-  const update = (ad: AdRecord, s: AdStatus) => {
+  const update = async (ad: AdRecord, s: AdStatus) => {
     const next = setStatus(ad, s, new Date().toLocaleDateString("en-CA"));
-    const o = { ...overrides, [ad.id]: { status: next.status, pausedAt: next.pausedAt } };
-    setOverrides(o);
+    setAds((all) => all.map((a) => (a.id === ad.id ? next : a)));
+    setError("");
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(o));
+      const res = await updateAdStatus({ name: ad.name, status: s });
+      if (!res.ok) throw new Error("not found");
     } catch {
-      /* ignore */
+      setAds((all) => all.map((a) => (a.id === ad.id ? ad : a)));
+      setError(`Couldn't update ${ad.name}. Try again.`);
     }
   };
 
@@ -122,6 +109,7 @@ export function Gallery({ initial }: { initial: AdRecord[] }) {
       </div>
 
       <p className="text-sm text-neutral-600" aria-live="polite">{shown.length} of {ads.length} ads</p>
+      {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
 
       {shown.length === 0 && <p className="rounded border border-dashed p-8 text-center text-sm text-neutral-500">No ads match these filters.</p>}
 

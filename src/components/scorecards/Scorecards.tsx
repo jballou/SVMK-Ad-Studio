@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { importMetrics as importMetricsAction, saveManualChecks } from "@/app/actions";
 import type { AdRecord } from "@/lib/ads/types";
-import { importMetrics, totalsByAd, type Totals } from "@/lib/metrics/csv";
+import { importMetrics, type Totals } from "@/lib/metrics/csv";
 import { buildScorecard, daysLive, type Benchmark, type ManualChecks, type ManualCriterion } from "@/lib/scorecard/build";
 import { BAND_LABEL, MAX_POINTS, type Band, type Criterion } from "@/lib/scorecard/score";
 
@@ -27,20 +29,25 @@ const BAND_STYLE: Record<Band, string> = {
 const mark = (v: boolean | null) => (v === null ? "—" : v ? "✓" : "✗");
 const markLabel = (v: boolean | null) => (v === null ? "not applicable" : v ? "met" : "not met");
 
-export function Scorecards({ ads, benchmarks, sampleTotals, today }: { ads: AdRecord[]; benchmarks: Benchmark[]; sampleTotals: Record<string, Totals>; today: string }) {
-  const [totals, setTotals] = useState(sampleTotals);
-  const [manual, setManual] = useState<Record<string, ManualChecks>>({});
+export function Scorecards({ ads, benchmarks, totals, checks, today }: { ads: AdRecord[]; benchmarks: Benchmark[]; totals: Record<string, Totals>; checks: Record<string, ManualChecks>; today: string }) {
+  const router = useRouter();
+  const [manual, setManual] = useState<Record<string, ManualChecks>>(checks);
   const [importMsg, setImportMsg] = useState<string>("");
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
-    const res = importMetrics(await file.text(), ads.map((a) => a.name));
-    if (res.errors.length && res.rows.length === 0) return setImportMsg(`Import failed: ${res.errors[0].message}`);
-    setTotals(totalsByAd(res.rows));
-    const bits = [`Imported ${res.rows.length} rows`];
-    if (res.errors.length) bits.push(`${res.errors.length} skipped (first: line ${res.errors[0].line}, ${res.errors[0].message})`);
-    if (res.unmatchedNames.length) bits.push(`${res.unmatchedNames.length} unmatched ad names (e.g. ${res.unmatchedNames[0]})`);
-    setImportMsg(bits.join("; "));
+    const res = importMetrics(await file.text());
+    if (res.rows.length === 0) return setImportMsg(`Import failed: ${res.errors[0]?.message ?? "no rows found"}`);
+    try {
+      const saved = await importMetricsAction(res.rows);
+      const bits = [`Saved ${saved.imported} rows`];
+      if (res.errors.length) bits.push(`${res.errors.length} skipped (first: line ${res.errors[0].line}, ${res.errors[0].message})`);
+      if (saved.unmatchedNames.length) bits.push(`${saved.unmatchedNames.length} unmatched ad names (e.g. ${saved.unmatchedNames[0]})`);
+      setImportMsg(bits.join("; "));
+      router.refresh();
+    } catch {
+      setImportMsg("Import failed on the server. Nothing was saved.");
+    }
   };
 
   const cards = useMemo(() => {
@@ -52,13 +59,24 @@ export function Scorecards({ ads, benchmarks, sampleTotals, today }: { ads: AdRe
   }, [ads, totals, manual, benchmarks, today]);
 
   const platforms = [...new Set(cards.map((c) => c.ad.platform))];
-  const toggle = (id: string, k: ManualCriterion) => setManual((m) => ({ ...m, [id]: { ...m[id], [k]: !m[id]?.[k] } }));
+  const toggle = async (id: string, k: ManualCriterion) => {
+    const prev = manual[id] ?? {};
+    const next = { ...prev, [k]: !prev[k] };
+    setManual((m) => ({ ...m, [id]: next }));
+    try {
+      const res = await saveManualChecks({ name: id, checks: next });
+      if (!res.ok) throw new Error("not found");
+    } catch {
+      setManual((m) => ({ ...m, [id]: prev }));
+      setImportMsg(`Couldn't save the check for ${id}. Try again.`);
+    }
+  };
 
   return (
     <div className="space-y-8">
       <section className="rounded-lg border border-neutral-200 p-4">
         <h2 className="text-sm font-semibold">Import performance (CSV)</h2>
-        <p className="mt-1 text-xs text-neutral-600">Columns: Date, Ad Name, Spend, Impressions, Clicks, Conversions. Ad names must match the <code>Concept + MMYYYY _ WxH</code> format. Replaces the sample numbers in this session only.</p>
+        <p className="mt-1 text-xs text-neutral-600">Columns: Date, Ad Name, Spend, Impressions, Clicks, Conversions. Ad names must match the <code>Concept + MMYYYY _ WxH</code> format. Rows for an ad replace its sample numbers; the same ad and date is updated, not duplicated.</p>
         <input type="file" accept=".csv,text/csv" className="mt-2 text-sm" onChange={(e) => onFile(e.target.files?.[0])} aria-label="Upload performance CSV" />
         {importMsg && <p className="mt-2 text-sm" role="status">{importMsg}</p>}
       </section>

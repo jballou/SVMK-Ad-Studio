@@ -23,3 +23,9 @@ v1 scope: static ads for LinkedIn, Meta, Google Display and newsletter.
 
 ## Dev
 `npm run dev`, `npm test`, `npm run typecheck`. Copy `.env.example` to `.env.local`.
+
+## Database
+- Local dev: no setup. With `DATABASE_URL` unset the app uses an embedded Postgres (PGlite) under `.data/` (git-ignored), migrated and seeded with sample data on first use.
+- Hosted: set `DATABASE_URL` to a Postgres connection string, then run `npm run db:migrate`. The embedded database refuses to start on Vercel.
+- Schema changes: edit `src/db/schema.ts`, run `npm run db:generate`, commit the new file in `drizzle/`.
+- Sample rows are tagged `source = 'sample'`; importing real metrics for an ad replaces its sample rows.
