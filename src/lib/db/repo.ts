@@ -223,3 +223,30 @@ export async function deleteBenchmark(db: Db, id: number): Promise<boolean> {
   const res = await db.delete(t.benchmarks).where(eq(t.benchmarks.id, id)).returning({ id: t.benchmarks.id });
   return res.length > 0;
 }
+
+export type AssetRow = typeof t.assets.$inferSelect;
+
+export async function insertAsset(db: Db, row: typeof t.assets.$inferInsert): Promise<AssetRow> {
+  const [r] = await db.insert(t.assets).values(row).returning();
+  return r;
+}
+
+export async function getAssetRow(db: Db, id: string): Promise<AssetRow | undefined> {
+  const [r] = await db.select().from(t.assets).where(eq(t.assets.id, id));
+  return r;
+}
+
+export async function listAssetRows(db: Db, kind?: "photo" | "product"): Promise<AssetRow[]> {
+  const q = db.select().from(t.assets);
+  return (kind ? q.where(eq(t.assets.kind, kind)) : q).orderBy(sql`${t.assets.createdAt} desc`).limit(200);
+}
+
+export async function setAssetApproved(db: Db, id: string, approved: boolean): Promise<boolean> {
+  const res = await db.update(t.assets).set({ approved }).where(eq(t.assets.id, id)).returning({ id: t.assets.id });
+  return res.length > 0;
+}
+
+export async function deleteAssetRow(db: Db, id: string): Promise<AssetRow | undefined> {
+  const [r] = await db.delete(t.assets).where(eq(t.assets.id, id)).returning();
+  return r;
+}

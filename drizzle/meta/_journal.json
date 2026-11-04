@@ -29,6 +29,13 @@
       "when": 1793755758882,
       "tag": "0003_ad_composition",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793813810628,
+      "tag": "0004_assets",
+      "breakpoints": true
     }
   ]
 }

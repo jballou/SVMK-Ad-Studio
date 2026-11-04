@@ -1,4 +1,10 @@
+import { connection } from "next/server";
+import { Suspense } from "react";
+import { AssetManager } from "@/components/settings/AssetManager";
 import { TemplateGrid } from "@/components/settings/TemplateGrid";
+import { toDto } from "@/lib/assets/ingest";
+import { getDb } from "@/db";
+import { listAssetRows } from "@/lib/db/repo";
 import { Chip } from "@/components/ui/chip";
 import { Card, DataTable, PageHeader } from "@/components/ui/primitives";
 import { checkCopy } from "@/lib/batches/plan";
@@ -19,12 +25,23 @@ const SLOTS: [string, string, string][] = [
   ["#bg", "Fill", "Background color token"],
 ];
 
+async function Assets() {
+  await connection();
+  return <AssetManager assets={(await listAssetRows(await getDb())).map(toDto)} />;
+}
+
 export default function Library() {
   return (
     <div className="space-y-8">
       <PageHeader title="Library" description="The Figma templates and copy decks that batches are generated from, and the conventions that connect them." />
 
       <section aria-labelledby="tpl"><h2 id="tpl" className="mb-3 text-base font-semibold">Figma templates</h2><TemplateGrid templates={TEMPLATE_FILES} /></section>
+
+      <section aria-labelledby="imgs">
+        <h2 id="imgs" className="mb-1 text-base font-semibold">Uploaded and imported images</h2>
+        <p className="mb-3 text-sm text-brand-neutral-650">Saved from uploads, Google Drive and Figma. Approving an image removes the &quot;needs brand review&quot; warning in the design editor.</p>
+        <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading images…</p>}><Assets /></Suspense>
+      </section>
 
       <section aria-labelledby="decks">
         <h2 id="decks" className="mb-3 text-base font-semibold">Copy decks</h2>

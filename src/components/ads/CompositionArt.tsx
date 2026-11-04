@@ -58,11 +58,12 @@ export function CompositionArt({ composition: c, art, width, height, placementKe
     const box = layerBox(l, imageAspect(l.image), width, height);
     const style: CSSProperties = { position: "absolute", left: pct(box.x), top: pct(box.y), width: pct(box.w), height: pct(box.h), zIndex: z, ...(sel === kind ? SELECT : {}), ...(editor ? { cursor: "grab", touchAction: "none" } : {}) };
     const common = editor ? { tabIndex: 0, role: "button" as const, "aria-label": `${kind === "photo" ? "Photo" : "Product image"} layer. Arrow keys move, plus and minus resize.`, onPointerDown: (e: PointerEvent<HTMLElement>) => editor.onLayerPointerDown(kind, e), onKeyDown: (e: KeyboardEvent<HTMLElement>) => editor.onLayerKeyDown(kind, e), onFocus: () => editor.onSelect(kind) } : {};
-    const src = l.image.source === "gallery" ? (getAsset(l.image.id) ? assetUrl(l.image.id) : undefined) : l.image.src;
+    const ref = l.image;
+    const src = ref.source === "gallery" ? (getAsset(ref.id) ? assetUrl(ref.id) : undefined) : ref.source === "asset" ? `/api/assets/${ref.id}` : ref.src;
     if (!src) {
-      return <div key={kind} {...common} style={{ ...style, background: "repeating-linear-gradient(45deg,#E2DFDA,#E2DFDA 8px,#EDEBE8 8px,#EDEBE8 16px)", display: "grid", placeItems: "center", color: "#686764", fontSize: "2.4cqmin" }}>{l.image.source === "upload" ? l.image.name : "Missing image"}</div>;
+      return <div key={kind} {...common} style={{ ...style, background: "repeating-linear-gradient(45deg,#E2DFDA,#E2DFDA 8px,#EDEBE8 8px,#EDEBE8 16px)", display: "grid", placeItems: "center", color: "#686764", fontSize: "2.4cqmin" }}>{l.image.source !== "gallery" ? l.image.name : "Missing image"}</div>;
     }
-    const alt = l.image.source === "gallery" ? (getAsset(l.image.id)?.name ?? "") : l.image.name;
+    const alt = ref.source === "gallery" ? (getAsset(ref.id)?.name ?? "") : ref.name;
     // eslint-disable-next-line @next/next/no-img-element
     return <img key={kind} {...common} src={src} alt={alt} draggable={false} style={{ ...style, objectFit: kind === "photo" ? "cover" : "contain", userSelect: "none" }} />;
   };

@@ -239,7 +239,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
         {step === 3 && pc && previewRow && (
           <Card title="Preview and design" description="Edit each concept's imagery and text, then check it in the platform UI. Checks run for every size you selected." actions={
             <label className="flex items-center gap-2 text-xs font-medium text-brand-neutral-650">Concept
-              <select value={pc} onChange={(e) => setPreviewConcept(e.target.value)} className={`${field} w-48 shrink-0`}>
+              <select value={pc} onChange={(e) => setPreviewConcept(e.target.value)} className="h-9 w-48 shrink-0 rounded-lg border border-brand-neutral-250 bg-white px-2.5 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40">
                 {picked.map((k) => { const n = qa.get(k); return <option key={k} value={k}>{k}{n?.errors ? ` (${n.errors} error${n.errors === 1 ? "" : "s"})` : n?.warnings ? ` (${n.warnings} warning${n.warnings === 1 ? "" : "s"})` : ""}</option>; })}
               </select>
             </label>

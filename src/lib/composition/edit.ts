@@ -62,7 +62,7 @@ export function applyFix(d: Design, fix: FixId, ctx: { width: number; height: nu
     case "hide-layer": return kind ? setVisible(d, kind, false) : d;
     case "fit-resolution": {
       const l = kind && kind !== "background" ? d.content.layers[kind].image : undefined;
-      if (!kind || !l || l.source !== "upload") return d;
+      if (!kind || !l || l.source === "gallery") return d;
       const cur = resolveComposition(d, ctx.width, ctx.height, ctx.placementKey).layers[kind];
       return withTransform(d, ctx.width, ctx.height, kind, clampTransform({ x: cur.x, y: cur.y, scale: Math.min(cur.scale, l.naturalW / ctx.width) }));
     }

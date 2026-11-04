@@ -38,7 +38,7 @@ export function resolveTextColor(c: Composition, themeBg: string): string {
 }
 
 const label = (k: LayerKind) => (k === "photo" ? "Photo" : k === "product" ? "Product image" : "Background");
-const isUpload = (r?: ImageRef): r is Extract<ImageRef, { source: "upload" }> => r?.source === "upload";
+const isCustom = (r?: ImageRef): r is Exclude<ImageRef, { source: "gallery" }> => !!r && r.source !== "gallery";
 
 export function qaComposition(c: Composition, ctx: QaContext): QaIssue[] {
   const out: QaIssue[] = [];
@@ -88,8 +88,9 @@ export function qaComposition(c: Composition, ctx: QaContext): QaIssue[] {
       const zone = overlapOf(box, { x: 0, y: 0, w: 1, h: rule.safe.top }) + overlapOf(box, { x: 0, y: 1 - rule.safe.bottom, w: 1, h: rule.safe.bottom });
       if (zone > 0.2) add({ id: "product-safe-zone", severity: "warn", target: "product", message: "Part of the product sits where Stories and Reels UI covers the ad. Keep it inside the safe area.", fix: { id: "reset-layer", label: "Reset position" } });
     }
-    if (isUpload(l.image)) {
-      add({ id: `${kind}-unapproved`, severity: "warn", target: kind, message: `"${l.image.name}" isn't in the approved library. Get brand review before launch.` });
+    if (isCustom(l.image)) {
+      const approved = l.image.source === "asset" && l.image.approved;
+      if (!approved) add({ id: `${kind}-unapproved`, severity: "warn", target: kind, message: `"${l.image.name}" isn't in the approved library. Get brand review before launch.` });
       const rendered = l.scale * w;
       if (l.image.naturalW < rendered * 0.5) add({ id: `${kind}-lowres`, severity: "error", target: kind, message: `"${l.image.name}" is ${l.image.naturalW}px wide but needs about ${Math.round(rendered)}px at this size, so it will look blurry.`, fix: { id: "fit-resolution", label: "Shrink to its sharp size" } });
       else if (l.image.naturalW < rendered) add({ id: `${kind}-softres`, severity: "warn", target: kind, message: `"${l.image.name}" is ${l.image.naturalW}px wide; ${Math.round(rendered)}px would be sharper at this size.` });

@@ -1,4 +1,4 @@
-import { date, integer, jsonb, pgEnum, pgTable, primaryKey, real, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { boolean, date, integer, jsonb, pgEnum, pgTable, primaryKey, real, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const adStatus = pgEnum("ad_status", ["draft", "live", "paused", "retired"]);
 
@@ -121,4 +121,21 @@ export const appSettings = pgTable("app_settings", {
   key: text("key").primaryKey(),
   value: jsonb("value").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const assets = pgTable("assets", {
+  id: text("id").primaryKey(),
+  kind: text("kind").$type<"photo" | "product">().notNull(),
+  name: text("name").notNull(),
+  origin: text("origin").$type<"upload" | "drive" | "figma">().notNull(),
+  originRef: jsonb("origin_ref").$type<Record<string, string>>(),
+  storageKey: text("storage_key").notNull(),
+  storageKind: text("storage_kind").notNull(),
+  contentType: text("content_type").notNull(),
+  bytes: integer("bytes").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  approved: boolean("approved").default(false).notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

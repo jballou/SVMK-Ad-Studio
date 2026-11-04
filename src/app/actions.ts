@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { addBenchmark, createBatch, deleteBenchmark, importMetricRows, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, updateAdTags, type ImportSummary } from "@/lib/db/repo";
+import { addBenchmark, createBatch, deleteBenchmark, importMetricRows, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, setAssetApproved, updateAdTags, type ImportSummary } from "@/lib/db/repo";
 import { planBatch } from "@/lib/batches/plan";
 import { artFor, conceptByKey, conceptImagery, designForConcept } from "@/lib/dummy/library";
 import { resolveComposition } from "@/lib/composition/defaults";
+import { hydrateAssetRefs } from "@/lib/assets/hydrate";
+import { removeAsset } from "@/lib/assets/ingest";
 import { hasErrors, qaComposition } from "@/lib/composition/qa";
 import type { Design } from "@/lib/composition/types";
 import { THEMES } from "@/lib/dummy/concepts";
@@ -93,6 +95,7 @@ const transformInput = z.object({ x: z.number().min(-0.5).max(1.5), y: z.number(
 const kindEnum = z.enum(["background", "photo", "product"]);
 const imageRef = z.union([
   z.object({ source: z.literal("gallery"), id: z.string().refine((id) => !!getAsset(id), "Unknown approved image") }),
+  z.object({ source: z.literal("asset"), id: z.string().uuid(), name: z.string().max(200), naturalW: z.number().int().min(1).max(30000), naturalH: z.number().int().min(1).max(30000), approved: z.boolean(), origin: z.enum(["upload", "drive", "figma"]) }),
   z.object({ source: z.literal("upload"), name: z.string().max(200), naturalW: z.number().int().min(1).max(30000), naturalH: z.number().int().min(1).max(30000) }),
 ]);
 const layerInput = z.object({ visible: z.boolean(), image: imageRef.optional(), preset: z.string().max(40).refine((p) => !!getPreset(p), "Unknown background preset").optional() });
@@ -147,13 +150,21 @@ export async function generateBatch(input: unknown): Promise<BatchResult> {
 
   // Compose and check every new ad on the server too, so a batch can't skip the editor's QA.
   const compositions = new Map<string, ReturnType<typeof resolveComposition>>();
+  const hydrated = new Map<string, Design>();
   const problems: string[] = [];
   for (const p of plan.filter((x) => !x.exists)) {
     const seed = conceptByKey(p.conceptKey);
     if (!seed) continue;
     const supports = conceptImagery(seed);
     const given = designs?.[p.conceptKey];
-    const design: Design = given ? { ...given, supports } : designForConcept(seed, copy?.[p.conceptKey]?.headline);
+    if (given && !hydrated.has(p.conceptKey)) {
+      try {
+        hydrated.set(p.conceptKey, await hydrateAssetRefs(db, { ...given, supports }));
+      } catch (e) {
+        return { ok: false, created: 0, skipped: [], names: [], error: e instanceof Error ? e.message : "An image in this design is no longer available." };
+      }
+    }
+    const design: Design = hydrated.get(p.conceptKey) ?? designForConcept(seed, copy?.[p.conceptKey]?.headline);
     const comp = resolveComposition(design, p.width, p.height, p.placement);
     compositions.set(p.name, comp);
     const issues = qaComposition(comp, { placementKey: p.placement, width: p.width, height: p.height, supports, themeBg: THEMES[seed.theme].bg });
@@ -215,5 +226,24 @@ export async function removeBenchmark(id: unknown): Promise<{ ok: boolean }> {
   if (!parsed.success) return { ok: false };
   const ok = await deleteBenchmark(await getDb(), parsed.data);
   revalidatePath("/", "layout");
+  return { ok };
+}
+
+const assetId = z.string().uuid();
+
+export async function setAssetApprovedAction(id: unknown, approved: unknown): Promise<{ ok: boolean }> {
+  const a = assetId.safeParse(id);
+  const b = z.boolean().safeParse(approved);
+  if (!a.success || !b.success) return { ok: false };
+  const ok = await setAssetApproved(await getDb(), a.data, b.data);
+  revalidatePath("/library");
+  return { ok };
+}
+
+export async function deleteAssetAction(id: unknown): Promise<{ ok: boolean }> {
+  const a = assetId.safeParse(id);
+  if (!a.success) return { ok: false };
+  const ok = await removeAsset(await getDb(), a.data);
+  revalidatePath("/library");
   return { ok };
 }

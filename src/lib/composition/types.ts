@@ -4,7 +4,9 @@ export const LAYER_LABEL: Record<LayerKind, string> = { background: "Background"
 
 export type ImageRef =
   | { source: "gallery"; id: string }
-  /** `src` only exists in the browser session that uploaded it; saved designs keep just the metadata. */
+  /** A stored upload or import (Drive, Figma). The bytes live in storage and are served from /api/assets/[id]. */
+  | { source: "asset"; id: string; name: string; naturalW: number; naturalH: number; approved: boolean; origin: "upload" | "drive" | "figma" }
+  /** Browser-only fallback when image storage isn't connected: `src` exists only in the session that uploaded it. */
   | { source: "upload"; name: string; naturalW: number; naturalH: number; src?: string };
 
 /** Center of the layer as a fraction of the canvas, and its width as a fraction of canvas width. */

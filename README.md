@@ -23,7 +23,20 @@ Scope: static ads for LinkedIn, Meta (Facebook, Instagram, Threads), Google Disp
 - Layers: Background (preset fills), Photo and Product. Each can be turned on or off and reordered; a concept's template enables up to two of the imagery layers. Headline, CTA and the locked brand mark sit on top.
 - Imagery comes from the approved library (generated placeholders for now) or an upload. Drag to move, arrow keys or the nudge pad to fine-tune, slider or +/- to resize. Positions are per size, with "apply to similar sizes".
 - QA rules run for every size (`src/lib/composition/qa.ts`) and again on the server when a batch is generated. Examples: LinkedIn/Meta add their own CTA so the image shouldn't carry one; Display and newsletter must; Stories/Reels safe zones; contrast; text fit; hidden or cropped layers; unapproved or low-resolution uploads. Errors block the batch; warnings don't. Many issues have a one-click fix, and most can be fixed across all sizes at once.
-- Compositions are stored per ad (`ads.composition`) and rendered everywhere by `CompositionArt`. Uploaded files are not stored yet (a placeholder is shown until image storage is connected).
+- Compositions are stored per ad (`ads.composition`) and rendered everywhere by `CompositionArt`.
+
+### Image storage and imports
+Images you bring in (upload, Google Drive, Figma) go through one pipeline (`src/lib/assets`): the bytes are sniffed and validated (PNG, JPG or WebP; up to 4 MB and 8000px; SVG is refused), saved to storage, and recorded in the `assets` table as **unapproved**. They are served only through `/api/assets/[id]`; an admin approves them in **Library**, which removes the "needs brand review" warning.
+
+| Setting | What it enables |
+|---|---|
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob (private access). Create a Blob store in the project's Storage tab, or run `vercel storage` and connect it to the project; the token is added for you. Locally, run `vercel env pull .env.local`. |
+| *(no token, local dev)* | Files are stored under `.data/uploads/` instead. |
+| *(no token, on Vercel)* | Storage is off: uploads stay in the browser session and generated ads show a placeholder. |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Google Drive import (read-only). Share the file or folder with the service account's `client_email`; paste the link in the picker. Also used for copy-deck sheets. |
+| `FIGMA_TOKEN` | Figma import: paste a link to a frame or layer (it must include `node-id`); it is rendered to PNG at up to 2x and saved. |
+
+On the hosted demo (no `DATABASE_URL`) the in-memory database resets, so stored image records, and therefore the images, don't last. Connect a real Postgres alongside Blob.
 
 ## Figma naming scheme
 - Page = campaign, section = concept, frame = one size.
