@@ -1,4 +1,5 @@
 import type { AdArtSpec } from "@/lib/ads/types";
+import { intentSlugFor } from "@/lib/templates/intents";
 import type { PlatformKey } from "@/lib/specs/platforms";
 
 export interface ConceptSeed {
@@ -18,6 +19,8 @@ export interface ConceptSeed {
   /** Relative creative quality (1 = average). Drives the performance model. */
   quality: number;
   draft?: boolean;
+  /** Creative-intent template slug. When absent it is derived from the layout. */
+  intent?: string;
 }
 
 export const THEMES: Omit<AdArtSpec, "layout">[] = [
@@ -35,13 +38,17 @@ export const THEMES: Omit<AdArtSpec, "layout">[] = [
 
 const c = (
   key: string, campaign: string, headline: string, platformHeadline: string, intro: string, cta: string, landing: string,
-  personas: string[], funnel: ConceptSeed["funnel"], offer: string, icp: string[], theme: number, layout: AdArtSpec["layout"], quality: number, draft = false,
-): ConceptSeed => ({ key, campaign, headline, platformHeadline, intro, cta, landing, personas, funnel, offer, icp, theme, layout, quality, draft });
+  personas: string[], funnel: ConceptSeed["funnel"], offer: string, icp: string[], theme: number, layout: AdArtSpec["layout"], quality: number, draft = false, intent?: string,
+): ConceptSeed => ({ key, campaign, headline, platformHeadline, intro, cta, landing, personas, funnel, offer, icp, theme, layout, quality, draft, intent });
 
 const ENT = "/welcome/enterprise";
 const SALES = "/welcome/contact-sales/";
 const AWARE = "Today's SurveyMonkey";
 const PH2 = "SA Campaign Phase 2";
+// Copy for the "Consideration + Intent" concepts is taken from that page of the Today's SurveyMonkey Ads Figma file.
+// Landing pages are still "TBD" in the designs; the customer quote is shown without the named individual.
+const CI = "Consideration + Intent";
+const TBD = "/TBD";
 
 export const CONCEPTS: ConceptSeed[] = [
   c("HumansMatter", AWARE, "Behind every response is a human.", "Listen to the people behind the data", "Great feedback starts with listening. See how SurveyMonkey helps you hear every voice.", "Learn more", "/welcome/humans", ["CX"], "Awareness", "Brand", ["Enterprise"], 0, "left", 1.25),
@@ -65,6 +72,11 @@ export const CONCEPTS: ConceptSeed[] = [
   c("RenewalMoment", PH2, "Win the moment that matters: the renewal.", "Personalize your renewal experience", "Don't lose customers at renewal. Find out how to close the experience gap.", "Download", "/resources/cx-gap", ["CX"], "Consideration", "Report", ["Mid-market"], 4, "center", 0.9),
   c("TableauBridge", PH2, "From data chaos to data clarity.", "Smart integrations for Tableau and Power BI", "Stop patching dashboards. One source of truth, not scattered reports.", "Download", "/resources/integrations", ["IT"], "Consideration", "Guide", ["Enterprise"], 1, "bottom", 1.05),
   c("DataDetective", PH2, "Still playing data detective?", "Connect survey and business data fast", "Surface insights without detective work. See how integrations unlock insight.", "Download", "/resources/integrations", ["IT", "Marketing"], "Consideration", "Guide", ["Mid-market"], 5, "left", 0.7),
+  c("TrustAtScale", CI, "Industry-leading security. Proven results.", "Trust. At scale.", "From different industries. Different continents. Different challenges. Yet 260K+ organizations made the same choice—trusting SurveyMonkey.", "Learn more", TBD, ["IT", "Enterprise"], "Consideration", "Brand", ["Enterprise"], 7, "center", 1.1, false, "stat-proof-point"),
+  c("TopFormsBuilder", CI, "The #1 online forms builder for businesses", "One platform. Every business size.", "G2 Leader for Enterprise, Mid-Market, and Small Business. SurveyMonkey works for teams at any stage. Start gathering insights that matter today.", "Learn more", TBD, ["Marketing"], "Intent", "Brand", ["Enterprise", "Mid-market", "SMB"], 2, "left", 1.05, false, "stat-proof-point"),
+  c("MostPopularSurvey", CI, "The world's most popular survey platform", "14,500+ 5-star reviews on G2", "14,500+ teams rely on us for customer feedback, market research, and employee insights. Get the data you need to make confident decisions.", "Learn more", TBD, ["Marketing", "CX"], "Consideration", "Brand", ["Mid-market"], 0, "left", 1.15, false, "product-feature-spotlight"),
+  c("EveryonesBFF", CI, "Everyone's BFF", "Wanna be friends?", "Real friends don't compromise on security or settle for mediocre results. We obsess over both. See why thousands of organizations made us their go-to.", "Learn more", TBD, ["Marketing"], "Consideration", "Brand", ["Mid-market"], 3, "center", 0.9, false, "lifestyle-impact"),
+  c("WinningStartsWithData", CI, "“SurveyMonkey allows us to ask what matters and find out what resonates within the marketplace.”", "Winning starts with data", "The Warriors use SurveyMonkey to understand their fans, creating diverse experiences, engaging social moments, and better-timed offerings. Discover how today.", "Learn more", TBD, ["Marketing", "CX"], "Consideration", "Brand", ["Enterprise"], 6, "bottom", 1.0, false, "customer-quote"),
   c("PeopleFirst", "EX Awareness", "People first. Always listening.", "Put your people first", "Employee feedback that leads to action, from onboarding to exit.", "Learn more", "/welcome/employee", ["EX"], "Awareness", "Brand", ["Enterprise"], 2, "center", 1.0),
   c("PulseCheck", "EX Awareness", "Take the pulse of your team.", "Quick pulse surveys for any team", "Know how your team is really doing, with templates that take minutes to launch.", "Try it free", "/welcome/pulse", ["EX"], "Consideration", "Free trial", ["Mid-market"], 7, "left", 1.1),
   c("ManagerReady", "EX Awareness", "Managers deserve better feedback.", "Feedback that helps managers grow", "Give every people manager the insight they need to lead well.", "Learn more", "/welcome/managers", ["EX"], "Consideration", "Webinar", ["Enterprise"], 6, "bottom", 0.85),
@@ -81,3 +93,9 @@ export const CONCEPT_PLATFORMS: PlatformKey[][] = [
   ["linkedin", "meta"], ["linkedin", "display"], ["meta", "display"], ["linkedin", "newsletter"],
   ["meta", "newsletter"], ["linkedin", "meta"], ["display", "newsletter"], ["linkedin", "display"],
 ];
+
+/** The creative-intent template slug for a concept (same mapping the seeded ads use). */
+export function conceptIntent(key: string): string | undefined {
+  const i = CONCEPTS.findIndex((c) => c.key === key);
+  return i < 0 ? undefined : CONCEPTS[i].intent ?? intentSlugFor(CONCEPTS[i].layout, i);
+}

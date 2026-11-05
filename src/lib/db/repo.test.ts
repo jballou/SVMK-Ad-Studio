@@ -6,7 +6,7 @@ import * as schema from "@/db/schema";
 import type { Db } from "@/db";
 import { seedIfEmpty } from "@/db/seed";
 import { generateDummyData } from "@/lib/dummy/generate";
-import { deleteScoreBenchmark, getRawInputs, getScoreConfig, listScoreBenchmarks, saveScoreConfig, upsertScoreBenchmark, addBenchmark, createBatch, deleteBenchmark, getBenchmarks, getGate, getTaxonomy, listBenchmarkRows, saveGate, saveTaxonomy, getChecks, getDailyMetrics, getTotals, importMetricRows, listAds, listBatches, listExperiments, periodFor, saveChecks, setAdStatus, updateAdTags } from "./repo";
+import { ensureStarterTemplates, listTemplates, deleteScoreBenchmark, getRawInputs, getScoreConfig, listScoreBenchmarks, saveScoreConfig, upsertScoreBenchmark, addBenchmark, createBatch, deleteBenchmark, getBenchmarks, getGate, getTaxonomy, listBenchmarkRows, saveGate, saveTaxonomy, getChecks, getDailyMetrics, getTotals, importMetricRows, listAds, listBatches, listExperiments, periodFor, saveChecks, setAdStatus, updateAdTags } from "./repo";
 
 vi.mock("server-only", () => ({}));
 
@@ -172,5 +172,31 @@ describe("Creative Score data model", () => {
     expect(raw[a.name].videoStarts).toBe(400);
     expect(raw[a.name].videoCompletions).toBe(100);
     expect(raw[b.name].videoStarts).toBeNull();
+  });
+});
+
+describe("Templates (creative intent)", () => {
+  it("seeds the intent templates and links every ad to one", async () => {
+    const templates = await listTemplates(db);
+    expect(templates.map((x) => x.slug)).toEqual(expect.arrayContaining(["lifestyle-impact", "product-feature-spotlight", "product-in-use"]));
+    const seeded = new Map(data.ads.map((a) => [a.name, a.template]));
+    const ads = (await listAds(db)).filter((a) => seeded.has(a.name));
+    expect(ads).toHaveLength(data.ads.length);
+    expect(ads.every((a) => a.templateName && a.templateSlug === seeded.get(a.name))).toBe(true);
+  });
+
+  it("ensureStarterTemplates is idempotent", async () => {
+    expect(await ensureStarterTemplates(db)).toBe(0);
+  });
+
+  it("a batch ad can carry a template", async () => {
+    const res = await createBatch(db, {
+      name: "Template test", createdBy: "t", placements: ["facebook-feed"],
+      concepts: [{ key: "TplTestConcept", tags: { persona: [] } }],
+      ads: [{ conceptKey: "TplTestConcept", placement: "facebook-feed", platform: "meta", width: 1080, height: 1080, name: "TplTestConcept112026_1080x1080", tags: { persona: [] }, templateSlug: "product-in-use" }],
+    });
+    expect(res.created).toBe(1);
+    const ad = (await listAds(db)).find((a) => a.name === "TplTestConcept112026_1080x1080")!;
+    expect(ad.templateName).toBe("Product in use");
   });
 });

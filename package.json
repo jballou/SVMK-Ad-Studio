@@ -13,6 +13,7 @@
     "figma:discover": "tsx scripts/figma-discover.ts",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:reset": "rm -rf .data",
+    "dev:fresh": "rm -rf .data && next dev",
     "figma:check": "tsx scripts/figma-check.ts"
   },
   "dependencies": {

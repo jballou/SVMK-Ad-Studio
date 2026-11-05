@@ -11,7 +11,7 @@ import { hydrateAssetRefs } from "@/lib/assets/hydrate";
 import { removeAsset } from "@/lib/assets/ingest";
 import { hasErrors, qaComposition } from "@/lib/composition/qa";
 import type { Design } from "@/lib/composition/types";
-import { THEMES } from "@/lib/dummy/concepts";
+import { conceptIntent, THEMES } from "@/lib/dummy/concepts";
 import { getAsset, getPreset } from "@/lib/imagery/library";
 
 const today = () => new Date().toLocaleDateString("en-CA");
@@ -175,7 +175,7 @@ export async function generateBatch(input: unknown): Promise<BatchResult> {
 
   const res = await createBatch(db, {
     name, createdBy: "Jarrod B.", placements: placementKeys, concepts,
-    ads: plan.filter((p) => tagsByKey.has(p.conceptKey)).map((p) => ({ conceptKey: p.conceptKey, placement: p.placement, platform: p.platform, width: p.width, height: p.height, name: p.name, tags: { ...tagsByKey.get(p.conceptKey)!, geo: ["US"] }, composition: compositions.get(p.name) })),
+    ads: plan.filter((p) => tagsByKey.has(p.conceptKey)).map((p) => ({ conceptKey: p.conceptKey, placement: p.placement, platform: p.platform, width: p.width, height: p.height, name: p.name, tags: { ...tagsByKey.get(p.conceptKey)!, geo: ["US"] }, composition: compositions.get(p.name), templateSlug: conceptIntent(p.conceptKey) })),
   });
   revalidatePath("/gallery");
   revalidatePath("/batches");

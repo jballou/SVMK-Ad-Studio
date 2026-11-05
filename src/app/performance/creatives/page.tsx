@@ -16,6 +16,7 @@ export const metadata = { title: "Creatives & tags · Ad Studio" };
 
 const DIMS: Record<string, { label: string; pick: (a: AdRecord) => string | string[] }> = {
   concept: { label: "Creative concept", pick: (a) => a.conceptKey },
+  template: { label: "Template (intent)", pick: (a) => a.templateName ?? "No template" },
   persona: { label: "Persona", pick: (a) => a.tags.persona },
   funnel: { label: "Funnel stage", pick: (a) => a.tags.funnel ?? "Untagged" },
   offer: { label: "Offer", pick: (a) => a.tags.offer ?? "Untagged" },

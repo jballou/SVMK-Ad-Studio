@@ -11,9 +11,9 @@ describe("generateDummyData", () => {
     expect(again.daily.length).toBe(data.daily.length);
     expect(again.daily[100]).toEqual(data.daily[100]);
   });
-  it("produces ~150 ads with unique, parseable names", () => {
-    expect(data.ads.length).toBeGreaterThan(130);
-    expect(data.ads.length).toBeLessThan(175);
+  it("produces ~175-210 ads with unique, parseable names", () => {
+    expect(data.ads.length).toBeGreaterThan(150);
+    expect(data.ads.length).toBeLessThan(215);
     expect(new Set(data.ads.map((a) => a.name)).size).toBe(data.ads.length);
     for (const a of data.ads.filter((x) => x.launchedAt)) {
       expect(parseAdName(a.name)).toMatchObject({ conceptKey: a.conceptKey, width: a.width, height: a.height });

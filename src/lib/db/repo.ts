@@ -5,6 +5,7 @@ import * as t from "@/db/schema";
 import type { AdRecord, AdStatus } from "@/lib/ads/types";
 import type { MetricRow, Totals } from "@/lib/metrics/csv";
 import type { Benchmark, ManualChecks } from "@/lib/scorecard/build";
+import { STARTER_TEMPLATES } from "@/lib/templates/intents";
 import { DEFAULT_CONFIG, type Benchmark as ScoreBenchmark, type FunnelStage, type KpiKey, type RawInputs, type ScoreConfig } from "@/lib/scoring/creative-score";
 import { DEFAULT_GATE, DEFAULT_TAXONOMY, SETTING_KEYS, type LearningGate, type Taxonomy } from "@/lib/settings";
 
@@ -13,11 +14,12 @@ import { DEFAULT_GATE, DEFAULT_TAXONOMY, SETTING_KEYS, type LearningGate, type T
 
 export async function listAds(db: Db): Promise<AdRecord[]> {
   const rows = await db
-    .select({ ad: t.ads, creative: t.creatives, concept: t.concepts })
+    .select({ ad: t.ads, creative: t.creatives, concept: t.concepts, template: t.templates })
     .from(t.ads)
     .innerJoin(t.creatives, eq(t.ads.creativeId, t.creatives.id))
-    .innerJoin(t.concepts, eq(t.creatives.conceptId, t.concepts.id));
-  return rows.map(({ ad, creative, concept }) => ({
+    .innerJoin(t.concepts, eq(t.creatives.conceptId, t.concepts.id))
+    .leftJoin(t.templates, eq(t.ads.templateId, t.templates.id));
+  return rows.map(({ ad, creative, concept, template }) => ({
     id: ad.name,
     name: ad.name,
     conceptKey: concept.conceptKey,
@@ -26,6 +28,8 @@ export async function listAds(db: Db): Promise<AdRecord[]> {
     width: creative.width,
     height: creative.height,
     status: ad.status,
+    templateSlug: template?.slug,
+    templateName: template?.name,
     adType: ad.adType,
     stage: ad.stage ?? undefined,
     geo: ad.geo ?? undefined,
@@ -178,6 +182,8 @@ export interface NewBatchAd {
   name: string;
   tags: AdRecord["tags"];
   composition?: AdRecord["composition"];
+  /** Creative-intent template slug. */
+  templateSlug?: string;
 }
 
 /** Creates a draft batch: ensures each concept has creatives and inserts draft ads for the chosen sizes. */
@@ -195,6 +201,7 @@ export async function createBatch(
         .returning({ id: t.concepts.id });
       conceptIds.set(c.key, row.id);
     }
+    const templateIds = new Map((await tx.select({ id: t.templates.id, slug: t.templates.slug }).from(t.templates)).map((r) => [r.slug, r.id]));
     let created = 0;
     const skipped: string[] = [];
     for (const a of input.ads) {
@@ -205,7 +212,7 @@ export async function createBatch(
         .values({ conceptId: conceptIds.get(a.conceptKey)!, figmaNodeId: `batch:${a.conceptKey}:${a.width}x${a.height}`, width: a.width, height: a.height })
         .onConflictDoUpdate({ target: [t.creatives.conceptId, t.creatives.width, t.creatives.height], set: { syncedAt: new Date() } })
         .returning({ id: t.creatives.id });
-      await tx.insert(t.ads).values({ creativeId: creative.id, name: a.name, platform: a.platform, placement: a.placement, status: "draft", tags: a.tags, composition: a.composition });
+      await tx.insert(t.ads).values({ creativeId: creative.id, name: a.name, platform: a.platform, placement: a.placement, status: "draft", tags: a.tags, composition: a.composition, templateId: a.templateSlug ? templateIds.get(a.templateSlug) ?? null : null });
       created++;
     }
     const [batch] = await tx
@@ -326,4 +333,27 @@ export async function upsertScoreBenchmark(db: Db, b: Omit<ScoreBenchmarkRow, "i
 export async function deleteScoreBenchmark(db: Db, id: number): Promise<boolean> {
   const res = await db.delete(t.scoreBenchmarks).where(eq(t.scoreBenchmarks.id, id)).returning({ id: t.scoreBenchmarks.id });
   return res.length > 0;
+}
+
+// ---- Templates (named for creative intent) ----
+
+export interface TemplateRow {
+  id: number;
+  slug: string;
+  name: string;
+  description?: string;
+  status: "draft" | "published";
+  layout: "left" | "center" | "bottom";
+  supports: { photo: boolean; product: boolean };
+}
+
+export async function listTemplates(db: Db): Promise<TemplateRow[]> {
+  const rows = await db.select().from(t.templates).orderBy(t.templates.id);
+  return rows.map((r) => ({ id: r.id, slug: r.slug, name: r.name, description: r.description ?? undefined, status: r.status, layout: r.layout, supports: r.supports }));
+}
+
+/** Adds any starter template that is missing (matched by slug); never overwrites designer edits. */
+export async function ensureStarterTemplates(db: Db): Promise<number> {
+  const res = await db.insert(t.templates).values(STARTER_TEMPLATES.map((s) => ({ ...s, status: "published" as const, createdBy: "Ad Studio" }))).onConflictDoNothing({ target: t.templates.slug }).returning({ id: t.templates.id });
+  return res.length;
 }

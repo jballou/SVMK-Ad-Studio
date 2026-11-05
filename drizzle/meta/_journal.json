@@ -43,6 +43,13 @@
       "when": 1793824509388,
       "tag": "0005_yummy_toro",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793907709416,
+      "tag": "0006_kind_shockwave",
+      "breakpoints": true
     }
   ]
 }

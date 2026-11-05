@@ -2,34 +2,35 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, CircleCheck, CircleX, FileSpreadsheet, Frame, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, CircleCheck, CircleX, FileSpreadsheet, Sparkles } from "lucide-react";
 import { generateBatch, type BatchResult } from "@/app/actions";
-import { AdArt } from "@/components/ads/AdArt";
 import { DesignEditor, qaForDesign, type SizeOption } from "@/components/design/DesignEditor";
 import { stripUploads } from "@/lib/composition/edit";
 import type { Design } from "@/lib/composition/types";
 import { counts } from "@/lib/composition/qa";
 import { overusesGreen900, type LogoVariant } from "@/lib/composition/logo";
+import { BatchCart } from "@/components/batches/BatchCart";
+import { ConceptGallery } from "@/components/batches/ConceptGallery";
 import { Button } from "@/components/ui/button-1";
 import { Chip } from "@/components/ui/chip";
 import { Card } from "@/components/ui/primitives";
 import { checkCopy, planBatch } from "@/lib/batches/plan";
-import { artFor, conceptByKey, COPY_DECKS, DECK_LIMITS, designForConcept, TEMPLATE_FILES, type DeckRowData } from "@/lib/dummy/library";
+import { conceptByKey, COPY_DECKS, DECK_LIMITS, designForConcept, type DeckRowData } from "@/lib/dummy/library";
 import { fmtDate } from "@/lib/format";
 import { PLACEMENTS, type PlatformKey } from "@/lib/specs/platforms";
 import { PLATFORM_LABEL } from "@/lib/ui/colors";
 
-const STEPS = ["Template", "Copy deck", "Platforms", "Preview", "Review"] as const;
+const STEPS = ["Concepts", "Copy deck", "Platforms", "Preview", "Review"] as const;
 type CopyEdit = Pick<DeckRowData, "platformHeadline" | "intro">;
 
 const field = "h-9 w-full rounded-lg border border-brand-neutral-250 bg-white px-2.5 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
 
-export function BatchWizard({ existing, defaultMonth }: { existing: string[]; defaultMonth: string }) {
+export function BatchWizard({ existing, defaultMonth, customRequestUrl }: { existing: string[]; defaultMonth: string; customRequestUrl: string }) {
   const [step, setStep] = useState(0);
-  const [templateId, setTemplateId] = useState(TEMPLATE_FILES[0].id);
-  const template = TEMPLATE_FILES.find((t) => t.id === templateId)!;
-  const [picked, setPicked] = useState<string[]>(() => TEMPLATE_FILES[0].concepts.slice(0, 3));
-  const [deckId, setDeckId] = useState(`deck-${TEMPLATE_FILES[0].id}`);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [deckOverride, setDeckOverride] = useState<string | null>(null);
+  // Default to the copy deck that covers the most picked concepts; the user can change it.
+  const deckId = deckOverride ?? [...COPY_DECKS].sort((a, b) => picked.filter((k) => b.rows.some((r) => r.adBase === k)).length - picked.filter((k) => a.rows.some((r) => r.adBase === k)).length)[0].id;
   const [edits, setEdits] = useState<Record<string, Partial<CopyEdit>>>({});
   const [placements, setPlacements] = useState<string[]>(["linkedin-single-image", "instagram-feed"]);
   const [previewConcept, setPreviewConcept] = useState<string>("");
@@ -49,7 +50,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
   const rows = picked.flatMap((k) => { const r = rowFor(k); return r ? [r] : []; });
   const checks = rows.map((r) => ({ row: r, issues: checkCopy(r, DECK_LIMITS) }));
   const copyErrors = checks.reduce((n, c) => n + c.issues.filter((i) => i.severity === "error").length, 0);
-  const orphanRows = deck.rows.filter((r) => !template.concepts.includes(r.adBase));
+  const orphanRows = deck.rows.filter((r) => !conceptByKey(r.adBase));
 
   const [y, m] = month.split("-").map(Number);
   const plan = useMemo(() => planBatch({ conceptKeys: picked, placementKeys: placements, month: m || 1, year: y || 2026, existing: new Set(existing) }), [picked, placements, m, y, existing]);
@@ -92,19 +93,11 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
   const canNext = step === 0 ? picked.length > 0 : step === 1 ? copyErrors === 0 : step === 2 ? placements.length > 0 : step === 3 ? designErrors === 0 : true;
   const reason = step === 0 ? "Select at least one concept." : step === 1 ? `Fix ${copyErrors} copy error${copyErrors === 1 ? "" : "s"} to continue.` : step === 2 ? "Select at least one placement." : step === 3 ? `Fix ${designErrors} design error${designErrors === 1 ? "" : "s"} to continue.` : "";
 
-  const chooseTemplate = (id: string) => {
-    const t = TEMPLATE_FILES.find((x) => x.id === id)!;
-    setTemplateId(id);
-    setPicked(t.concepts.slice(0, 3));
-    setDeckId(`deck-${id}`);
-    setEdits({});
-    setDesigns({});
-    setPreviewConcept("");
-  };
+  const defaultName = picked.length === 1 ? picked[0] : `${picked.length} concepts`;
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
   const submit = () => {
-    const batchName = name.trim() || `${template.campaign}: ${picked.length} concept${picked.length === 1 ? "" : "s"}`;
+    const batchName = name.trim() || defaultName;
     start(async () => {
       const copy = Object.fromEntries(rows.map((r) => [r.adBase, { headline: r.headline, platformHeadline: r.platformHeadline, intro: r.intro, cta: r.cta, landing: r.landing }]));
       try {
@@ -146,46 +139,12 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
           ))}
         </ol>
 
-        {step === 0 && (
-          <>
-            <Card title="Choose a Figma template" description="Frames follow the AD | Concept | WxH naming scheme. Pick the file, then the concepts to generate.">
-              <div role="radiogroup" aria-label="Figma template" className="grid gap-3 sm:grid-cols-2">
-                {TEMPLATE_FILES.map((t) => (
-                  <label key={t.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 ${t.id === templateId ? "border-brand-green-600 bg-brand-green-100/40" : "border-brand-neutral-200 hover:bg-brand-neutral-50"}`}>
-                    <input type="radio" name="template" checked={t.id === templateId} onChange={() => chooseTemplate(t.id)} className="mt-1 accent-brand-green-600" />
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-1.5 text-sm font-medium"><Frame className="size-3.5 text-brand-neutral-650" aria-hidden />{t.name}</span>
-                      <span className="mt-0.5 block text-xs text-brand-neutral-650">{t.concepts.length} concepts · {t.frameCount} frames · synced {fmtDate(t.lastSynced)}</span>
-                      {t.status === "stale" && <span className="mt-1 inline-flex items-center gap-1 text-xs text-brand-orange-600"><AlertTriangle className="size-3" aria-hidden />Not synced in over a month</span>}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </Card>
-            <Card title="Concepts" description={`${picked.length} of ${template.concepts.length} selected`} actions={<Button variant="ghost" size="sm" onClick={() => setPicked(picked.length === template.concepts.length ? [] : template.concepts)}>{picked.length === template.concepts.length ? "Clear all" : "Select all"}</Button>}>
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {template.concepts.map((k) => {
-                  const c = conceptByKey(k)!;
-                  const on = picked.includes(k);
-                  return (
-                    <li key={k}>
-                      <label className={`block cursor-pointer rounded-xl border p-2 ${on ? "border-brand-green-600 bg-brand-green-100/40" : "border-brand-neutral-200 hover:bg-brand-neutral-50"}`}>
-                        <span className="mb-2 block overflow-hidden rounded"><AdArt art={artFor(c)} copy={c} width={1200} height={1200} showCta={false} /></span>
-                        <span className="flex items-center gap-2 text-sm"><input type="checkbox" checked={on} onChange={() => setPicked(toggle(picked, k))} className="accent-brand-green-600" /><span className="truncate font-medium">{k}</span></span>
-                        <span className="ml-6 block text-xs text-brand-neutral-650">{c.funnel} · {c.personas.join(", ")}</span>
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Card>
-          </>
-        )}
+        {step === 0 && <ConceptGallery selected={picked} onToggle={(k) => setPicked(toggle(picked, k))} customRequestUrl={customRequestUrl} />}
 
         {step === 1 && (
           <Card title="Link the copy deck" description="Headline and intro text are checked against each platform's character limits." actions={<Chip variant="completed" chevron={false} className="!px-2.5 !py-1 !text-xs">Synced {fmtDate(deck.syncedAt)}</Chip>}>
             <label className="mb-4 block text-xs font-medium text-brand-neutral-650">Spreadsheet
-              <select value={deckId} onChange={(e) => { setDeckId(e.target.value); setEdits({}); setDesigns({}); }} className={`${field} mt-1 max-w-md`}>
+              <select value={deckId} onChange={(e) => { setDeckOverride(e.target.value); setEdits({}); setDesigns({}); }} className={`${field} mt-1 max-w-md`}>
                 {COPY_DECKS.map((d) => <option key={d.id} value={d.id}>{d.name} · tab “{d.tab}”</option>)}
               </select>
             </label>
@@ -254,7 +213,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
         {step === 4 && (
           <Card title="Review and generate" description="Ads are created as drafts. Nothing goes to a platform from here.">
             <div className="mb-4 grid gap-3 sm:grid-cols-2">
-              <label className="text-xs font-medium text-brand-neutral-650">Batch name<input value={name} onChange={(e) => setName(e.target.value)} placeholder={`${template.campaign}: ${picked.length} concept${picked.length === 1 ? "" : "s"}`} className={`${field} mt-1`} /></label>
+              <label className="text-xs font-medium text-brand-neutral-650">Batch name<input value={name} onChange={(e) => setName(e.target.value)} placeholder={defaultName} className={`${field} mt-1`} /></label>
               <label className="text-xs font-medium text-brand-neutral-650">Launch month<input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className={`${field} mt-1`} /></label>
             </div>
             <div className="overflow-x-auto rounded-lg border border-brand-neutral-200">
@@ -283,17 +242,7 @@ export function BatchWizard({ existing, defaultMonth }: { existing: string[]; de
         </div>
       </div>
 
-      {step !== 3 && <aside aria-label="Batch summary" className="h-fit rounded-xl border border-brand-neutral-200 bg-white p-4 text-sm lg:sticky lg:top-20">
-        <h2 className="text-sm font-semibold">Batch summary</h2>
-        <dl className="mt-3 space-y-2.5">
-          <div><dt className="text-xs text-brand-neutral-650">Template</dt><dd className="font-medium">{template.name}</dd></div>
-          <div><dt className="text-xs text-brand-neutral-650">Concepts</dt><dd>{picked.length ? picked.join(", ") : "None yet"}</dd></div>
-          <div><dt className="text-xs text-brand-neutral-650">Copy deck</dt><dd>{deck.name}</dd></div>
-          <div><dt className="text-xs text-brand-neutral-650">Placements</dt><dd>{placements.length}</dd></div>
-          <div className="border-t border-brand-neutral-150 pt-2.5"><dt className="text-xs text-brand-neutral-650">Ads to create</dt><dd className="text-2xl font-semibold tabular-nums">{fresh.length}</dd>{plan.length > fresh.length && <p className="text-xs text-brand-orange-600">{plan.length - fresh.length} already exist</p>}</div>
-          {copyErrors > 0 && <p className="text-xs text-brand-red-500">{copyErrors} copy error{copyErrors === 1 ? "" : "s"} to fix</p>}
-        </dl>
-      </aside>}
+      {step !== 3 && <BatchCart picked={picked} onRemove={(k) => setPicked(picked.filter((x) => x !== k))} onClear={() => setPicked([])} adsToCreate={fresh.length} alreadyExist={plan.length - fresh.length} placements={placements.length} copyErrors={copyErrors} step={step} />}
     </div>
   );
 }

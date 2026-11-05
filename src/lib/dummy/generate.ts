@@ -1,5 +1,6 @@
 import { CONCEPTS, CONCEPT_PLATFORMS, type ConceptSeed } from "./concepts";
 import { addDays, daysBetween, mulberry32, normal, weekday, type Rng } from "./rng";
+import { intentSlugFor } from "@/lib/templates/intents";
 import type { AdStatus } from "@/lib/ads/types";
 import type { PlatformKey } from "@/lib/specs/platforms";
 
@@ -17,6 +18,8 @@ export interface DummyAd {
   /** Creative Score dimensions. Funnel maps Awareness->Awareness, Consideration->Interest, Intent->Conversion. */
   adType: string;
   stage: "Awareness" | "Interest" | "Conversion";
+  /** Creative-intent template slug. */
+  template: string;
   launchedAt?: string;
   pausedAt?: string;
   geo: string[];
@@ -103,6 +106,12 @@ const MODEL: Record<PlatformKey, { cpm: number; ctr: number; cvr: number; daily:
   display: { cpm: 4.5, ctr: 0.0014, cvr: 0.012, daily: 85_000 },
   newsletter: { cpm: 28, ctr: 0.009, cvr: 0.04, daily: 11_000 },
 };
+// Each concept's layout picks a family of intents; the concept index picks one. Intents carry a small
+// performance lift so the by-template breakdown has something to show.
+const TEMPLATE_LIFT: Record<string, number> = {
+  "lifestyle-impact": 1.08, "product-feature-spotlight": 1.0, "product-in-use": 1.1, "stat-proof-point": 0.97,
+  "customer-quote": 1.03, "offer-promo": 0.95, "report-download": 1.0, "event-webinar": 0.93,
+};
 const STAGE_FOR = { Awareness: "Awareness", Consideration: "Interest", Intent: "Conversion" } as const;
 const FUNNEL_CVR = { Awareness: 0.6, Consideration: 1, Intent: 1.5 } as const;
 
@@ -150,13 +159,14 @@ export function generateDummyData(seed = 20261103): DummyData {
     const idx = concept.draft ? 0 : ci;
     const conceptLaunch = addDays(FIRST_LAUNCH, Math.round((idx * 172) / Math.max(1, active.length - 1)));
     const platforms = CONCEPT_PLATFORMS[ci % CONCEPT_PLATFORMS.length];
+    const template = concept.intent ?? intentSlugFor(concept.layout, ci);
     for (const platform of platforms) {
       const offset = Math.floor(r() * 4);
       const launch = concept.draft ? undefined : addDays(conceptLaunch, offset);
       const geo = r() < 0.7 ? ["US"] : ["US", "UK"];
       for (const slot of SLOTS[platform]) {
         for (const [w, h] of slot.sizes) {
-          const quality = concept.quality * Math.exp(0.18 * normal(r));
+          const quality = concept.quality * TEMPLATE_LIFT[template] * Math.exp(0.18 * normal(r));
           let status: AdStatus = "draft";
           let pausedAt: string | undefined;
           if (launch) {
@@ -170,7 +180,7 @@ export function generateDummyData(seed = 20261103): DummyData {
           const checks = launch
             ? { campaignActive: status === "live" || r() < 0.2, landingPageClear: r() < 0.85, ctaMatch: r() < 0.9, icpMatch: r() < 0.8 }
             : undefined;
-          const ad: DummyAd = { name, conceptKey: concept.key, platform, placement: slot.placement, width: w, height: h, status, adType: platform === "display" ? "Display" : "Static", stage: STAGE_FOR[concept.funnel], launchedAt: launch, pausedAt, geo, quality, checks };
+          const ad: DummyAd = { name, conceptKey: concept.key, platform, placement: slot.placement, width: w, height: h, status, adType: platform === "display" ? "Display" : "Static", stage: STAGE_FOR[concept.funnel], template, launchedAt: launch, pausedAt, geo, quality, checks };
           ads.push(ad);
           daily.push(...dailyFor(r, ad, concept.funnel, today));
         }

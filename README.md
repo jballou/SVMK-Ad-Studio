@@ -11,7 +11,7 @@ Scope: static ads for LinkedIn, Meta (Facebook, Instagram, Threads), Google Disp
 | Dashboard | `/` | 30-day KPIs vs prior period, CTR by platform, scorecard health, top performers, fatigue alerts, refresh candidates, recent batches |
 | Ad gallery | `/gallery` | Grid / gallery / list views, search, filters (platform, status, persona, funnel), sort, bulk select to export, inline status changes |
 | Ad detail | `/gallery/[name]` | Creative inside its platform UI (all Meta placements), metrics, rolling CTR, scorecard, copy with char limits, editable tags, pause/resume |
-| New batch | `/batches/new` | 5-step wizard: Figma template and concepts, copy deck (validated, editable), placements, **visual design editor**, review and generate |
+| New batch | `/batches/new` | 5-step wizard: concept gallery by creative intent (search, filters, cart-style summary, "Request custom ad"), copy deck (validated, editable), placements, **visual design editor**, review and generate |
 | Batches | `/batches` | History of generated batches |
 | Analytics | `/performance/*` | Overview with winners/losers; platforms, placements and sizes; creatives and tag breakdowns; A/B tests with significance; fatigue |
 | Scorecards | `/scorecards` | 45-point scoring, bands, "Too early" learning gate, manual checks, CSV import |
@@ -34,6 +34,7 @@ Images you bring in (upload, Google Drive, Figma) go through one pipeline (`src/
 | *(no token, local dev)* | Files are stored under `.data/uploads/` instead. |
 | *(no token, on Vercel)* | Storage is off: uploads stay in the browser session and generated ads show a placeholder. |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Google Drive import (read-only). Share the file or folder with the service account's `client_email`; paste the link in the picker. Also used for copy-deck sheets. |
+| `BRAND_CREATIVE_HUB_URL` | Where the "Request custom ad" button on New batch sends people (the Brand Creative Hub new-project page). While unset, the button is disabled. |
 | `FIGMA_TOKEN` | Figma import: paste a link to a frame or layer (it must include `node-id`); it is rendered to PNG at up to 2x and saved. |
 
 On the hosted demo (no `DATABASE_URL`) the in-memory database resets, so stored image records, and therefore the images, don't last. Connect a real Postgres alongside Blob.
@@ -56,7 +57,8 @@ On the hosted demo (no `DATABASE_URL`) the in-memory database resets, so stored 
 ## Develop
 ```bash
 npm install
-npm run dev        # http://localhost:3000
+npm run dev        # http://localhost:3000 (shows uncommitted changes live; no commit or deploy needed)
+npm run dev:fresh  # same, but wipes the local database first so it reseeds
 npm test           # Vitest
 npm run typecheck
 npm run lint

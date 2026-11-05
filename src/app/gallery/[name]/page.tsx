@@ -141,7 +141,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
             </dl>
           ) : <p className="text-sm text-brand-neutral-650">No copy linked.</p>}
         </Card>
-        <Card title="Tags" description="Persona, funnel stage, and targeting used in filters and reports"><TagEditor key={JSON.stringify(ad.tags)} name={ad.name} tags={ad.tags} taxonomy={ws.taxonomy} /></Card>
+        <Card title="Tags" description={`Persona, funnel stage, and targeting used in filters and reports${ad.templateName ? ` · Template: ${ad.templateName}` : ""}`}><TagEditor key={JSON.stringify(ad.tags)} name={ad.name} tags={ad.tags} taxonomy={ws.taxonomy} /></Card>
       </div>
       <p className="mt-6 text-xs text-brand-neutral-550">Launched {fmtDate(ad.launchedAt)}{ad.pausedAt ? ` · paused ${fmtDate(ad.pausedAt)}` : ""}</p>
     </>

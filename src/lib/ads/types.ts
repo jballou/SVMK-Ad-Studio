@@ -11,6 +11,9 @@ export interface AdRecord {
   height: number;
   status: AdStatus;
   /** Creative Score dimensions. */
+  /** Creative intent template (see lib/templates). */
+  templateSlug?: string;
+  templateName?: string;
   /** Defaults to "Static" when absent. */
   adType?: string;
   stage?: string;

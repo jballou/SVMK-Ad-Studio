@@ -26,11 +26,11 @@ export function estimateBytes(ads: Pick<AdRecord, "width" | "height">[], format:
   return ads.reduce((n, a) => n + a.width * a.height * scale * scale * BYTES_PER_PIXEL[format], 0);
 }
 
-export const MANIFEST_HEADER = ["ad_name", "file_path", "concept", "campaign", "platform", "placement", "width", "height", "status", "launched", "funnel", "persona", "icp", "geo", "offer", "in_image_headline", "intro_text", "platform_headline", "cta", "landing_page"];
+export const MANIFEST_HEADER = ["ad_name", "file_path", "concept", "campaign", "platform", "placement", "template", "width", "height", "status", "launched", "funnel", "persona", "icp", "geo", "offer", "in_image_headline", "intro_text", "platform_headline", "cta", "landing_page"];
 
 export function manifestRows(ads: AdRecord[], structure: Structure, format: Format): unknown[][] {
   return ads.map((a) => [
-    a.name, exportPath(a, structure, format), a.conceptKey, a.campaign, a.platform, a.placement, a.width, a.height, a.status, a.launchedAt,
+    a.name, exportPath(a, structure, format), a.conceptKey, a.campaign, a.platform, a.placement, a.templateName, a.width, a.height, a.status, a.launchedAt,
     a.tags.funnel, a.tags.persona.join("; "), (a.tags.icp ?? []).join("; "), (a.tags.geo ?? []).join("; "), a.tags.offer,
     a.copy?.headline, a.copy?.intro, a.copy?.platformHeadline, a.copy?.cta, a.copy?.landing,
   ]);

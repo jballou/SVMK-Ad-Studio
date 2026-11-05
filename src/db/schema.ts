@@ -14,6 +14,20 @@ export const concepts = pgTable("concepts", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Templates are named for creative intent (Lifestyle impact, Product in use...). A concept supplies the
+// campaign copy and imagery; the template supplies the layout and style.
+export const templates = pgTable("templates", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").$type<"draft" | "published">().default("published").notNull(),
+  layout: text("layout").$type<"left" | "center" | "bottom">().notNull(),
+  supports: jsonb("supports").$type<{ photo: boolean; product: boolean }>().notNull(),
+  createdBy: text("created_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // One Figma frame = one size of a concept.
 export const creatives = pgTable(
   "creatives",
@@ -56,6 +70,7 @@ export const ads = pgTable("ads", {
   placement: text("placement").notNull(),
   // Creative Score dimensions. adType: Static | Carousel | Display | Native | InMail | Video | CTV | ...
   // stage: Awareness | Interest | Conversion | Re-engage. geo is the ad's primary geo (null = all/unspecified).
+  templateId: integer("template_id").references(() => templates.id),
   adType: text("ad_type").default("Static").notNull(),
   stage: text("stage"),
   geo: text("geo"),
