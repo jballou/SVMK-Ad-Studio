@@ -43,24 +43,19 @@ const c = (
 
 const ENT = "/welcome/enterprise";
 const SALES = "/welcome/contact-sales/";
-const AWARE = "Today's SurveyMonkey";
 const PH2 = "SA Campaign Phase 2";
 // Copy for the "Consideration + Intent" concepts is taken from that page of the Today's SurveyMonkey Ads Figma file.
 // Landing pages are still "TBD" in the designs; the customer quote is shown without the named individual.
+const EVG = "Evergreen Awareness";
+const INT = "Interest";
+const CUST = "Customer Static Paid Social";
+const MKI = "Marketing Interest";
+const SCS = "SCS Consideration";
+const MKC = "Marketing Consideration";
 const CI = "Consideration + Intent";
 const TBD = "/TBD";
 
 export const CONCEPTS: ConceptSeed[] = [
-  c("HumansMatter", AWARE, "Behind every response is a human.", "Listen to the people behind the data", "Great feedback starts with listening. See how SurveyMonkey helps you hear every voice.", "Learn more", "/welcome/humans", ["CX"], "Awareness", "Brand", ["Enterprise"], 0, "left", 1.25),
-  c("JustBeginning", AWARE, "You've only just begun to listen.", "There's more to hear. Start with SurveyMonkey", "Every answer opens a new question. Start hearing what your customers really mean.", "Learn more", "/welcome/begin", ["Marketing"], "Awareness", "Brand", ["Mid-market"], 8, "center", 1.4),
-  c("GuessingKnowing", AWARE, "Stop guessing. Start knowing.", "Replace assumptions with answers", "Guesswork is expensive. Get the answers that move your business forward.", "Learn more", "/welcome/know", ["Marketing", "CX"], "Awareness", "Brand", ["Mid-market"], 3, "left", 0.85),
-  c("NotSurveys", AWARE, "It's not just surveys.", "A feedback platform, not just forms", "Surveys are the start. Turn feedback into decisions with one connected platform.", "Learn more", "/welcome/platform", ["IT"], "Awareness", "Brand", ["Enterprise"], 6, "bottom", 1.1),
-  c("DataDecisions", AWARE, "Turn data into decisions.", "From feedback data to confident decisions", "Connect survey results to the tools your team already uses.", "Learn more", "/welcome/data", ["IT", "Marketing"], "Awareness", "Brand", ["Enterprise"], 1, "left", 0.9),
-  c("StillListen", AWARE, "Still listening? Start hearing.", "Hear what your customers actually mean", "Hearing is more than collecting. Get the insight behind every answer.", "Learn more", "/welcome/hear", ["CX"], "Awareness", "Brand", ["Mid-market"], 4, "center", 0.75),
-  c("FeedbackOrg", AWARE, "Feedback your whole org can use.", "One feedback program for every team", "Share insights across teams so everyone acts on the same source of truth.", "Learn more", "/welcome/org", ["EX", "IT"], "Awareness", "Brand", ["Enterprise"], 7, "bottom", 0.7),
-  c("WhereWork", AWARE, "Where work gets better.", "Make every workplace better, faster", "Listen to your people and turn their feedback into a better place to work.", "Learn more", "/welcome/work", ["EX"], "Awareness", "Brand", ["Enterprise"], 2, "left", 1.05),
-  c("LeadReal", AWARE, "Lead with real insight.", "Lead with what customers really say", "Real answers beat gut feel. Make the next call with confidence.", "Learn more", "/welcome/lead", ["Marketing"], "Awareness", "Brand", ["SMB"], 9, "center", 0.8),
-  c("SmartListen", AWARE, "Listen smarter with AI.", "AI-powered analysis in seconds", "Let AI surface the themes in your feedback so you can act faster.", "Try it free", "/welcome/ai", ["Marketing", "CX"], "Awareness", "Free trial", ["Mid-market"], 0, "bottom", 1.2),
   c("YourBrand", PH2, "Your brand, your survey.", "Tailor every survey detail, from invite to final question", "Create surveys that feel like your brand. Customize every detail to build trust and boost responses.", "Learn more", ENT, ["Marketing"], "Consideration", "Brand", ["Enterprise"], 5, "left", 1.0),
   c("CaptureFeedback", PH2, "Capture feedback anytime, anywhere.", "Collect real-time feedback wherever customers are", "Meet customers on the channels they prefer: SMS, WhatsApp, QR codes and more.", "Learn more", ENT, ["CX"], "Consideration", "Brand", ["Enterprise"], 1, "center", 1.15),
   c("FasterInsights", PH2, "Faster insights, smarter moves.", "Speed up feedback to action", "Connect SurveyMonkey to 200+ tools and turn feedback into faster decisions.", "Learn more", ENT, ["IT"], "Consideration", "Brand", ["Enterprise"], 6, "left", 0.95),
@@ -77,16 +72,24 @@ export const CONCEPTS: ConceptSeed[] = [
   c("MostPopularSurvey", CI, "The world's most popular survey platform", "14,500+ 5-star reviews on G2", "14,500+ teams rely on us for customer feedback, market research, and employee insights. Get the data you need to make confident decisions.", "Learn more", TBD, ["Marketing", "CX"], "Consideration", "Brand", ["Mid-market"], 0, "left", 1.15, false, "product-feature-spotlight"),
   c("EveryonesBFF", CI, "Everyone's BFF", "Wanna be friends?", "Real friends don't compromise on security or settle for mediocre results. We obsess over both. See why thousands of organizations made us their go-to.", "Learn more", TBD, ["Marketing"], "Consideration", "Brand", ["Mid-market"], 3, "center", 0.9, false, "lifestyle-impact"),
   c("WinningStartsWithData", CI, "“SurveyMonkey allows us to ask what matters and find out what resonates within the marketplace.”", "Winning starts with data", "The Warriors use SurveyMonkey to understand their fans, creating diverse experiences, engaging social moments, and better-timed offerings. Discover how today.", "Learn more", TBD, ["Marketing", "CX"], "Consideration", "Brand", ["Enterprise"], 6, "bottom", 1.0, false, "customer-quote"),
-  c("PeopleFirst", "EX Awareness", "People first. Always listening.", "Put your people first", "Employee feedback that leads to action, from onboarding to exit.", "Learn more", "/welcome/employee", ["EX"], "Awareness", "Brand", ["Enterprise"], 2, "center", 1.0),
-  c("PulseCheck", "EX Awareness", "Take the pulse of your team.", "Quick pulse surveys for any team", "Know how your team is really doing, with templates that take minutes to launch.", "Try it free", "/welcome/pulse", ["EX"], "Consideration", "Free trial", ["Mid-market"], 7, "left", 1.1),
-  c("ManagerReady", "EX Awareness", "Managers deserve better feedback.", "Feedback that helps managers grow", "Give every people manager the insight they need to lead well.", "Learn more", "/welcome/managers", ["EX"], "Consideration", "Webinar", ["Enterprise"], 6, "bottom", 0.85),
-  c("ResearchFaster", "Market Research", "Market research in days, not weeks.", "Get audience answers fast", "Reach your target audience and get statistically sound answers quickly.", "Get started", "/market-research", ["Marketing"], "Consideration", "Free trial", ["Mid-market"], 3, "center", 1.25),
-  c("AudienceInsight", "Market Research", "Know your audience before you launch.", "Test ideas with real people first", "Validate concepts, messaging and pricing before you spend on launch.", "Book a demo", SALES, ["Marketing"], "Intent", "Demo", ["Mid-market"], 0, "left", 1.0),
-  c("SecureAtScale", AWARE, "Enterprise-grade security, built in.", "Security and compliance you can trust", "SSO, audit logs and data residency for every team in your organization.", "Book a demo", SALES, ["IT"], "Intent", "Demo", ["Enterprise"], 8, "left", 0.95),
-  c("IntegrateAll", AWARE, "200+ integrations. One source of truth.", "Connect feedback to every tool you use", "Pipe survey responses into the systems your teams already live in.", "Learn more", "/integrations", ["IT"], "Consideration", "Guide", ["Enterprise"], 1, "bottom", 1.0),
-  c("AIInsights", "Q1 Preview", "Ask your feedback anything.", "Chat with your survey data", "Ask questions in plain language and get answers from your responses.", "Try it free", "/welcome/ai-chat", ["Marketing", "CX"], "Awareness", "Free trial", ["Mid-market"], 0, "center", 1.0, true),
-  c("NPSNow", "Q1 Preview", "Know your NPS in an afternoon.", "Launch NPS in minutes", "Prebuilt NPS programs with benchmarks built in.", "Get started", "/welcome/nps", ["CX"], "Consideration", "Free trial", ["SMB"], 2, "left", 1.0, true),
-  c("BenchmarkYou", "Q1 Preview", "How do you compare?", "See how you stack up", "Industry benchmarks for every metric you measure.", "Learn more", "/welcome/benchmarks", ["Marketing"], "Awareness", "Report", ["Enterprise"], 4, "bottom", 1.0, true),
+  c("GuessingToKnowing", EVG, "Stop guessing. Start knowing.", "Gather continuous insight across your organization", "Understand your customers, employees, and market with real data in minutes.", "Learn more", TBD, ["Marketing"], "Awareness", "Brand", ["Mid-market"], 8, "center", 1.0, false, "lifestyle-impact"),
+  c("NotJustSurveys", EVG, "Not. Just. Surveys.", "Market research, forms, audience panels, and more.", "Today's SurveyMonkey is more than surveys. See what else it can do for your team.", "Learn more", TBD, ["Marketing", "CX"], "Awareness", "Brand", ["Mid-market"], 0, "left", 1.1, false, "product-feature-spotlight"),
+  c("SurveysJustBeginning", EVG, "Surveys are just the beginning", "Market research, forms, audience panels, and more.", "Go beyond surveys with market research, forms and audience panels in one platform.", "Learn more", TBD, ["Marketing"], "Awareness", "Brand", ["Mid-market"], 1, "left", 1.05, false, "product-feature-spotlight"),
+  c("ImprovementThemes", INT, "Here are your top improvement themes", "Get charts, insights, and summaries in seconds", "Ask your feedback anything and get charts, insights and summaries in seconds.", "Learn more", TBD, ["CX"], "Consideration", "Brand", ["Mid-market"], 2, "bottom", 1.15, false, "product-in-use"),
+  c("RicherDataSmarterEmails", INT, "Richer data. Smarter emails.", "Collect feedback right in the email", "Put the first survey question in your email and get richer data from every send.", "Learn more", TBD, ["Marketing", "CX"], "Consideration", "Brand", ["Mid-market"], 3, "left", 1.0, false, "product-feature-spotlight"),
+  c("SurveyGlowUp", INT, "Your survey's glow up routine", "Catch bias. Clock bad questions. Up response rates.", "Get your survey ready to send: catch bias, flag bad questions and lift response rates.", "Learn more", TBD, ["Marketing"], "Consideration", "Brand", ["SMB"], 4, "left", 0.95, false, "product-feature-spotlight"),
+  c("DodgeballFeedback", CUST, "“Being able to build continuous feedback into the way we operate has been transformational.”", "How Dodgeball Canada listens", "See how Dodgeball Canada turned continuous feedback into a way of operating.", "Learn more", TBD, ["CX"], "Consideration", "Brand", ["SMB"], 5, "bottom", 1.0, false, "customer-quote"),
+  c("NoomRetention", CUST, "How Noom listened to 30K people to build a high-retention product", "Engagement and retention, measured", "Learn how Noom listened to 30K people to build a high-retention product.", "Learn more", TBD, ["CX", "Marketing"], "Consideration", "Brand", ["Enterprise"], 6, "bottom", 1.1, false, "customer-quote"),
+  c("EventFeedbackOnTheSpot", MKI, "This year's event had higher speaker ratings than last year", "Feedback on the spot", "Capture event feedback on the spot and compare speaker ratings year over year.", "Learn more", TBD, ["Marketing"], "Consideration", "Brand", ["Mid-market"], 7, "bottom", 0.95, false, "product-in-use"),
+  c("PrecisionTargeting", MKI, "Precision targeting. At scale.", "Reach the audience you need", "Target by country, gender, income and age to reach the audience you need, at scale.", "Learn more", TBD, ["Marketing"], "Consideration", "Brand", ["Mid-market"], 9, "left", 1.05, false, "product-feature-spotlight"),
+  c("KnowYourAudience", MKI, "How well do you know your target audience?", "Connect to 200+ apps", "Put your audience research to work with 200+ app integrations.", "Learn more", TBD, ["Marketing"], "Consideration", "Brand", ["SMB"], 3, "center", 0.9, true, "lifestyle-impact"),
+  c("NoSilos", SCS, "Don't build surveys in silos", "Connect to 200+ apps", "Connect SurveyMonkey to 200+ apps so feedback reaches every team.", "Learn more", TBD, ["IT"], "Consideration", "Brand", ["Enterprise"], 0, "left", 1.0, false, "product-feature-spotlight"),
+  c("OneSourceOfTruth", SCS, "One platform. One source of truth. Across every team.", "Workgroups for every team", "Bring every team onto one platform with shared workgroups and one source of truth.", "Learn more", TBD, ["IT", "Enterprise"], "Consideration", "Brand", ["Enterprise"], 6, "left", 1.1, false, "product-feature-spotlight"),
+  c("FeedbackLoops", SCS, "Feedback loops that actually loop", "Connect to 200+ apps", "Close the loop by connecting feedback to the 200+ apps your teams already use.", "Learn more", TBD, ["IT"], "Consideration", "Brand", ["Enterprise"], 1, "center", 1.0, false, "product-feature-spotlight"),
+  c("TeamsTogether", SCS, "Your teams were made to work together.", "Collaborate on surveys in real time", "Comment, edit logic and build surveys together with your team.", "Learn more", TBD, ["IT", "Enterprise"], "Consideration", "Brand", ["Enterprise"], 2, "bottom", 1.05, false, "product-in-use"),
+  c("TrustTheData", MKC, "When multi millions are on the line, trust the data.", "How ClickUp went from ad testing to 113 million views", "Discover how ClickUp went from ad testing to 113 million views.", "Learn more", TBD, ["Marketing"], "Consideration", "Brand", ["Enterprise"], 8, "bottom", 1.15, false, "customer-quote"),
+  c("DataBackedPersonas", MKC, "Data-backed personas drive better marketing", "How Kajabi improved its marketing strategy", "Discover how Kajabi used our market research tools to improve their marketing strategy.", "Learn more", TBD, ["Marketing"], "Consideration", "Brand", ["Mid-market"], 4, "left", 1.0, false, "customer-quote"),
+  c("GoodCompany", MKC, "You're in good company", "260K+ of them", "260K+ organizations trust SurveyMonkey. See who's already on board.", "Learn more", TBD, ["Marketing"], "Consideration", "Brand", ["Enterprise"], 5, "center", 1.0, false, "stat-proof-point"),
 ];
 
 export const CONCEPT_PLATFORMS: PlatformKey[][] = [
@@ -99,3 +102,31 @@ export function conceptIntent(key: string): string | undefined {
   const i = CONCEPTS.findIndex((c) => c.key === key);
   return i < 0 ? undefined : CONCEPTS[i].intent ?? intentSlugFor(CONCEPTS[i].layout, i);
 }
+
+/** Real ad exports from the Figma "Consideration + Intent" page, kept in public/examples. Concepts without one use generated art. */
+const EXAMPLE_IMAGES: Record<string, string> = {
+  TrustAtScale: "/examples/trust-at-scale.png",
+  TopFormsBuilder: "/examples/top-forms-builder.png",
+  MostPopularSurvey: "/examples/most-popular-survey.png",
+  EveryonesBFF: "/examples/everyones-bff.png",
+  WinningStartsWithData: "/examples/winning-starts-with-data.png",
+  GuessingToKnowing: "/examples/guessing-to-knowing.png",
+  NotJustSurveys: "/examples/not-just-surveys.png",
+  SurveysJustBeginning: "/examples/surveys-just-beginning.png",
+  ImprovementThemes: "/examples/improvement-themes.png",
+  RicherDataSmarterEmails: "/examples/richer-data-smarter-emails.png",
+  SurveyGlowUp: "/examples/survey-glow-up.png",
+  DodgeballFeedback: "/examples/dodgeball-feedback.png",
+  NoomRetention: "/examples/noom-retention.png",
+  EventFeedbackOnTheSpot: "/examples/event-feedback-on-the-spot.png",
+  PrecisionTargeting: "/examples/precision-targeting.png",
+  KnowYourAudience: "/examples/know-your-audience.png",
+  NoSilos: "/examples/no-silos.png",
+  OneSourceOfTruth: "/examples/one-source-of-truth.png",
+  FeedbackLoops: "/examples/feedback-loops.png",
+  TeamsTogether: "/examples/teams-together.png",
+  TrustTheData: "/examples/trust-the-data.png",
+  DataBackedPersonas: "/examples/data-backed-personas.png",
+  GoodCompany: "/examples/good-company.png",
+};
+export const conceptImage = (key: string): string | undefined => EXAMPLE_IMAGES[key];

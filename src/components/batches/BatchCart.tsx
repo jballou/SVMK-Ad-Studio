@@ -1,9 +1,9 @@
 "use client";
 
 import { Trash2, X } from "lucide-react";
-import { AdArt } from "@/components/ads/AdArt";
+import { ConceptThumb } from "@/components/batches/ConceptThumb";
 import { conceptIntent } from "@/lib/dummy/concepts";
-import { artFor, conceptByKey } from "@/lib/dummy/library";
+import { conceptByKey } from "@/lib/dummy/library";
 import { STARTER_TEMPLATES } from "@/lib/templates/intents";
 
 /** A running list of what the user has picked, like a cart: each concept, and how many ads it will produce. */
@@ -34,7 +34,7 @@ export function BatchCart({ picked, onRemove, onClear, adsToCreate, alreadyExist
             const intent = STARTER_TEMPLATES.find((t) => t.slug === conceptIntent(k))?.name;
             return (
               <li key={k} className="flex items-center gap-2.5 rounded-lg border border-brand-neutral-150 p-1.5">
-                <span className="block w-12 shrink-0 overflow-hidden rounded">{c && <AdArt art={artFor(c)} copy={c} width={1200} height={1200} showCta={false} />}</span>
+                <span className="block w-12 shrink-0 overflow-hidden rounded">{c && <ConceptThumb concept={c} />}</span>
                 <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{k}</span><span className="block truncate text-xs text-brand-neutral-650">{intent}</span></span>
                 <button type="button" onClick={() => onRemove(k)} aria-label={`Remove ${k}`} className="grid size-6 shrink-0 place-items-center rounded text-brand-neutral-650 hover:bg-brand-neutral-100 hover:text-brand-red-500"><X className="size-3.5" aria-hidden /></button>
               </li>

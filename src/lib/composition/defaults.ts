@@ -1,5 +1,5 @@
 import { PHOTOS, PRODUCTS, type ImageryAsset } from "@/lib/imagery/library";
-import { imageAspect, shapeOf, textBox } from "./geometry";
+import { coverScale, imageAspect, shapeOf, textBox } from "./geometry";
 import { recommendedLogo } from "./logo";
 import { ctaDefault, placementRule } from "./rules";
 import { LAYER_KINDS, sizeKey, type Composition, type Design, type ImageRef, type LayerKind, type Transform } from "./types";
@@ -49,11 +49,12 @@ export function defaultDesign(i: DefaultDesignInput): Design {
   };
 }
 
-interface Ctx { aspect: number; hasPhoto: boolean; hasProduct: boolean }
+interface Ctx { aspect: number; hasPhoto: boolean; hasProduct: boolean; bleed?: boolean }
 
 /** Sensible starting position for a layer, based on the canvas shape and what else is on it. */
 export function defaultTransform(kind: LayerKind, w: number, h: number, safe: { top: number; bottom: number } | undefined, c: Ctx): Transform {
   if (kind === "background") return { x: 0.5, y: 0.5, scale: 1 };
+  if (kind === "photo" && c.bleed) return { x: 0.5, y: 0.5, scale: coverScale(c.aspect, w, h) };
   const r = w / h;
   const shape = shapeOf(w, h);
   const both = c.hasPhoto && c.hasProduct;
@@ -94,14 +95,15 @@ export function resolveComposition(design: Design, w: number, h: number, placeme
   for (const kind of LAYER_KINDS) {
     const st = content.layers[kind];
     const aspect = kind === "background" ? 1 : imageAspect(st.image);
-    layers[kind] = { ...st, ...(transforms[key]?.[kind] ?? defaultTransform(kind, w, h, rule.safe, { aspect, hasPhoto, hasProduct })) };
+    layers[kind] = { ...st, ...(transforms[key]?.[kind] ?? defaultTransform(kind, w, h, rule.safe, { aspect, hasPhoto, hasProduct, bleed: kind === "photo" && !!st.bleed })) };
   }
   const t = content.text;
   return {
     order: content.order,
     layers,
     logo: content.logo ?? "green",
-    text: { headline: t.headline, headlineScale: t.headlineScale, align: t.align, color: t.color, scrim: t.scrim, cta: t.cta, showCta: t.ctaOverride[placementKey] ?? ctaDefault(placementKey) },
+    logoScale: content.logoScale ?? 1,
+    text: { headline: t.headline, headlineScale: t.headlineScale, align: t.align, color: t.color, scrim: t.scrim, cta: t.cta, showCta: t.ctaOverride[placementKey] ?? ctaDefault(placementKey), dx: design.textOffsets?.[key]?.dx ?? 0, dy: design.textOffsets?.[key]?.dy ?? 0 },
   };
 }
 

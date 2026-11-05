@@ -60,6 +60,23 @@ export function layerBox(t: Transform, aspect: number, w: number, h: number): Bo
   return { x: t.x - bw / 2, y: t.y - bh / 2, w: bw, h: bh };
 }
 
+/** Smallest scale at which an image of this aspect (height / width) covers the whole canvas. */
+export function coverScale(aspect: number, w: number, h: number): number {
+  return Math.max(1, h / (Math.max(0.01, aspect) * w));
+}
+
+/** Fraction of the canvas an image box leaves empty (0 = fully covered). */
+export function uncovered(box: Box): number {
+  const inter = intersect(box, { x: 0, y: 0, w: 1, h: 1 });
+  return Math.min(1, Math.max(0, 1 - area(inter)));
+}
+
+/** Moves a cover-sized image's center as little as needed so it covers the canvas. */
+export function clampToCover(t: { x: number; y: number }, box: { w: number; h: number }): { x: number; y: number } {
+  const cl = (v: number, lo: number, hi: number) => (lo > hi ? 0.5 : Math.min(hi, Math.max(lo, v)));
+  return { x: cl(t.x, 1 - box.w / 2, box.w / 2), y: cl(t.y, 1 - box.h / 2, box.h / 2) };
+}
+
 export const area = (b: Box) => Math.max(0, b.w) * Math.max(0, b.h);
 
 export function intersect(a: Box, b: Box): Box {

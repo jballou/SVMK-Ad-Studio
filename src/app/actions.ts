@@ -91,24 +91,26 @@ const copyInput = z.object({
   landing: z.string().max(200),
 });
 
-const transformInput = z.object({ x: z.number().min(-0.5).max(1.5), y: z.number().min(-0.5).max(1.5), scale: z.number().min(0.04).max(1.7) });
+const transformInput = z.object({ x: z.number().min(-0.5).max(1.5), y: z.number().min(-0.5).max(1.5), scale: z.number().min(0.04).max(3.1) });
 const kindEnum = z.enum(["background", "photo", "product"]);
 const imageRef = z.union([
   z.object({ source: z.literal("gallery"), id: z.string().refine((id) => !!getAsset(id), "Unknown approved image") }),
   z.object({ source: z.literal("asset"), id: z.string().uuid(), name: z.string().max(200), naturalW: z.number().int().min(1).max(30000), naturalH: z.number().int().min(1).max(30000), approved: z.boolean(), origin: z.enum(["upload", "drive", "figma"]) }),
   z.object({ source: z.literal("upload"), name: z.string().max(200), naturalW: z.number().int().min(1).max(30000), naturalH: z.number().int().min(1).max(30000) }),
 ]);
-const layerInput = z.object({ visible: z.boolean(), image: imageRef.optional(), preset: z.string().max(40).refine((p) => !!getPreset(p), "Unknown background preset").optional() });
+const layerInput = z.object({ visible: z.boolean(), image: imageRef.optional(), preset: z.string().max(40).refine((p) => !!getPreset(p), "Unknown background preset").optional(), bleed: z.boolean().optional(), extend: z.enum(["none", "blur"]).optional() });
 const designInput = z.object({
   content: z.object({
     order: z.array(kindEnum).length(3).refine((o) => new Set(o).size === 3, "Layers must be unique"),
     layers: z.object({ background: layerInput, photo: layerInput, product: layerInput }),
     logo: z.enum(["green", "white", "green-900"]).default("green"),
+    logoScale: z.number().min(0.8).max(1.25).optional(),
     text: z.object({
-      headline: z.string().max(200), headlineScale: z.number().min(0.5).max(1.6), align: z.enum(["left", "center"]), color: z.enum(["auto", "dark", "light"]),
+      headline: z.string().max(200), headlineScale: z.number().min(0.5).max(1.6), align: z.enum(["left", "center", "right"]), color: z.enum(["auto", "dark", "light"]),
       scrim: z.boolean(), cta: z.string().max(40), ctaOverride: z.record(z.string(), z.boolean()),
     }),
   }),
+  textOffsets: z.record(z.string(), z.object({ dx: z.number().min(-1).max(1), dy: z.number().min(-1).max(1) })).optional(),
   transforms: z.record(z.string(), z.object({ background: transformInput.optional(), photo: transformInput.optional(), product: transformInput.optional() })),
 });
 

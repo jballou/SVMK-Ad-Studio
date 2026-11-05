@@ -4,7 +4,9 @@ import { conceptImagery, designForConcept } from "@/lib/dummy/library";
 import { PLACEMENTS } from "@/lib/specs/platforms";
 import { contrast } from "./color";
 import { defaultDesign, resetSize, resolveComposition, withTransform } from "./defaults";
-import { hasErrors, qaComposition, type QaContext } from "./qa";
+import { setBleed, setExtend, setLogoScale, setTextOffset } from "./edit";
+import { hasErrors, photoGap, qaComposition, type QaContext } from "./qa";
+import { LOGO_SCALE_MAX, LOGO_SCALE_MIN } from "./logo";
 import { ctaDefault } from "./rules";
 
 const concept = CONCEPTS.find((c) => c.key === "GetInsights")!; // Intent: photo + product
@@ -110,7 +112,7 @@ import { applyFix, clampTransform, moveLayer, nudge, resize, setCtaFor, setImage
 describe("editing helpers", () => {
   const d = designForConcept(concept);
   it("clamps position and size", () => {
-    expect(clampTransform({ x: 9, y: -9, scale: 9 })).toEqual({ x: 1.25, y: -0.25, scale: 1.6 });
+    expect(clampTransform({ x: 9, y: -9, scale: 9 })).toEqual({ x: 1.25, y: -0.25, scale: 3 });
     expect(nudge({ x: 0.5, y: 0.5, scale: 0.4 }, 0.01, -0.05)).toEqual({ x: 0.51, y: 0.45, scale: 0.4 });
     expect(resize({ x: 0.5, y: 0.5, scale: 0.06 }, -0.1).scale).toBe(0.05);
   });
@@ -179,5 +181,72 @@ describe("logo variants", () => {
     expect(overusesGreen900({ green: 6, white: 1, "green-900": 1 })).toBe(false);
     expect(overusesGreen900({ green: 3, white: 0, "green-900": 3 })).toBe(true);
     expect(overusesGreen900({ green: 0, white: 0, "green-900": 1 })).toBe(false);
+  });
+});
+
+describe("full-bleed photo and extend background", () => {
+  const base = designForConcept(concept);
+  const W = 1200, H = 628, P = "linkedin-single-image";
+  const bleed = setBleed(base, true);
+  const issuesOf = (d: typeof base) => qaComposition(resolveComposition(d, W, H, P), ctx(P, W, H));
+
+  it("covers the whole ad by default once full-bleed is on", () => {
+    const comp = resolveComposition(bleed, W, H, P);
+    expect(photoGap(comp, W, H)).toBeLessThan(0.002);
+    expect(issuesOf(bleed).some((i) => i.id === "photo-gap")).toBe(false);
+  });
+
+  it("flags a gap when the photo is moved off the edge, with two ways to fix it", () => {
+    const moved = withTransform(bleed, W, H, "photo", { x: 0.9, y: 0.5, scale: resolveComposition(bleed, W, H, P).layers.photo.scale });
+    const gap = issuesOf(moved).find((i) => i.id === "photo-gap");
+    expect(gap).toMatchObject({ severity: "error", fix: { id: "scale-to-fill" }, alsoFix: { id: "extend-blur" } });
+  });
+
+  it("Scale to fill closes the gap; Extend background removes the error and paints a blurred copy", () => {
+    const moved = withTransform(bleed, W, H, "photo", { x: 0.9, y: 0.5, scale: 0.8 });
+    const scaled = applyFix(moved, "scale-to-fill", { width: W, height: H, placementKey: P });
+    expect(photoGap(resolveComposition(scaled, W, H, P), W, H)).toBeLessThan(0.002);
+    const extended = setExtend(moved, "blur");
+    expect(issuesOf(extended).some((i) => i.id === "photo-gap")).toBe(false);
+    expect(resolveComposition(extended, W, H, P).layers.photo.extend).toBe("blur");
+  });
+
+  it("does not check coverage when the photo isn't full-bleed", () => {
+    expect(issuesOf(base).some((i) => i.id.startsWith("photo-gap"))).toBe(false);
+  });
+
+  it("turning full-bleed off restores free positioning at every size", () => {
+    const off = setBleed(setBleed(base, true), false);
+    expect(off.content.layers.photo.bleed).toBe(false);
+    expect(off.transforms[`${W}x${H}`]?.photo).toBeUndefined();
+  });
+});
+
+describe("moving text and resizing the logo", () => {
+  const base = designForConcept(concept);
+
+  it("keeps the headline inside the ad", () => {
+    const d = setTextOffset(base, 1080, 1080, "instagram-feed", 5, 5);
+    const off = d.textOffsets!["1080x1080"];
+    const comp = resolveComposition(d, 1080, 1080, "instagram-feed");
+    expect(comp.text.dx).toBe(off.dx);
+    expect(0.07 + off.dx + 0.86).toBeLessThanOrEqual(1.0001);
+  });
+
+  it("warns when the headline is moved into Stories UI", () => {
+    const d = setTextOffset(base, 1080, 1920, "meta-stories-reels", 0, 0.6);
+    const issues = qaComposition(resolveComposition(d, 1080, 1920, "meta-stories-reels"), ctx("meta-stories-reels", 1080, 1920));
+    expect(issues.some((i) => i.id === "text-safe-zone")).toBe(true);
+  });
+
+  it("limits the logo to its allowed range", () => {
+    expect(setLogoScale(base, 5).content.logoScale).toBe(LOGO_SCALE_MAX);
+    expect(setLogoScale(base, 0.1).content.logoScale).toBe(LOGO_SCALE_MIN);
+    expect(resolveComposition(setLogoScale(base, 1.1), 1080, 1080, "instagram-feed").logoScale).toBe(1.1);
+  });
+
+  it("right-aligned text is carried through to the composition", () => {
+    const d = { ...base, content: { ...base.content, text: { ...base.content.text, align: "right" as const } } };
+    expect(resolveComposition(d, 1080, 1080, "instagram-feed").text.align).toBe("right");
   });
 });

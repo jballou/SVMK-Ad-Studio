@@ -6,12 +6,12 @@ import { PlacementPreview } from "@/components/ads/PlacementPreview";
 import { CompositionArt, type Selectable } from "@/components/ads/CompositionArt";
 import { Button } from "@/components/ui/button-1";
 import { Card } from "@/components/ui/primitives";
-import { applyFix, moveLayer, nudge, resize, setCtaFor, setImage, setLogo, setPreset, setText, setVisible } from "@/lib/composition/edit";
-import { LOGO_COLOR, LOGO_INFO, LOGO_MIN_CONTRAST, LOGO_VARIANTS, logoContrast, recommendedLogo } from "@/lib/composition/logo";
+import { applyFix, moveLayer, nudge, resetTextOffset, resize, setBleed, setCtaFor, setExtend, setImage, setLogo, setLogoScale, setPreset, setText, setTextOffset, setVisible } from "@/lib/composition/edit";
+import { LOGO_COLOR, LOGO_INFO, LOGO_MIN_CONTRAST, LOGO_SCALE_MAX, LOGO_SCALE_MIN, LOGO_VARIANTS, logoContrast, recommendedLogo } from "@/lib/composition/logo";
 import { LogoMark } from "@/components/ads/LogoMark";
 import { resetSize, resolveComposition, withTransform } from "@/lib/composition/defaults";
 import { shapeOf } from "@/lib/composition/geometry";
-import { backgroundColors, counts, qaComposition, type QaContext, type QaIssue } from "@/lib/composition/qa";
+import { backgroundColors, counts, photoGap, qaComposition, type QaContext, type QaIssue } from "@/lib/composition/qa";
 import { placementRule } from "@/lib/composition/rules";
 import { LAYER_LABEL, sizeKey, type Design, type LayerKind } from "@/lib/composition/types";
 import type { ConceptSeed } from "@/lib/dummy/concepts";
@@ -46,7 +46,7 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
   const [view, setView] = useState<"edit" | "platform">("edit");
   const [guides, setGuides] = useState(true);
   const [note, setNote] = useState("");
-  const drag = useRef<{ kind: "photo" | "product"; px: number; py: number; x: number; y: number; scale: number } | null>(null);
+  const drag = useRef<({ kind: "photo" | "product"; px: number; py: number; x: number; y: number; scale: number } | { kind: "text"; px: number; py: number; dx: number; dy: number }) | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
 
   const size = sizes[Math.min(sizeIdx, sizes.length - 1)];
@@ -71,10 +71,25 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
     drag.current = { kind, px: e.clientX, py: e.clientY, ...t };
     setSelected(kind);
   };
+  const textOff = { dx: comp.text.dx ?? 0, dy: comp.text.dy ?? 0 };
+  const setOffset = (dx: number, dy: number) => onChange(setTextOffset(design, w, h, placementKey, dx, dy));
+  const onTextPointerDown = (e: PointerEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { kind: "text", px: e.clientX, py: e.clientY, ...textOff };
+    setSelected("headline");
+  };
+  const onTextKeyDown = (e: KeyboardEvent<HTMLElement>) => {
+    const big = e.shiftKey ? 5 : 1;
+    const map: Record<string, [number, number]> = { ArrowLeft: [-STEP * big, 0], ArrowRight: [STEP * big, 0], ArrowUp: [0, -STEP * big], ArrowDown: [0, STEP * big] };
+    const m = map[e.key];
+    if (m) { e.preventDefault(); setOffset(textOff.dx + m[0], textOff.dy + m[1]); setNote("Headline moved."); }
+  };
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
     const d = drag.current;
     if (!d || !wrap.current) return;
     const r = wrap.current.getBoundingClientRect();
+    if (d.kind === "text") return setOffset(d.dx + (e.clientX - d.px) / r.width, d.dy + (e.clientY - d.py) / r.height);
     setTransform(d.kind, nudge({ x: d.x, y: d.y, scale: d.scale }, (e.clientX - d.px) / r.width, (e.clientY - d.py) / r.height));
   };
   const endDrag = () => { drag.current = null; };
@@ -94,6 +109,9 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
     if (fn) { e.preventDefault(); fn(); const n = cur(kind); setNote(`${LAYER_LABEL[kind]} at ${Math.round(n.x * 100)}% across, ${Math.round(n.y * 100)}% down, ${Math.round(n.scale * 100)}% wide`); }
   };
 
+  const fixAlso = (i: QaIssue) => i.alsoFix && onChange(applyFix(design, i.alsoFix.id, { width: w, height: h, placementKey, target: i.target, themeBg: THEMES[concept.theme].bg }));
+  const gap = photoGap(comp, w, h);
+  const extending = design.content.layers.photo.bleed && design.content.layers.photo.extend === "blur";
   const fixIssue = (i: QaIssue) => i.fix && onChange(applyFix(design, i.fix.id, { width: w, height: h, placementKey, target: i.target, themeBg: THEMES[concept.theme].bg }));
   const sizesWith = (i: QaIssue) => sizes.filter((s) => (all.get(sizeKey(s.width, s.height)) ?? []).some((x) => x.id === i.id)).length;
   const fixAll = (i: QaIssue) => {
@@ -142,15 +160,22 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
           <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-brand-neutral-100 p-5">
             {view === "edit" ? (
               <div ref={wrap} style={{ width: "100%", maxWidth: maxW }} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} className="shadow-sm">
-                <CompositionArt composition={comp} art={art} width={w} height={h} placementKey={placementKey} guides={guides} editor={{ selected, onSelect: setSelected, onLayerPointerDown: onPointerDown, onLayerKeyDown: onKeyDown }} />
+                <CompositionArt composition={comp} art={art} width={w} height={h} placementKey={placementKey} guides={guides} editor={{ selected, onSelect: setSelected, onLayerPointerDown: onPointerDown, onLayerKeyDown: onKeyDown, onTextPointerDown, onTextKeyDown }} />
               </div>
             ) : (
               <PlacementPreview ad={{ art, copy: { headline: t.headline, intro: platformCopy.intro, platformHeadline: platformCopy.platformHeadline, cta: t.cta, landing: platformCopy.landing }, width: w, height: h, placement: placementKey, composition: comp }} placement={placementKey} />
             )}
           </div>
-          <p className="text-xs text-brand-neutral-650" aria-live="polite">{note || "Drag a photo or product to move it, or focus it and use the arrow keys (Shift for bigger steps) and + / − to resize."}</p>
+          {gap > 0.002 && !extending && (
+            <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-red-200 bg-brand-red-100/50 px-3 py-2 text-sm">
+              <span className="min-w-0 flex-1">The photo doesn&apos;t fill the ad ({Math.round(gap * 100)}% empty).</span>
+              <Button size="sm" variant="outline" onClick={() => onChange(applyFix(design, "scale-to-fill", { width: w, height: h, placementKey, themeBg: THEMES[concept.theme].bg }))}>Scale to fill</Button>
+              <Button size="sm" onClick={() => onChange(setExtend(design, "blur"))}>Extend background</Button>
+            </div>
+          )}
+          <p className="text-xs text-brand-neutral-650" aria-live="polite">{note || "Drag a photo, product or the headline to move it, or focus it and use the arrow keys (Shift for bigger steps). + / − resize an image."}</p>
           <Card title={`Checks for ${w}×${h}`} description={(() => { const n = counts(issues); return n.errors || n.warnings ? `${n.errors} error${n.errors === 1 ? "" : "s"}, ${n.warnings} warning${n.warnings === 1 ? "" : "s"}` : "All clear"; })()}>
-            <QaIssues issues={issues} onFix={fixIssue} onFixAll={fixAll} sizesWith={sizesWith} />
+            <QaIssues issues={issues} onFix={fixIssue} onFixAlso={fixAlso} onFixAll={fixAll} sizesWith={sizesWith} />
             {others.length > 0 && (
               <div className="mt-4 border-t border-brand-neutral-150 pt-3">
                 <p className="mb-2 text-xs font-medium text-brand-neutral-650">Other sizes with issues</p>
@@ -201,6 +226,20 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
             {layerSel && (
               <div className="space-y-4">
                 <ImagePicker kind={layerSel} value={layerInfo(layerSel).image} onPick={(r) => onChange(setImage(design, layerSel, r))} />
+                {layerSel === "photo" && (
+                  <div className="space-y-2 border-t border-brand-neutral-150 pt-3">
+                    <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={!!design.content.layers.photo.bleed} onChange={(e) => onChange(setBleed(design, e.target.checked))} className="mt-0.5 accent-brand-green-600" /><span>Full-bleed background<span className="block text-xs text-brand-neutral-650">The photo fills the whole ad. Drag to reposition it; if it stops covering the ad you can extend the background.</span></span></label>
+                    {design.content.layers.photo.bleed && (
+                      <div className="rounded-lg bg-brand-neutral-100 p-2.5 text-xs text-brand-neutral-750">
+                        {gap > 0.002 && !extending ? <p className="font-medium text-brand-red-500">{Math.round(gap * 100)}% of the ad isn&apos;t covered at {w}×{h}.</p> : extending ? <p className="font-medium">Extended with a blurred copy of the photo.</p> : <p>Fully covered at {w}×{h}.</p>}
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" onClick={() => onChange(applyFix(design, "scale-to-fill", { width: w, height: h, placementKey, themeBg: THEMES[concept.theme].bg }))}>Scale to fill</Button>
+                          {extending ? <Button size="sm" variant="ghost" onClick={() => onChange(setExtend(design, "none"))}>Remove extension</Button> : <Button size="sm" variant="outline" onClick={() => onChange(setExtend(design, "blur"))}>Extend background</Button>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <fieldset className="space-y-2 border-t border-brand-neutral-150 pt-3">
                   <legend className="text-xs font-medium text-brand-neutral-650">Position (this size)</legend>
                   <div className="grid grid-cols-[1fr_auto] items-end gap-3">
@@ -239,10 +278,26 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
                 <label className="block text-xs font-medium text-brand-neutral-650">Text<textarea rows={3} value={t.headline} onChange={(e) => onChange(setText(design, { headline: e.target.value }))} className={`${field} mt-1 h-auto py-1.5`} /></label>
                 <label className="block text-xs font-medium text-brand-neutral-650">Size <span className="tabular-nums">{Math.round(t.headlineScale * 100)}%</span><input type="range" min={60} max={140} value={Math.round(t.headlineScale * 100)} onChange={(e) => onChange(setText(design, { headlineScale: Number(e.target.value) / 100 }))} className="mt-1 block w-full accent-brand-green-600" /></label>
                 <div className="grid grid-cols-2 gap-2">
-                  <label className="text-xs font-medium text-brand-neutral-650">Align<select value={t.align} onChange={(e) => onChange(setText(design, { align: e.target.value as "left" | "center" }))} className={`${field} mt-1`}><option value="left">Left</option><option value="center">Center</option></select></label>
+                  <label className="text-xs font-medium text-brand-neutral-650">Align<select value={t.align} onChange={(e) => onChange(setText(design, { align: e.target.value as "left" | "center" | "right" }))} className={`${field} mt-1`}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
                   <label className="text-xs font-medium text-brand-neutral-650">Color<select value={t.color} onChange={(e) => onChange(setText(design, { color: e.target.value as "auto" | "dark" | "light" }))} className={`${field} mt-1`}><option value="auto">Automatic</option><option value="dark">Dark</option><option value="light">Light</option></select></label>
                 </div>
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={t.scrim} onChange={(e) => onChange(setText(design, { scrim: e.target.checked }))} className="accent-brand-green-600" />Add a scrim behind the text</label>
+                <fieldset className="space-y-2 border-t border-brand-neutral-150 pt-3">
+                  <legend className="text-xs font-medium text-brand-neutral-650">Move text (this size)</legend>
+                  <div className="flex items-center gap-3">
+                    <div className="grid grid-cols-3 gap-1" role="group" aria-label="Nudge text">
+                      <span /><Button size="sm" variant="outline" mode="icon" aria-label="Nudge text up" onClick={() => setOffset(textOff.dx, textOff.dy - STEP)}><ArrowUp /></Button><span />
+                      <Button size="sm" variant="outline" mode="icon" aria-label="Nudge text left" onClick={() => setOffset(textOff.dx - STEP, textOff.dy)}><ArrowLeft /></Button>
+                      <Button size="sm" variant="outline" mode="icon" aria-label="Nudge text down" onClick={() => setOffset(textOff.dx, textOff.dy + STEP)}><ArrowDown /></Button>
+                      <Button size="sm" variant="outline" mode="icon" aria-label="Nudge text right" onClick={() => setOffset(textOff.dx + STEP, textOff.dy)}><ArrowRight /></Button>
+                    </div>
+                    <div className="min-w-0 text-xs text-brand-neutral-650">
+                      <p className="tabular-nums">{Math.round(textOff.dx * 100)}% across, {Math.round(textOff.dy * 100)}% down</p>
+                      <Button size="sm" variant="ghost" disabled={!textOff.dx && !textOff.dy} onClick={() => onChange(resetTextOffset(design, w, h))}><RotateCcw /> Reset</Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-brand-neutral-650">You can also drag the headline on the canvas. It stays inside the ad, and checks warn if it enters platform UI or covers the logo.</p>
+                </fieldset>
               </div>
             )}
 
@@ -252,7 +307,10 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
               const current = design.content.logo ?? "green";
               return (
                 <fieldset className="space-y-2">
-                  <legend className="mb-1 text-xs text-brand-neutral-650">The mark&apos;s position is fixed by the template. Choose its color.</legend>
+                  <legend className="mb-1 text-xs text-brand-neutral-650">The mark&apos;s position is fixed by the template. Choose its color and, within limits, its size.</legend>
+                  <label className="block rounded-lg border border-brand-neutral-200 p-2.5 text-xs font-medium text-brand-neutral-650">Size <span className="tabular-nums">{Math.round((design.content.logoScale ?? 1) * 100)}%</span> <span className="font-normal">(allowed {Math.round(LOGO_SCALE_MIN * 100)}–{Math.round(LOGO_SCALE_MAX * 100)}%)</span>
+                    <input type="range" min={Math.round(LOGO_SCALE_MIN * 100)} max={Math.round(LOGO_SCALE_MAX * 100)} value={Math.round((design.content.logoScale ?? 1) * 100)} onChange={(e) => onChange(setLogoScale(design, Number(e.target.value) / 100))} className="mt-1 block w-full accent-brand-green-600" />
+                  </label>
                   {LOGO_VARIANTS.map((v) => {
                     const ratio = logoContrast(v, bgs);
                     const ok = ratio >= LOGO_MIN_CONTRAST;

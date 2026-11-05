@@ -12,6 +12,11 @@ export const LOGO_INFO: Record<LogoVariant, { label: string; use: string }> = {
   "green-900": { label: "Green 900", use: "Use sparingly, only where the standard green clashes." },
 };
 
+/** The brand mark may be resized, but only within this range of the template default. */
+export const LOGO_SCALE_MIN = 0.8;
+export const LOGO_SCALE_MAX = 1.25;
+export const clampLogoScale = (s: number) => Math.round(Math.min(LOGO_SCALE_MAX, Math.max(LOGO_SCALE_MIN, s)) * 100) / 100;
+
 /** Graphics need 3:1 against their background (WCAG non-text contrast). */
 export const LOGO_MIN_CONTRAST = 3;
 

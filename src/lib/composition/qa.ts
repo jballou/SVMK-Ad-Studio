@@ -1,12 +1,12 @@
 import { getAsset, getPreset } from "@/lib/imagery/library";
 import { autoTextColor, INK, PAPER, worstContrast } from "./color";
-import { area, headlinePx, imageAspect, insideCanvas, layerBox, overlapOf, shapeOf, textBox, type Box } from "./geometry";
+import { area, brandBox, headlinePx, imageAspect, insideCanvas, layerBox, overlapOf, shapeOf, textBox, uncovered, type Box } from "./geometry";
 import { LOGO_INFO, LOGO_MIN_CONTRAST, logoContrast, recommendedLogo } from "./logo";
 import { placementRule } from "./rules";
 import type { Composition, ImageRef, LayerKind } from "./types";
 
 export type Severity = "error" | "warn";
-export type FixId = "recommended-logo" | "remove-cta" | "add-cta" | "enable-scrim" | "auto-color" | "reset-layer" | "hide-layer" | "background-to-bottom" | "reduce-headline-size" | "fit-resolution";
+export type FixId = "recommended-logo" | "remove-cta" | "add-cta" | "enable-scrim" | "auto-color" | "reset-layer" | "hide-layer" | "background-to-bottom" | "reduce-headline-size" | "fit-resolution" | "scale-to-fill" | "extend-blur" | "reset-text";
 
 export interface QaIssue {
   id: string;
@@ -14,6 +14,15 @@ export interface QaIssue {
   message: string;
   target?: LayerKind | "headline" | "cta";
   fix?: { id: FixId; label: string };
+  /** A second way to resolve the same issue. */
+  alsoFix?: { id: FixId; label: string };
+}
+
+/** How much of the ad a full-bleed photo leaves empty (0 when it isn't full-bleed or has no image). */
+export function photoGap(c: Composition, w: number, h: number): number {
+  const l = c.layers.photo;
+  if (!l.visible || !l.bleed || !l.image) return 0;
+  return uncovered(layerBox(l, imageAspect(l.image), w, h));
 }
 
 export interface QaContext {
@@ -72,7 +81,12 @@ export function qaComposition(c: Composition, ctx: QaContext): QaIssue[] {
   // Imagery.
   const bgIdx = c.order.indexOf("background");
   const bgVisible = c.layers.background.visible;
-  const textBoxBox: Box = tb;
+  const off = { dx: t.dx ?? 0, dy: t.dy ?? 0 };
+  const textBoxBox: Box = { ...tb, x: tb.x + off.dx, y: tb.y + off.dy };
+  if (off.dx || off.dy) {
+    if (rule.safe && (textBoxBox.y < rule.safe.top - 0.001 || textBoxBox.y + textBoxBox.h > 1 - rule.safe.bottom + 0.001)) add({ id: "text-safe-zone", severity: "warn", target: "headline", message: "The headline has moved into the area covered by the platform's UI (Stories and Reels top and bottom).", fix: { id: "reset-text", label: "Reset text position" } });
+    if (overlapOf(brandBox(w, h, rule.safe), textBoxBox) > 0.1) add({ id: "text-over-logo", severity: "warn", target: "headline", message: "The headline overlaps the brand mark.", fix: { id: "reset-text", label: "Reset text position" } });
+  }
   let imageryCount = 0;
   for (const kind of ["photo", "product"] as const) {
     const l = c.layers[kind];
@@ -85,7 +99,11 @@ export function qaComposition(c: Composition, ctx: QaContext): QaIssue[] {
     const box = layerBox(l, aspect, w, h);
     if (bgVisible && bgIdx > c.order.indexOf(kind)) add({ id: `${kind}-hidden`, severity: "warn", target: kind, message: `${label(kind)} sits under the background, so it's hidden.`, fix: { id: "background-to-bottom", label: "Move background to bottom" } });
     const inside = insideCanvas(box);
-    if (inside < (kind === "product" ? 0.85 : 0.6)) add({ id: `${kind}-cropped`, severity: "warn", target: kind, message: `${Math.round((1 - inside) * 100)}% of the ${label(kind).toLowerCase()} falls outside the ad.`, fix: { id: "reset-layer", label: "Reset position" } });
+    if (kind === "photo" && l.bleed) {
+      const gap = uncovered(box);
+      if (gap > 0.002 && l.extend !== "blur") add({ id: "photo-gap", severity: "error", target: "photo", message: `The photo doesn't fill the ad: ${Math.round(gap * 100)}% of it is empty. Scale it up to cover, or extend the background.`, fix: { id: "scale-to-fill", label: "Scale photo to fill" }, alsoFix: { id: "extend-blur", label: "Extend with blurred edges" } });
+      else if (gap > 0.35) add({ id: "photo-extend-large", severity: "warn", target: "photo", message: `${Math.round(gap * 100)}% of the ad is the extended background, which will look noticeably soft. A larger photo or Scale to fill looks better.`, fix: { id: "scale-to-fill", label: "Scale photo to fill" } });
+    } else if (inside < (kind === "product" ? 0.85 : 0.6)) add({ id: `${kind}-cropped`, severity: "warn", target: kind, message: `${Math.round((1 - inside) * 100)}% of the ${label(kind).toLowerCase()} falls outside the ad.`, fix: { id: "reset-layer", label: "Reset position" } });
     if (rule.safe && kind === "product") {
       const zone = overlapOf(box, { x: 0, y: 0, w: 1, h: rule.safe.top }) + overlapOf(box, { x: 0, y: 1 - rule.safe.bottom, w: 1, h: rule.safe.bottom });
       if (zone > 0.2) add({ id: "product-safe-zone", severity: "warn", target: "product", message: "Part of the product sits where Stories and Reels UI covers the ad. Keep it inside the safe area.", fix: { id: "reset-layer", label: "Reset position" } });

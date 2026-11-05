@@ -1,4 +1,4 @@
-import { CONCEPTS, conceptIntent, type ConceptSeed } from "@/lib/dummy/concepts";
+import { CONCEPTS, conceptImage, conceptIntent, type ConceptSeed } from "@/lib/dummy/concepts";
 import { STARTER_TEMPLATES } from "@/lib/templates/intents";
 
 export interface GalleryItem {
@@ -15,13 +15,14 @@ export interface GalleryFilter {
   persona?: string | null;
 }
 
-/** Ready-to-use concepts (drafts excluded), each tagged with its creative intent. */
+/** Ready-to-use concepts (drafts excluded), each tagged with its creative intent. Real Figma designs come first. */
 export function galleryItems(): GalleryItem[] {
-  return CONCEPTS.filter((c) => !c.draft).flatMap((concept) => {
+  const items = CONCEPTS.filter((c) => !c.draft).flatMap((concept) => {
     const intent = conceptIntent(concept.key);
     const name = STARTER_TEMPLATES.find((t) => t.slug === intent)?.name;
     return intent && name ? [{ concept, intent, intentName: name }] : [];
   });
+  return [...items.filter((i) => conceptImage(i.concept.key)), ...items.filter((i) => !conceptImage(i.concept.key))];
 }
 
 /** Free-text search over key, campaign, copy, persona, offer and intent, plus exact-match tag filters. */

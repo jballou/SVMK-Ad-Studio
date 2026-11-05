@@ -2,11 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { ExternalLink, Search, X } from "lucide-react";
-import { AdArt } from "@/components/ads/AdArt";
+import { ConceptThumb } from "@/components/batches/ConceptThumb";
 import { Button } from "@/components/ui/button-1";
 import { Card } from "@/components/ui/primitives";
 import { filterGallery, galleryItems, intentCounts } from "@/lib/batches/gallery";
-import { artFor } from "@/lib/dummy/library";
 import { STARTER_TEMPLATES } from "@/lib/templates/intents";
 
 const chip = (on: boolean) => `rounded-full border px-3 py-1 text-xs font-medium ${on ? "border-brand-green-600 bg-brand-green-100 text-brand-green-800" : "border-brand-neutral-250 bg-white text-brand-neutral-750 hover:bg-brand-neutral-100"}`;
@@ -73,7 +72,7 @@ export function ConceptGallery({ selected, onToggle, customRequestUrl }: { selec
               return (
                 <li key={c.key}>
                   <label className={`block h-full cursor-pointer rounded-xl border p-2 ${on ? "border-brand-green-600 bg-brand-green-100/40" : "border-brand-neutral-200 hover:bg-brand-neutral-50"}`}>
-                    <span className="mb-2 block overflow-hidden rounded"><AdArt art={artFor(c)} copy={c} width={1200} height={1200} showCta={false} /></span>
+                    <span className="mb-2 block overflow-hidden rounded"><ConceptThumb concept={c} /></span>
                     <span className="flex items-center gap-2 text-sm"><input type="checkbox" checked={on} onChange={() => onToggle(c.key)} aria-label={`Select ${c.key}`} className="accent-brand-green-600" /><span className="truncate font-medium">{c.key}</span></span>
                     <span className="ml-6 block text-xs font-medium text-brand-green-700">{intentName}</span>
                     <span className="ml-6 block text-xs text-brand-neutral-650">{c.funnel} · {c.personas.join(", ")}</span>

@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .data/
+
+# Real ad exports pulled from Figma (customer logos, a named person). Local preview only; not pushed to the public repo.
+/public/examples/

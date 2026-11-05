@@ -16,6 +16,8 @@ export interface EditorBindings {
   onSelect: (k: Selectable) => void;
   onLayerPointerDown: (k: "photo" | "product", e: PointerEvent<HTMLElement>) => void;
   onLayerKeyDown: (k: "photo" | "product", e: KeyboardEvent<HTMLElement>) => void;
+  onTextPointerDown?: (e: PointerEvent<HTMLElement>) => void;
+  onTextKeyDown?: (e: KeyboardEvent<HTMLElement>) => void;
 }
 
 const pct = (n: number) => `${(n * 100).toFixed(3)}%`;
@@ -66,7 +68,16 @@ export function CompositionArt({ composition: c, art, width, height, placementKe
     }
     const alt = ref.source === "gallery" ? (getAsset(ref.id)?.name ?? "") : ref.name;
     // eslint-disable-next-line @next/next/no-img-element
-    return <img key={kind} {...common} src={src} alt={alt} draggable={false} style={{ ...style, objectFit: kind === "photo" ? "cover" : "contain", userSelect: "none" }} />;
+    const img = <img key={kind} {...common} src={src} alt={alt} draggable={false} style={{ ...style, objectFit: kind === "photo" ? "cover" : "contain", userSelect: "none" }} />;
+    if (kind === "photo" && l.bleed && l.extend === "blur") {
+      // Extend the background: a soft, enlarged copy of the photo fills whatever the photo itself doesn't cover.
+      return [
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key="photo-extend" aria-hidden alt="" src={src} draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(2.4cqmin) saturate(1.05)", transform: "scale(1.25)", zIndex: z, pointerEvents: "none" }} />,
+        img,
+      ];
+    }
+    return img;
   };
 
   const items: ReactNode[] = [];
@@ -74,7 +85,11 @@ export function CompositionArt({ composition: c, art, width, height, placementKe
 
   const z = c.order.length + 1;
   const showScrim = c.text.scrim;
-  const centered = c.text.align === "center" && shape !== "banner";
+  const align = shape === "banner" ? "left" : c.text.align;
+  const dx = c.text.dx ?? 0;
+  const dy = c.text.dy ?? 0;
+  const logoScale = c.logoScale ?? 1;
+  const logoSize = shape === "banner" ? "min(24cqh, 1.9cqw)" : "3.2cqmin";
   const ctaStyle: CSSProperties = { background: accent, color: themeBg, borderRadius: 999, fontWeight: 600, whiteSpace: "nowrap", fontSize: shape === "banner" ? "min(18cqh, 3.2cqw)" : "3.4cqmin", padding: shape === "banner" ? "0.5em 1em" : "0.7em 1.4em", ...(sel === "cta" ? SELECT : {}) };
 
   return (
@@ -90,11 +105,12 @@ export function CompositionArt({ composition: c, art, width, height, placementKe
         onClick={editor ? () => editor.onSelect("logo") : undefined}
         style={{ position: "absolute", left: pct(bm.x), top: pct(bm.y), zIndex: z + 2, display: "inline-flex", ...(shape === "banner" ? { height: pct(bm.h), width: pct(bm.w), alignItems: "center" } : {}), ...(sel === "logo" ? SELECT : {}), cursor: editor ? "pointer" : undefined }}
       >
-        <LogoMark variant={c.logo ?? "green"} compact={shape === "banner" && width < 500} size={shape === "banner" ? "min(24cqh, 1.9cqw)" : "3.2cqmin"} />
+        <LogoMark variant={c.logo ?? "green"} compact={shape === "banner" && width < 500} size={logoScale === 1 ? logoSize : `calc(${logoSize} * ${logoScale})`} />
       </span>
       <div
         onClick={editor ? () => editor.onSelect("headline") : undefined}
-        style={{ position: "absolute", left: pct(tb.x), top: pct(tb.y), width: pct(tb.w), height: pct(tb.h), zIndex: z + 1, display: "flex", flexDirection: "column", justifyContent: shape === "landscape" ? "center" : "flex-start", alignItems: centered ? "center" : "flex-start", textAlign: centered ? "center" : "left", gap: "3cqmin", color: textColor, cursor: editor ? "pointer" : undefined }}
+        {...(editor?.onTextPointerDown ? { tabIndex: 0, role: "button" as const, "aria-label": "Headline. Drag to move; arrow keys nudge it.", onPointerDown: editor.onTextPointerDown, onKeyDown: editor.onTextKeyDown, onFocus: () => editor.onSelect("headline") } : {})}
+        style={{ position: "absolute", left: pct(tb.x + dx), top: pct(tb.y + dy), width: pct(tb.w), height: pct(tb.h), zIndex: z + 1, display: "flex", flexDirection: "column", justifyContent: shape === "landscape" ? "center" : "flex-start", alignItems: align === "center" ? "center" : align === "right" ? "flex-end" : "flex-start", textAlign: align, gap: "3cqmin", color: textColor, cursor: editor ? "grab" : undefined, touchAction: editor ? "none" : undefined }}
       >
         <p style={{ margin: 0, fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700, lineHeight: 1.1, fontSize: headlineCss(width, height, c.text.headlineScale), ...(sel === "headline" ? SELECT : {}) }}>{c.text.headline}</p>
         {c.text.showCta && shape !== "banner" && <span onClick={editor ? (e) => { e.stopPropagation(); editor.onSelect("cta"); } : undefined} style={ctaStyle}>{c.text.cta}</span>}

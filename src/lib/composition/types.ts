@@ -23,10 +23,14 @@ export interface LayerState {
   image?: ImageRef;
   /** Background preset id. */
   preset?: string;
+  /** Photo only: the photo is meant to fill the whole ad edge to edge. */
+  bleed?: boolean;
+  /** Photo only: how to fill any part of the ad the photo doesn't cover. "blur" paints a soft, enlarged copy of the photo behind it. */
+  extend?: "none" | "blur";
 }
 
 export type TextColor = "auto" | "dark" | "light";
-export type Align = "left" | "center";
+export type Align = "left" | "center" | "right";
 
 export interface TextState {
   headline: string;
@@ -47,6 +51,8 @@ export interface DesignContent {
   text: TextState;
   /** Brand mark color. Green by default. */
   logo: LogoVariant;
+  /** Brand mark size relative to the template default; limited to LOGO_SCALE_MIN..MAX. Defaults to 1. */
+  logoScale?: number;
 }
 
 export type TransformMap = Record<string, Partial<Record<LayerKind, Transform>>>;
@@ -55,6 +61,8 @@ export interface Design {
   content: DesignContent;
   /** Per-size position/size overrides, keyed `WxH`. Anything missing falls back to the default for that shape. */
   transforms: TransformMap;
+  /** Per-size headline offset from its template position, as fractions of the canvas. */
+  textOffsets?: Record<string, { dx: number; dy: number }>;
   /** Which imagery layers this concept's template supports (up to two). */
   supports: { photo: boolean; product: boolean };
 }
@@ -64,7 +72,8 @@ export interface Composition {
   order: LayerKind[];
   layers: Record<LayerKind, LayerState & Transform>;
   logo: LogoVariant;
-  text: { headline: string; headlineScale: number; align: Align; color: TextColor; scrim: boolean; cta: string; showCta: boolean };
+  logoScale?: number;
+  text: { headline: string; headlineScale: number; align: Align; color: TextColor; scrim: boolean; cta: string; showCta: boolean; dx?: number; dy?: number };
 }
 
 export const sizeKey = (w: number, h: number) => `${w}x${h}`;
