@@ -21,8 +21,7 @@ describe("real Figma examples per ad size", () => {
     for (const sizes of Object.values(EXAMPLE_FRAMES)) for (const size of Object.keys(sizes)) expect(sizeOf(size)).not.toBeNull();
   });
 
-  // The image files are git-ignored, so only check them when they exist locally.
-  it.runIf(existsSync("public/examples/trust-at-scale.png"))("points at files that exist", () => {
+  it("points at files that exist", () => {
     for (const sizes of Object.values(EXAMPLE_FRAMES)) for (const url of Object.values(sizes)) expect(existsSync(`public${url}`)).toBe(true);
   });
 });
