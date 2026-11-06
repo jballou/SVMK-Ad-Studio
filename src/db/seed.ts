@@ -1,7 +1,7 @@
 import { count } from "drizzle-orm";
 import type { Db } from "./index";
 import * as t from "./schema";
-import { THEMES } from "@/lib/dummy/concepts";
+import { exampleImageFor, THEMES } from "@/lib/dummy/concepts";
 import { generateDummyData } from "@/lib/dummy/generate";
 import { resolveComposition } from "@/lib/composition/defaults";
 import { designForConcept } from "@/lib/dummy/library";
@@ -38,7 +38,7 @@ export async function seedIfEmpty(db: Db) {
     const concept = conceptByKey.get(a.conceptKey)!;
     const [creative] = await db
       .insert(t.creatives)
-      .values({ conceptId: conceptIds.get(a.conceptKey)!, figmaNodeId: `sample:${a.conceptKey}:${a.width}x${a.height}`, width: a.width, height: a.height })
+      .values({ conceptId: conceptIds.get(a.conceptKey)!, figmaNodeId: `sample:${a.conceptKey}:${a.width}x${a.height}`, width: a.width, height: a.height, imageUrl: exampleImageFor(a.conceptKey, a.width, a.height) ?? null })
       .onConflictDoUpdate({ target: [t.creatives.conceptId, t.creatives.width, t.creatives.height], set: { syncedAt: null } })
       .returning({ id: t.creatives.id });
     const [ad] = await db

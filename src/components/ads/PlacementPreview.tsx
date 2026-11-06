@@ -7,10 +7,10 @@ import { MetaStory } from "@/components/mockups/MetaStory";
 import { NewsletterSlot } from "@/components/mockups/NewsletterSlot";
 
 /** The ad shown inside its platform UI. `placement` can override the ad's own (e.g. to preview a creative in Threads). */
-export function PlacementPreview({ ad, placement = ad.placement, showSafeZone = true }: { ad: Pick<AdRecord, "art" | "copy" | "width" | "height" | "placement" | "composition">; placement?: string; showSafeZone?: boolean }) {
+export function PlacementPreview({ ad, placement = ad.placement, showSafeZone = true }: { ad: Pick<AdRecord, "art" | "copy" | "width" | "height" | "placement" | "composition" | "imageUrl">; placement?: string; showSafeZone?: boolean }) {
   const { width, height } = ad;
   const copy = ad.copy;
-  const art = <AdArt art={ad.art} copy={copy} width={width} height={height} composition={ad.composition} placementKey={placement} />;
+  const art = <AdArt art={ad.art} copy={copy} width={width} height={height} composition={ad.composition} placementKey={placement} imageUrl={ad.imageUrl} />;
   const intro = copy?.intro ?? "";
   const headline = copy?.platformHeadline ?? copy?.headline ?? "";
   const cta = copy?.cta;

@@ -1,9 +1,9 @@
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { ExportCenter } from "@/components/export/ExportCenter";
 import { PageHeader } from "@/components/ui/primitives";
 import { getDb } from "@/db";
 import { listAds } from "@/lib/db/repo";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Export · Ad Studio" };
 
@@ -17,7 +17,7 @@ export default function ExportPage({ searchParams }: { searchParams: Promise<{ a
   return (
     <>
       <PageHeader title="Export" description="Download ads individually or as a batch, organized the way each platform team expects, with a spreadsheet manifest." />
-      <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading…</p>}><Content searchParams={searchParams} /></Suspense>
+      <Loadable><Content searchParams={searchParams} /></Loadable>
     </>
   );
 }

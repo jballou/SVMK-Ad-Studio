@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { Sparkles } from "lucide-react";
 import { AdRow } from "@/components/ads/AdRow";
 import { LineChart } from "@/components/charts/LineChart";
@@ -13,6 +12,7 @@ import { loadWorkspace } from "@/lib/db/workspace";
 import { fmtPct } from "@/lib/format";
 import { SERIES_COLORS } from "@/lib/ui/colors";
 import { daysLive } from "@/lib/scorecard/build";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Fatigue · Ad Studio" };
 
@@ -75,5 +75,5 @@ async function Content() {
 }
 
 export default function Fatigue() {
-  return <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading fatigue report…</p>}><Content /></Suspense>;
+  return <Loadable><Content /></Loadable>;
 }

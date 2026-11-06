@@ -1,9 +1,9 @@
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { Gallery, type AdStat } from "@/components/gallery/Gallery";
 import { PageHeader } from "@/components/ui/primitives";
 import { rates, totalsByAd } from "@/lib/analytics/aggregate";
 import { loadWorkspace } from "@/lib/db/workspace";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Ad gallery · Ad Studio" };
 
@@ -19,9 +19,9 @@ export default function GalleryPage({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       <PageHeader title="Ad gallery" description="Every ad across platforms. Browse as thumbnails, a gallery or a list; change status, filter by tags, and select ads to export." />
-      <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading ads…</p>}>
+      <Loadable>
         <Content searchParams={searchParams} />
-      </Suspense>
+      </Loadable>
     </>
   );
 }

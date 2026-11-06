@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span title="Jarrod B." className="hidden size-8 place-items-center rounded-full bg-brand-periwinkle-200 text-xs font-semibold text-brand-periwinkle-800 sm:grid" aria-label="Signed in as Jarrod B.">JB</span>
           </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+        <main id="main" className="w-full px-4 py-6 sm:px-6 sm:py-8">{children}</main>
       </div>
     </div>
   );

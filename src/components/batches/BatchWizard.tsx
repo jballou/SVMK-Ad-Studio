@@ -93,6 +93,7 @@ export function BatchWizard({ existing, defaultMonth, customRequestUrl }: { exis
   const canNext = step === 0 ? picked.length > 0 : step === 1 ? copyErrors === 0 : step === 2 ? placements.length > 0 : step === 3 ? designErrors === 0 : true;
   const reason = step === 0 ? "Select at least one concept." : step === 1 ? `Fix ${copyErrors} copy error${copyErrors === 1 ? "" : "s"} to continue.` : step === 2 ? "Select at least one placement." : step === 3 ? `Fix ${designErrors} design error${designErrors === 1 ? "" : "s"} to continue.` : "";
 
+  const goNext = () => { setStep((x) => x + 1); if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" }); };
   const defaultName = picked.length === 1 ? picked[0] : `${picked.length} concepts`;
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
@@ -127,6 +128,7 @@ export function BatchWizard({ existing, defaultMonth, customRequestUrl }: { exis
   }
 
   return (
+    <>
     <div className={`grid gap-6 ${step === 3 ? "" : "lg:grid-cols-[minmax(0,1fr)_300px]"}`}>
       <div className="min-w-0 space-y-6">
         <ol className="flex flex-wrap gap-2" aria-label="Steps">
@@ -232,17 +234,19 @@ export function BatchWizard({ existing, defaultMonth, customRequestUrl }: { exis
             {result && !result.ok && <p role="alert" className="mt-3 rounded-lg bg-brand-red-100 px-3 py-2 text-sm text-brand-red-700">{result.error}</p>}
           </Card>
         )}
+      </div>
 
+      {step !== 3 && <BatchCart picked={picked} onRemove={(k) => setPicked(picked.filter((x) => x !== k))} onClear={() => setPicked([])} adsToCreate={fresh.length} alreadyExist={plan.length - fresh.length} placements={placements.length} copyErrors={copyErrors} step={step} onContinue={goNext} canContinue={canNext} reason={reason} nextLabel={STEPS[Math.min(step + 1, 4)]} />}
+    </div>
+      <div className="sticky bottom-0 z-30 -mx-4 mt-6 border-t border-brand-neutral-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex items-center justify-between gap-3">
           <Button variant="outline" onClick={() => setStep((s) => s - 1)} disabled={step === 0}><ArrowLeft /> Back</Button>
-          <div className="flex items-center gap-3">
-            {!canNext && <span className="text-xs text-brand-neutral-650" role="status">{reason}</span>}
-            {step < 4 ? <Button onClick={() => setStep((s) => s + 1)} disabled={!canNext}>Next <ArrowRight /></Button> : <Button onClick={submit} disabled={pending || fresh.length === 0 || designErrors > 0}><Sparkles /> {pending ? "Generating…" : `Generate ${fresh.length} ad${fresh.length === 1 ? "" : "s"}`}</Button>}
+          <div className="flex min-w-0 items-center gap-3">
+            {!canNext && <span className="truncate text-xs text-brand-neutral-650" role="status">{reason}</span>}
+            {step < 4 ? <Button onClick={goNext} disabled={!canNext}>Next: {STEPS[step + 1]} <ArrowRight /></Button> : <Button onClick={submit} disabled={pending || fresh.length === 0 || designErrors > 0}><Sparkles /> {pending ? "Generating…" : `Generate ${fresh.length} ad${fresh.length === 1 ? "" : "s"}`}</Button>}
           </div>
         </div>
       </div>
-
-      {step !== 3 && <BatchCart picked={picked} onRemove={(k) => setPicked(picked.filter((x) => x !== k))} onClear={() => setPicked([])} adsToCreate={fresh.length} alreadyExist={plan.length - fresh.length} placements={placements.length} copyErrors={copyErrors} step={step} />}
-    </div>
+    </>
   );
 }

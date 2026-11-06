@@ -1,5 +1,6 @@
 import type { AdArtSpec } from "@/lib/ads/types";
 import { intentSlugFor } from "@/lib/templates/intents";
+import { EXAMPLE_FRAMES } from "./example-frames";
 import type { PlatformKey } from "@/lib/specs/platforms";
 
 export interface ConceptSeed {
@@ -130,3 +131,6 @@ const EXAMPLE_IMAGES: Record<string, string> = {
   GoodCompany: "/examples/good-company.png",
 };
 export const conceptImage = (key: string): string | undefined => EXAMPLE_IMAGES[key];
+
+/** The real export for a concept at a given ad size: the frame closest in shape, else the concept's square export. */
+export const exampleImageFor = (key: string, w: number, h: number): string | undefined => EXAMPLE_FRAMES[key]?.[`${w}x${h}`] ?? EXAMPLE_IMAGES[key];

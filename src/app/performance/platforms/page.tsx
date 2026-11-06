@@ -1,5 +1,4 @@
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { LineChart } from "@/components/charts/LineChart";
 import { Card, DataTable } from "@/components/ui/primitives";
 import { RangePicker } from "@/components/ui/range-picker";
@@ -10,6 +9,7 @@ import { fmtCompact, fmtInt, fmtMoney, fmtPct } from "@/lib/format";
 import { PLACEMENTS, type PlatformKey } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@/lib/ui/colors";
 import type { Totals } from "@/lib/metrics/csv";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Platforms · Ad Studio" };
 
@@ -70,5 +70,5 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
 }
 
 export default function Platforms({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
-  return <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading platforms…</p>}><Content searchParams={searchParams} /></Suspense>;
+  return <Loadable><Content searchParams={searchParams} /></Loadable>;
 }

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { ChevronLeft, CircleCheck, CircleX, Download } from "lucide-react";
 import { AdArt } from "@/components/ads/AdArt";
 import { BandChip, PlatformBadge, StatusChip, TooEarlyChip } from "@/components/ads/badges";
@@ -19,6 +18,7 @@ import { fmtCompact, fmtDate, fmtMoney, fmtPct } from "@/lib/format";
 import { MAX_POINTS, type Criterion } from "@/lib/scorecard/score";
 import { PLACEMENTS } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR } from "@/lib/ui/colors";
+import { Loadable } from "@/components/ui/loadable";
 
 const CRITERIA: [Criterion, string][] = [
   ["campaignActive", "Part of an active campaign"], ["landingPageClear", "Landing page messaging is clear"], ["ctaMatch", "CTA matches landing page"], ["icpMatch", "Messaging is ICP-specific and targeting matches"],
@@ -78,7 +78,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
               <ul className="flex flex-wrap items-end gap-3">
                 {siblings.map((s) => (
                   <li key={s.id} className="w-24"><Link href={`/gallery/${s.name}`} className="block space-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500">
-                    <span className="block overflow-hidden rounded border border-brand-neutral-200"><AdArt art={s.art} copy={s.copy} width={s.width} height={s.height} showCta={false} composition={s.composition} placementKey={s.placement} /></span>
+                    <span className="block overflow-hidden rounded border border-brand-neutral-200"><AdArt art={s.art} copy={s.copy} width={s.width} height={s.height} showCta={false} composition={s.composition} placementKey={s.placement} imageUrl={s.imageUrl} /></span>
                     <span className="block truncate text-[11px] text-brand-neutral-650" title={s.name}>{s.width}×{s.height} · {s.platform}</span>
                   </Link></li>
                 ))}
@@ -150,8 +150,8 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
 
 export default function AdDetail({ params }: { params: Promise<{ name: string }> }) {
   return (
-    <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading ad…</p>}>
+    <Loadable>
       <Content params={params} />
-    </Suspense>
+    </Loadable>
   );
 }

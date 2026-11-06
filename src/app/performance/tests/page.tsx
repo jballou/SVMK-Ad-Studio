@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { Beaker } from "lucide-react";
 import { AdArt } from "@/components/ads/AdArt";
 import { Chip } from "@/components/ui/chip";
@@ -11,6 +10,7 @@ import { listExperiments } from "@/lib/db/repo";
 import { loadWorkspace } from "@/lib/db/workspace";
 import { fmtCompact, fmtDate, fmtPct } from "@/lib/format";
 import type { AdRecord } from "@/lib/ads/types";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "A/B tests · Ad Studio" };
 
@@ -18,7 +18,7 @@ function Side({ ad, ctr, impressions, win, label }: { ad: AdRecord; ctr: number;
   return (
     <Link href={`/gallery/${ad.name}`} className={`block rounded-lg border p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500 ${win ? "border-brand-green-400 bg-brand-green-100/40" : "border-brand-neutral-200"}`}>
       <div className="flex items-start gap-3">
-        <span className="w-20 shrink-0 overflow-hidden rounded border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={false} composition={ad.composition} placementKey={ad.placement} /></span>
+        <span className="w-20 shrink-0 overflow-hidden rounded border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={false} composition={ad.composition} placementKey={ad.placement} imageUrl={ad.imageUrl} /></span>
         <div className="min-w-0">
           <p className="text-xs font-semibold text-brand-neutral-650">Variant {label}{win && <span className="ml-1.5 text-brand-green-600">Winner</span>}</p>
           <p className="truncate text-sm font-medium" title={ad.name}>{ad.conceptKey}</p>
@@ -90,5 +90,5 @@ async function Content({ searchParams }: { searchParams: Promise<{ status?: stri
 }
 
 export default function Tests({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  return <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading tests…</p>}><Content searchParams={searchParams} /></Suspense>;
+  return <Loadable><Content searchParams={searchParams} /></Loadable>;
 }

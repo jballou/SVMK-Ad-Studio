@@ -1,5 +1,6 @@
 import type { AdArtSpec, AdCopy } from "@/lib/ads/types";
 import type { Composition } from "@/lib/composition/types";
+import { AdImage } from "./AdImage";
 import { CompositionArt } from "./CompositionArt";
 
 const FALLBACK: AdArtSpec = { bg: "#EDEBE8", fg: "#2F2E2D", accent: "#686764", layout: "left" };
@@ -8,7 +9,13 @@ const FALLBACK: AdArtSpec = { bg: "#EDEBE8", fg: "#2F2E2D", accent: "#686764", l
  * Generated stand-in for a Figma creative. Sizes everything from the container (cq units),
  * so it holds up from a 48px thumbnail to a full-size preview.
  */
-export function AdArt({ art = FALLBACK, copy, width, height, className = "", showCta = true, composition, placementKey }: { art?: AdArtSpec; copy?: Pick<AdCopy, "headline" | "cta">; width: number; height: number; className?: string; showCta?: boolean; composition?: Composition; placementKey?: string }) {
+export function AdArt({ imageUrl, ...rest }: { art?: AdArtSpec; copy?: Pick<AdCopy, "headline" | "cta">; width: number; height: number; className?: string; showCta?: boolean; composition?: Composition; placementKey?: string; imageUrl?: string }) {
+  const generated = <GeneratedArt {...rest} />;
+  if (!imageUrl) return generated;
+  return <AdImage src={imageUrl} width={rest.width} height={rest.height} label={rest.copy ? `Ad creative, ${rest.width} by ${rest.height}: ${rest.copy.headline}` : `Ad creative, ${rest.width} by ${rest.height}`} fallback={generated} className={rest.className} />;
+}
+
+function GeneratedArt({ art = FALLBACK, copy, width, height, className = "", showCta = true, composition, placementKey }: { art?: AdArtSpec; copy?: Pick<AdCopy, "headline" | "cta">; width: number; height: number; className?: string; showCta?: boolean; composition?: Composition; placementKey?: string }) {
   if (composition && placementKey) return <CompositionArt composition={composition} art={art} width={width} height={height} placementKey={placementKey} className={className} />;
   const ratio = width / height;
   const banner = ratio > 3;

@@ -1,5 +1,4 @@
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { AssetManager } from "@/components/settings/AssetManager";
 import { TemplateChecker } from "@/components/settings/TemplateChecker";
 import { TemplateGrid } from "@/components/settings/TemplateGrid";
@@ -13,6 +12,7 @@ import { COPY_DECKS, DECK_LIMITS, TEMPLATE_FILES } from "@/lib/dummy/library";
 import { fmtDate } from "@/lib/format";
 import { PLACEMENTS } from "@/lib/specs/platforms";
 import { PLATFORM_LABEL } from "@/lib/ui/colors";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Library · Ad Studio" };
 
@@ -42,7 +42,7 @@ export default function Library() {
       <section aria-labelledby="imgs">
         <h2 id="imgs" className="mb-1 text-base font-semibold">Uploaded and imported images</h2>
         <p className="mb-3 text-sm text-brand-neutral-650">Saved from uploads, Google Drive and Figma. Approving an image removes the &quot;needs brand review&quot; warning in the design editor.</p>
-        <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading images…</p>}><Assets /></Suspense>
+        <Loadable><Assets /></Loadable>
       </section>
 
       <section aria-labelledby="decks">

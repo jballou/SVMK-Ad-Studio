@@ -1,13 +1,14 @@
 "use client";
 
-import { Trash2, X } from "lucide-react";
+import { ArrowRight, Trash2, X } from "lucide-react";
+import { Button } from "@/components/ui/button-1";
 import { ConceptThumb } from "@/components/batches/ConceptThumb";
 import { conceptIntent } from "@/lib/dummy/concepts";
 import { conceptByKey } from "@/lib/dummy/library";
 import { STARTER_TEMPLATES } from "@/lib/templates/intents";
 
 /** A running list of what the user has picked, like a cart: each concept, and how many ads it will produce. */
-export function BatchCart({ picked, onRemove, onClear, adsToCreate, alreadyExist, placements, copyErrors, step }: {
+export function BatchCart({ picked, onRemove, onClear, adsToCreate, alreadyExist, placements, copyErrors, step, onContinue, canContinue, reason, nextLabel }: {
   picked: string[];
   onRemove: (key: string) => void;
   onClear: () => void;
@@ -16,6 +17,10 @@ export function BatchCart({ picked, onRemove, onClear, adsToCreate, alreadyExist
   placements: number;
   copyErrors: number;
   step: number;
+  onContinue: () => void;
+  canContinue: boolean;
+  reason: string;
+  nextLabel: string;
 }) {
   const single = picked.length === 1;
   return (
@@ -50,6 +55,13 @@ export function BatchCart({ picked, onRemove, onClear, adsToCreate, alreadyExist
         {step >= 2 && alreadyExist > 0 && <p className="text-xs text-brand-orange-600">{alreadyExist} already exist and will be skipped</p>}
         {copyErrors > 0 && <p className="mt-1 text-xs text-brand-red-500">{copyErrors} copy error{copyErrors === 1 ? "" : "s"} to fix</p>}
       </div>
+
+      {picked.length > 0 && step < 4 && (
+        <div className="mt-3">
+          <Button onClick={onContinue} disabled={!canContinue} className="w-full">Continue to {nextLabel.toLowerCase()} <ArrowRight /></Button>
+          {!canContinue && <p className="mt-1.5 text-xs text-brand-neutral-650" role="status">{reason}</p>}
+        </div>
+      )}
     </aside>
   );
 }

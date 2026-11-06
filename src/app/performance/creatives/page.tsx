@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { AdThumb } from "@/components/ads/AdThumb";
 import { HBar } from "@/components/charts/HBar";
 import { Sparkline } from "@/components/charts/Sparkline";
@@ -11,6 +10,7 @@ import { parseRange, rangeBounds } from "@/lib/analytics/range";
 import { loadWorkspace } from "@/lib/db/workspace";
 import { fmtCompact, fmtMoney, fmtPct } from "@/lib/format";
 import type { AdRecord } from "@/lib/ads/types";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Creatives & tags · Ad Studio" };
 
@@ -88,5 +88,5 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
 }
 
 export default function Creatives({ searchParams }: { searchParams: Promise<{ range?: string; by?: string }> }) {
-  return <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading creatives…</p>}><Content searchParams={searchParams} /></Suspense>;
+  return <Loadable><Content searchParams={searchParams} /></Loadable>;
 }

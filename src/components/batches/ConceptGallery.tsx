@@ -66,7 +66,7 @@ export function ConceptGallery({ selected, onToggle, customRequestUrl }: { selec
             <p className="mt-1">Try fewer filters, or request something custom from the Brand Creative Hub.</p>
           </div>
         ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1800px]:grid-cols-6">
             {shown.map(({ concept: c, intentName }) => {
               const on = selected.includes(c.key);
               return (

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { AlertTriangle, ArrowRight, Trophy, Upload, Plus } from "lucide-react";
 import { AdThumb } from "@/components/ads/AdThumb";
 import { BandChip, PlatformBadge, TooEarlyChip } from "@/components/ads/badges";
@@ -18,6 +17,7 @@ import { fmtCompact, fmtDate, fmtMoney, fmtPct } from "@/lib/format";
 import { BAND_LABEL, type Band } from "@/lib/scorecard/score";
 import type { PlatformKey } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@/lib/ui/colors";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Dashboard · Ad Studio" };
 
@@ -173,8 +173,8 @@ async function Content() {
 
 export default function Dashboard() {
   return (
-    <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading dashboard…</p>}>
+    <Loadable>
       <Content />
-    </Suspense>
+    </Loadable>
   );
 }

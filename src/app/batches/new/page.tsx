@@ -1,9 +1,9 @@
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { BatchWizard } from "@/components/batches/BatchWizard";
 import { PageHeader } from "@/components/ui/primitives";
 import { getDb } from "@/db";
 import { listAds } from "@/lib/db/repo";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "New batch · Ad Studio" };
 
@@ -20,7 +20,7 @@ export default function NewBatch() {
   return (
     <>
       <PageHeader title="New ad or batch" description="Pick one concept for a single ad, or several for a batch. Then add copy, choose platforms, preview and generate every size you need." />
-      <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading…</p>}><Content /></Suspense>
+      <Loadable><Content /></Loadable>
     </>
   );
 }

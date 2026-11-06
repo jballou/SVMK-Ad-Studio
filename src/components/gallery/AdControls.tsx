@@ -26,11 +26,7 @@ export function StatusControl({ name, status }: { name: string; status: AdStatus
     });
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {status === "live" ? (
-        <Button variant="outline" size="md" disabled={pending} onClick={() => set("paused")}>Pause ad</Button>
-      ) : status === "paused" ? (
-        <Button size="md" disabled={pending} onClick={() => set("live")}>Resume ad</Button>
-      ) : null}
+      {status === "paused" && <Button size="md" disabled={pending} onClick={() => set("live")}>Resume ad</Button>}
       <label className="text-xs text-brand-neutral-650">
         <span className="sr-only">Set status</span>
         <select value={status} disabled={pending} onChange={(e) => set(e.target.value as AdStatus)} className="h-8.5 rounded-md border border-brand-neutral-250 bg-white px-2 text-sm capitalize">

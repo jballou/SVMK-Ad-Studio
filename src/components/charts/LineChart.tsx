@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { fmtCompact, fmtDate, fmtMoney } from "@/lib/format";
 
 // Server components can't pass functions to this client component, so formats are named.
@@ -18,49 +18,62 @@ export interface Series {
   points: { x: string; y: number }[];
 }
 
-const W = 640;
 const H = 220;
-const M = { t: 12, r: 12, b: 24, l: 44 };
+/** Axis text is a fixed size in pixels: the SVG is drawn at its real width, so type never scales with the window. */
+const FONT = 11;
+const CHAR_W = 6.6; // generous average advance for the tabular digits and symbols in tick labels
+const M = { t: 12, r: 16, b: 26 };
 
 /** Multi-series line chart over ISO dates (shared x axis), with a hover readout and a table fallback for screen readers. */
 export function LineChart({ series, unit = "int", label, height = H, area = false }: { series: Series[]; unit?: Unit; label: string; height?: number; area?: boolean }) {
   const format = FORMAT[unit];
   const [hover, setHover] = useState<number | null>(null);
+  const [W, setW] = useState(640);
+  const box = useRef<HTMLDivElement>(null);
   const id = useId();
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(240, Math.round(e.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const xs = [...new Set(series.flatMap((s) => s.points.map((p) => p.x)))].sort();
   if (xs.length === 0) return <p className="text-sm text-brand-neutral-650">No data for this range.</p>;
   const ys = series.flatMap((s) => s.points.map((p) => p.y));
   const max = Math.max(...ys, 0) || 1;
   const niceMax = max * 1.08;
-  const iw = W - M.l - M.r;
-  const ih = height - M.t - M.b;
-  const x = (i: number) => M.l + (xs.length === 1 ? iw / 2 : (i / (xs.length - 1)) * iw);
-  const y = (v: number) => M.t + ih - (v / niceMax) * ih;
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * niceMax);
+  // Room for the widest tick label, so none is ever clipped.
+  const ml = Math.ceil(Math.max(...ticks.map((t) => format(t).length)) * CHAR_W) + 14;
+  const iw = W - ml - M.r;
+  const ih = height - M.t - M.b;
+  const x = (i: number) => ml + (xs.length === 1 ? iw / 2 : (i / (xs.length - 1)) * iw);
+  const y = (v: number) => M.t + ih - (v / niceMax) * ih;
   const labelIdx = [0, Math.floor((xs.length - 1) / 2), xs.length - 1].filter((v, i, a) => a.indexOf(v) === i);
   const xIndex = new Map(xs.map((v, i) => [v, i]));
 
   const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * W;
-    const i = Math.round(((px - M.l) / iw) * (xs.length - 1));
+    const i = Math.round(((px - ml) / iw) * (xs.length - 1));
     setHover(Math.max(0, Math.min(xs.length - 1, i)));
   };
 
   const hoverX = hover === null ? null : xs[hover];
   return (
     <figure className="m-0">
-      <div className="relative">
-        <svg viewBox={`0 0 ${W} ${height}`} role="img" aria-labelledby={id} className="w-full touch-none select-none" onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
+      <div ref={box} className="relative">
+        <svg width={W} height={height} viewBox={`0 0 ${W} ${height}`} role="img" aria-labelledby={id} className="block touch-none select-none" onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
           <title id={id}>{label}</title>
           {ticks.map((t) => (
             <g key={t}>
-              <line x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} stroke="#E2DFDA" strokeWidth={1} />
-              <text x={M.l - 6} y={y(t) + 3.5} textAnchor="end" fontSize={10} fill="#686764">{format(t)}</text>
+              <line x1={ml} x2={W - M.r} y1={y(t)} y2={y(t)} stroke="#E2DFDA" strokeWidth={1} />
+              <text x={ml - 8} y={y(t) + FONT / 3} textAnchor="end" fontSize={FONT} fill="#686764">{format(t)}</text>
             </g>
           ))}
           {labelIdx.map((i) => (
-            <text key={i} x={x(i)} y={height - 6} textAnchor={i === 0 ? "start" : i === xs.length - 1 ? "end" : "middle"} fontSize={10} fill="#686764">{fmtDate(xs[i], { month: "short", day: "numeric" })}</text>
+            <text key={i} x={x(i)} y={height - 7} textAnchor={i === 0 ? "start" : i === xs.length - 1 ? "end" : "middle"} fontSize={FONT} fill="#686764">{fmtDate(xs[i], { month: "short", day: "numeric" })}</text>
           ))}
           {series.map((s) => {
             const pts = s.points.map((p) => `${x(xIndex.get(p.x)!).toFixed(1)},${y(p.y).toFixed(1)}`);

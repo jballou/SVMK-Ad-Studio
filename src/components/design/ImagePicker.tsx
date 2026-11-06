@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button-1";
 import type { AssetDto, Capabilities } from "@/lib/assets/types";
 import type { ImageRef } from "@/lib/composition/types";
 import { assetUrl, PHOTOS, PRODUCTS } from "@/lib/imagery/library";
+import { Loading } from "@/components/ui/loading";
+import { useHeldLoading } from "@/components/ui/use-held-loading";
 
 type Tab = "library" | "mine" | "upload" | "drive" | "figma";
 const TABS: { id: Tab; label: string }[] = [
@@ -53,6 +55,8 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
   const [tab, setTab] = useState<Tab>(value && value.source !== "gallery" ? "mine" : "library");
   const [caps, setCaps] = useState<Capabilities | null>(null);
   const [mine, setMine] = useState<AssetDto[] | null>(null);
+  const mineLoad = useHeldLoading(mine === null);
+  const capsLoad = useHeldLoading(caps === null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [driveUrl, setDriveUrl] = useState("");
@@ -128,7 +132,7 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
       )}
 
       {tab === "mine" && (
-        mine === null ? <p className="text-xs text-brand-neutral-650">Loading…</p> : mine.length === 0 ? (
+        mine === null || mineLoad !== "idle" ? <Loading leaving={mineLoad === "leaving"} /> : mine.length === 0 ? (
           <p className="rounded-lg border border-dashed border-brand-neutral-300 p-4 text-center text-xs text-brand-neutral-650">Nothing here yet. Upload an image, or import one from Drive or Figma, and it will be saved for reuse.</p>
         ) : (
           <ul className="grid grid-cols-3 gap-2" aria-label="Uploaded and imported images">
@@ -161,7 +165,7 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
       )}
 
       {tab === "drive" && (
-        !caps ? <p className="text-xs text-brand-neutral-650">Loading…</p> : !caps.drive ? (
+        !caps || capsLoad !== "idle" ? <Loading leaving={capsLoad === "leaving"} /> : !caps.drive ? (
           <Setup title="Google Drive isn&apos;t connected"><p>Add a Google service account (<code>GOOGLE_SERVICE_ACCOUNT_JSON</code>) with the Drive API enabled, then share any file or folder with its email address.</p></Setup>
         ) : storage === "none" ? <Setup title="Needs image storage">Imported images are saved to storage first. Connect a Vercel Blob store to use Drive.</Setup> : (
           <div className="space-y-2">
@@ -182,7 +186,7 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
       )}
 
       {tab === "figma" && (
-        !caps ? <p className="text-xs text-brand-neutral-650">Loading…</p> : !caps.figma ? (
+        !caps || capsLoad !== "idle" ? <Loading leaving={capsLoad === "leaving"} /> : !caps.figma ? (
           <Setup title="Figma isn&apos;t connected"><p>Add a Figma personal access token (<code>FIGMA_TOKEN</code>) with read access to your files.</p></Setup>
         ) : storage === "none" ? <Setup title="Needs image storage">Imported images are saved to storage first. Connect a Vercel Blob store to use Figma.</Setup> : (
           <div className="space-y-2">

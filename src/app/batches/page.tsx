@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button-1";
 import { Chip } from "@/components/ui/chip";
@@ -9,6 +8,7 @@ import { getDb } from "@/db";
 import { listBatches } from "@/lib/db/repo";
 import { fmtDate } from "@/lib/format";
 import { PLACEMENTS } from "@/lib/specs/platforms";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Batches · Ad Studio" };
 
@@ -39,7 +39,7 @@ export default function Batches() {
   return (
     <>
       <PageHeader title="Batches" description="Every set of ads generated from a Figma template and copy deck." actions={<Button asChild><Link href="/batches/new"><Plus /> New batch</Link></Button>} />
-      <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading batches…</p>}><Content /></Suspense>
+      <Loadable><Content /></Loadable>
     </>
   );
 }

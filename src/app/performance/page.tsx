@@ -1,5 +1,4 @@
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { AdRow } from "@/components/ads/AdRow";
 import { LineChart } from "@/components/charts/LineChart";
 import { Card, Stat } from "@/components/ui/primitives";
@@ -10,6 +9,7 @@ import { loadWorkspace } from "@/lib/db/workspace";
 import { fmtCompact, fmtMoney, fmtPct } from "@/lib/format";
 import type { PlatformKey } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@/lib/ui/colors";
+import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Performance · Ad Studio" };
 const MIN_IMPRESSIONS = 20_000;
@@ -65,5 +65,5 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
 }
 
 export default function Overview({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
-  return <Suspense fallback={<p className="text-sm text-brand-neutral-650">Loading performance…</p>}><Content searchParams={searchParams} /></Suspense>;
+  return <Loadable><Content searchParams={searchParams} /></Loadable>;
 }
