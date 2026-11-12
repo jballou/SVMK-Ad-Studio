@@ -28,7 +28,7 @@ export interface SizeOption {
   label: string;
 }
 
-const field = "h-9 w-full rounded-lg border border-brand-neutral-250 bg-white px-2.5 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
+const field = "h-9 w-full rounded-tight border border-brand-neutral-250 bg-white px-2 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
 const STEP = 0.01;
 
 export function qaForDesign(concept: ConceptSeed, design: Design, sizes: SizeOption[]): Map<string, QaIssue[]> {
@@ -140,9 +140,9 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-end gap-4">
         <label className="text-xs font-medium text-brand-neutral-650">Size
-          <select value={sizeIdx} onChange={(e) => setSizeIdx(Number(e.target.value))} className={`${field} mt-1 block w-64`}>
+          <select value={sizeIdx} onChange={(e) => setSizeIdx(Number(e.target.value))} className={`${field} mt-0 block w-64`}>
             {sizes.map((s, i) => { const n = counts(all.get(sizeKey(s.width, s.height)) ?? []); return <option key={`${s.placementKey}-${s.width}x${s.height}`} value={i}>{s.width}×{s.height} · {s.label}{n.errors ? ` (${n.errors} error${n.errors === 1 ? "" : "s"})` : n.warnings ? ` (${n.warnings} warning${n.warnings === 1 ? "" : "s"})` : ""}</option>; })}
           </select>
         </label>
@@ -156,8 +156,8 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0 space-y-3">
-          <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-brand-neutral-100 p-5">
+        <div className="min-w-0 space-y-4">
+          <div className="flex min-h-[420px] items-center justify-center rounded-loose bg-brand-neutral-100 p-4">
             {view === "edit" ? (
               <div ref={wrap} style={{ width: "100%", maxWidth: maxW }} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} className="shadow-sm">
                 <CompositionArt composition={comp} art={art} width={w} height={h} placementKey={placementKey} guides={guides} editor={{ selected, onSelect: setSelected, onLayerPointerDown: onPointerDown, onLayerKeyDown: onKeyDown, onTextPointerDown, onTextKeyDown }} />
@@ -167,7 +167,7 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
             )}
           </div>
           {gap > 0.002 && !extending && (
-            <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-red-200 bg-brand-red-100/50 px-3 py-2 text-sm">
+            <div role="alert" className="flex flex-wrap items-center gap-2 rounded-tight border border-brand-red-200 bg-brand-red-100/50 px-4 py-2 text-sm">
               <span className="min-w-0 flex-1">The photo doesn&apos;t fill the ad ({Math.round(gap * 100)}% empty).</span>
               <Button size="sm" variant="outline" onClick={() => onChange(applyFix(design, "scale-to-fill", { width: w, height: h, placementKey, themeBg: THEMES[concept.theme].bg }))}>Scale to fill</Button>
               <Button size="sm" onClick={() => onChange(setExtend(design, "blur"))}>Extend background</Button>
@@ -177,9 +177,9 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
           <Card title={`Checks for ${w}×${h}`} description={(() => { const n = counts(issues); return n.errors || n.warnings ? `${n.errors} error${n.errors === 1 ? "" : "s"}, ${n.warnings} warning${n.warnings === 1 ? "" : "s"}` : "All clear"; })()}>
             <QaIssues issues={issues} onFix={fixIssue} onFixAlso={fixAlso} onFixAll={fixAll} sizesWith={sizesWith} />
             {others.length > 0 && (
-              <div className="mt-4 border-t border-brand-neutral-150 pt-3">
+              <div className="mt-4 border-t border-brand-neutral-150 pt-4">
                 <p className="mb-2 text-xs font-medium text-brand-neutral-650">Other sizes with issues</p>
-                <ul className="flex flex-wrap gap-1.5">{others.map(({ s, idx, n }) => <li key={`${s.placementKey}-${s.width}x${s.height}`}><button type="button" onClick={() => setSizeIdx(idx)} className={`rounded-full border px-2.5 py-1 text-xs font-medium ${n.errors ? "border-brand-red-200 bg-brand-red-100 text-brand-red-700" : "border-brand-yellow-200 bg-brand-yellow-100 text-brand-yellow-800"}`}>{s.width}×{s.height} · {n.errors ? `${n.errors} error${n.errors === 1 ? "" : "s"}` : `${n.warnings} warning${n.warnings === 1 ? "" : "s"}`}</button></li>)}</ul>
+                <ul className="flex flex-wrap gap-2">{others.map(({ s, idx, n }) => <li key={`${s.placementKey}-${s.width}x${s.height}`}><button type="button" onClick={() => setSizeIdx(idx)} className={`rounded-round border px-2 py-0 text-xs font-medium ${n.errors ? "border-brand-red-200 bg-brand-red-100 text-brand-red-700" : "border-brand-yellow-200 bg-brand-yellow-100 text-brand-yellow-800"}`}>{s.width}×{s.height} · {n.errors ? `${n.errors} error${n.errors === 1 ? "" : "s"}` : `${n.warnings} warning${n.warnings === 1 ? "" : "s"}`}</button></li>)}</ul>
               </div>
             )}
           </Card>
@@ -192,8 +192,8 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
                 const st = layerInfo(k);
                 const unsupported = k !== "background" && !supports[k];
                 return (
-                  <li key={k} className={`flex items-center gap-1.5 px-3 py-2 ${sel === k ? "bg-brand-periwinkle-100/60" : ""}`}>
-                    <button type="button" disabled={unsupported} onClick={() => setSelected(k)} aria-pressed={sel === k} className="min-w-0 flex-1 rounded px-1 py-1 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500 disabled:text-brand-neutral-550">
+                  <li key={k} className={`flex items-center gap-2 px-4 py-2 ${sel === k ? "bg-brand-periwinkle-100/60" : ""}`}>
+                    <button type="button" disabled={unsupported} onClick={() => setSelected(k)} aria-pressed={sel === k} className="min-w-0 flex-1 rounded-tight px-2 py-0 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500 disabled:text-brand-neutral-550">
                       {LAYER_LABEL[k]}
                       <span className="block truncate text-xs font-normal text-brand-neutral-650">{unsupported ? "Not part of this template" : k === "background" ? (getPreset(st.preset)?.name ?? "Concept color") : st.image ? (st.image.source === "gallery" ? "Approved library" : st.image.name) : "No image"}</span>
                     </button>
@@ -203,20 +203,20 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
                   </li>
                 );
               })}
-              <li className={`flex items-center gap-2 px-3 py-2 ${sel === "headline" ? "bg-brand-periwinkle-100/60" : ""}`}><button type="button" onClick={() => setSelected("headline")} aria-pressed={sel === "headline"} className="flex-1 rounded px-1 py-1 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500">Headline<span className="block truncate text-xs font-normal text-brand-neutral-650">{t.headline}</span></button></li>
-              <li className={`flex items-center gap-2 px-3 py-2 ${sel === "cta" ? "bg-brand-periwinkle-100/60" : ""}`}><button type="button" onClick={() => setSelected("cta")} aria-pressed={sel === "cta"} className="flex-1 rounded px-1 py-1 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500">CTA button<span className="block text-xs font-normal text-brand-neutral-650">{showCta ? t.cta : rule.uiAddsCta ? "Added by the platform" : "Off"}</span></button></li>
-              <li className={`flex items-center gap-2 px-3 py-2 ${sel === "logo" ? "bg-brand-periwinkle-100/60" : ""}`}><button type="button" onClick={() => setSelected("logo")} aria-pressed={sel === "logo"} className="flex-1 rounded px-1 py-1 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500">Brand mark<span className="block text-xs font-normal text-brand-neutral-650">{LOGO_INFO[design.content.logo ?? "green"].label} · position locked</span></button><Lock className="size-3.5 text-brand-neutral-550" aria-hidden /></li>
+              <li className={`flex items-center gap-2 px-4 py-2 ${sel === "headline" ? "bg-brand-periwinkle-100/60" : ""}`}><button type="button" onClick={() => setSelected("headline")} aria-pressed={sel === "headline"} className="flex-1 rounded-tight px-2 py-0 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500">Headline<span className="block truncate text-xs font-normal text-brand-neutral-650">{t.headline}</span></button></li>
+              <li className={`flex items-center gap-2 px-4 py-2 ${sel === "cta" ? "bg-brand-periwinkle-100/60" : ""}`}><button type="button" onClick={() => setSelected("cta")} aria-pressed={sel === "cta"} className="flex-1 rounded-tight px-2 py-0 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500">CTA button<span className="block text-xs font-normal text-brand-neutral-650">{showCta ? t.cta : rule.uiAddsCta ? "Added by the platform" : "Off"}</span></button></li>
+              <li className={`flex items-center gap-2 px-4 py-2 ${sel === "logo" ? "bg-brand-periwinkle-100/60" : ""}`}><button type="button" onClick={() => setSelected("logo")} aria-pressed={sel === "logo"} className="flex-1 rounded-tight px-2 py-0 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-periwinkle-500">Brand mark<span className="block text-xs font-normal text-brand-neutral-650">{LOGO_INFO[design.content.logo ?? "green"].label} · position locked</span></button><Lock className="size-3.5 text-brand-neutral-550" aria-hidden /></li>
             </ul>
           </Card>
 
           <Card title={sel === "headline" ? "Headline" : sel === "cta" ? "CTA button" : sel === "logo" ? "Brand mark" : LAYER_LABEL[sel]}>
             {sel === "background" && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <ul className="grid grid-cols-3 gap-2" aria-label="Background presets">
                   {BG_PRESETS.map((p) => {
                     const on = (design.content.layers.background.preset ?? "theme") === p.id;
                     const bg = p.id === "theme" ? THEMES[concept.theme].bg : p.css;
-                    return <li key={p.id}><button type="button" aria-pressed={on} onClick={() => onChange(setPreset(design, p.id))} className={`w-full rounded-lg border p-1 text-left ${on ? "border-brand-green-600 ring-2 ring-brand-green-600/30" : "border-brand-neutral-200 hover:border-brand-neutral-300"}`}><span className="block aspect-[4/3] rounded" style={{ background: bg }} /><span className="mt-1 block truncate text-[11px]">{p.name}</span></button></li>;
+                    return <li key={p.id}><button type="button" aria-pressed={on} onClick={() => onChange(setPreset(design, p.id))} className={`w-full rounded-tight border p-2 text-left ${on ? "border-brand-green-600 ring-2 ring-brand-green-600/30" : "border-brand-neutral-200 hover:border-brand-neutral-300"}`}><span className="block aspect-[4/3] rounded-tight" style={{ background: bg }} /><span className="mt-0 block truncate text-xs">{p.name}</span></button></li>;
                   })}
                 </ul>
                 <p className="text-xs text-brand-neutral-650">Text color adjusts automatically to stay readable.</p>
@@ -227,10 +227,10 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
               <div className="space-y-4">
                 <ImagePicker kind={layerSel} value={layerInfo(layerSel).image} onPick={(r) => onChange(setImage(design, layerSel, r))} />
                 {layerSel === "photo" && (
-                  <div className="space-y-2 border-t border-brand-neutral-150 pt-3">
-                    <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={!!design.content.layers.photo.bleed} onChange={(e) => onChange(setBleed(design, e.target.checked))} className="mt-0.5 accent-brand-green-600" /><span>Full-bleed background<span className="block text-xs text-brand-neutral-650">The photo fills the whole ad. Drag to reposition it; if it stops covering the ad you can extend the background.</span></span></label>
+                  <div className="space-y-2 border-t border-brand-neutral-150 pt-4">
+                    <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={!!design.content.layers.photo.bleed} onChange={(e) => onChange(setBleed(design, e.target.checked))} className="mt-0 accent-brand-green-600" /><span>Full-bleed background<span className="block text-xs text-brand-neutral-650">The photo fills the whole ad. Drag to reposition it; if it stops covering the ad you can extend the background.</span></span></label>
                     {design.content.layers.photo.bleed && (
-                      <div className="rounded-lg bg-brand-neutral-100 p-2.5 text-xs text-brand-neutral-750">
+                      <div className="rounded-tight bg-brand-neutral-100 p-2 text-xs text-brand-neutral-750">
                         {gap > 0.002 && !extending ? <p className="font-medium text-brand-red-500">{Math.round(gap * 100)}% of the ad isn&apos;t covered at {w}×{h}.</p> : extending ? <p className="font-medium">Extended with a blurred copy of the photo.</p> : <p>Fully covered at {w}×{h}.</p>}
                         <div className="mt-2 flex flex-wrap gap-2">
                           <Button size="sm" variant="outline" onClick={() => onChange(applyFix(design, "scale-to-fill", { width: w, height: h, placementKey, themeBg: THEMES[concept.theme].bg }))}>Scale to fill</Button>
@@ -240,17 +240,17 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
                     )}
                   </div>
                 )}
-                <fieldset className="space-y-2 border-t border-brand-neutral-150 pt-3">
+                <fieldset className="space-y-2 border-t border-brand-neutral-150 pt-4">
                   <legend className="text-xs font-medium text-brand-neutral-650">Position (this size)</legend>
-                  <div className="grid grid-cols-[1fr_auto] items-end gap-3">
+                  <div className="grid grid-cols-[1fr_auto] items-end gap-4">
                     <div className="grid grid-cols-2 gap-2">
                       {(["x", "y"] as const).map((a) => (
                         <label key={a} className="text-xs text-brand-neutral-650">{a === "x" ? "Across" : "Down"} %
-                          <input type="number" value={Math.round(comp.layers[layerSel][a] * 100)} onChange={(e) => setTransform(layerSel, nudge(cur(layerSel), a === "x" ? Number(e.target.value) / 100 - cur(layerSel).x : 0, a === "y" ? Number(e.target.value) / 100 - cur(layerSel).y : 0))} className={`${field} mt-1`} />
+                          <input type="number" value={Math.round(comp.layers[layerSel][a] * 100)} onChange={(e) => setTransform(layerSel, nudge(cur(layerSel), a === "x" ? Number(e.target.value) / 100 - cur(layerSel).x : 0, a === "y" ? Number(e.target.value) / 100 - cur(layerSel).y : 0))} className={`${field} mt-0`} />
                         </label>
                       ))}
                     </div>
-                    <div className="grid grid-cols-3 gap-1" role="group" aria-label="Nudge">
+                    <div className="grid grid-cols-3 gap-2" role="group" aria-label="Nudge">
                       <span /><Button size="sm" variant="outline" mode="icon" aria-label="Nudge up" onClick={() => setTransform(layerSel, nudge(cur(layerSel), 0, -STEP))}><ArrowUp /></Button><span />
                       <Button size="sm" variant="outline" mode="icon" aria-label="Nudge left" onClick={() => setTransform(layerSel, nudge(cur(layerSel), -STEP, 0))}><ArrowLeft /></Button>
                       <Button size="sm" variant="outline" mode="icon" aria-label="Nudge down" onClick={() => setTransform(layerSel, nudge(cur(layerSel), 0, STEP))}><ArrowDown /></Button>
@@ -259,13 +259,13 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
                   </div>
                   <div>
                     <label htmlFor="size-range" className="flex justify-between text-xs text-brand-neutral-650"><span>Size</span><span className="tabular-nums">{Math.round(comp.layers[layerSel].scale * 100)}% of width</span></label>
-                    <div className="mt-1 flex items-center gap-2">
+                    <div className="mt-0 flex items-center gap-2">
                       <Button size="sm" variant="outline" mode="icon" aria-label="Smaller" onClick={() => setTransform(layerSel, resize(cur(layerSel), -0.02))}><Minus /></Button>
                       <input id="size-range" type="range" min={5} max={160} value={Math.round(comp.layers[layerSel].scale * 100)} onChange={(e) => setTransform(layerSel, { ...cur(layerSel), scale: Number(e.target.value) / 100 })} className="flex-1 accent-brand-green-600" />
                       <Button size="sm" variant="outline" mode="icon" aria-label="Larger" onClick={() => setTransform(layerSel, resize(cur(layerSel), 0.02))}><Plus /></Button>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 pt-1">
+                  <div className="flex flex-wrap gap-2 pt-0">
                     <Button size="sm" variant="ghost" onClick={() => onChange(resetSize(design, w, h, layerSel))}><RotateCcw /> Reset layer</Button>
                     {sameShape.length > 0 && <Button size="sm" variant="ghost" onClick={() => applyToSimilar(layerSel)}>Apply to {sameShape.length} similar size{sameShape.length === 1 ? "" : "s"}</Button>}
                   </div>
@@ -274,18 +274,18 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
             )}
 
             {sel === "headline" && (
-              <div className="space-y-3">
-                <label className="block text-xs font-medium text-brand-neutral-650">Text<textarea rows={3} value={t.headline} onChange={(e) => onChange(setText(design, { headline: e.target.value }))} className={`${field} mt-1 h-auto py-1.5`} /></label>
-                <label className="block text-xs font-medium text-brand-neutral-650">Size <span className="tabular-nums">{Math.round(t.headlineScale * 100)}%</span><input type="range" min={60} max={140} value={Math.round(t.headlineScale * 100)} onChange={(e) => onChange(setText(design, { headlineScale: Number(e.target.value) / 100 }))} className="mt-1 block w-full accent-brand-green-600" /></label>
+              <div className="space-y-4">
+                <label className="block text-xs font-medium text-brand-neutral-650">Text<textarea rows={3} value={t.headline} onChange={(e) => onChange(setText(design, { headline: e.target.value }))} className={`${field} mt-0 h-auto py-2`} /></label>
+                <label className="block text-xs font-medium text-brand-neutral-650">Size <span className="tabular-nums">{Math.round(t.headlineScale * 100)}%</span><input type="range" min={60} max={140} value={Math.round(t.headlineScale * 100)} onChange={(e) => onChange(setText(design, { headlineScale: Number(e.target.value) / 100 }))} className="mt-0 block w-full accent-brand-green-600" /></label>
                 <div className="grid grid-cols-2 gap-2">
-                  <label className="text-xs font-medium text-brand-neutral-650">Align<select value={t.align} onChange={(e) => onChange(setText(design, { align: e.target.value as "left" | "center" | "right" }))} className={`${field} mt-1`}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
-                  <label className="text-xs font-medium text-brand-neutral-650">Color<select value={t.color} onChange={(e) => onChange(setText(design, { color: e.target.value as "auto" | "dark" | "light" }))} className={`${field} mt-1`}><option value="auto">Automatic</option><option value="dark">Dark</option><option value="light">Light</option></select></label>
+                  <label className="text-xs font-medium text-brand-neutral-650">Align<select value={t.align} onChange={(e) => onChange(setText(design, { align: e.target.value as "left" | "center" | "right" }))} className={`${field} mt-0`}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
+                  <label className="text-xs font-medium text-brand-neutral-650">Color<select value={t.color} onChange={(e) => onChange(setText(design, { color: e.target.value as "auto" | "dark" | "light" }))} className={`${field} mt-0`}><option value="auto">Automatic</option><option value="dark">Dark</option><option value="light">Light</option></select></label>
                 </div>
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={t.scrim} onChange={(e) => onChange(setText(design, { scrim: e.target.checked }))} className="accent-brand-green-600" />Add a scrim behind the text</label>
-                <fieldset className="space-y-2 border-t border-brand-neutral-150 pt-3">
+                <fieldset className="space-y-2 border-t border-brand-neutral-150 pt-4">
                   <legend className="text-xs font-medium text-brand-neutral-650">Move text (this size)</legend>
-                  <div className="flex items-center gap-3">
-                    <div className="grid grid-cols-3 gap-1" role="group" aria-label="Nudge text">
+                  <div className="flex items-center gap-4">
+                    <div className="grid grid-cols-3 gap-2" role="group" aria-label="Nudge text">
                       <span /><Button size="sm" variant="outline" mode="icon" aria-label="Nudge text up" onClick={() => setOffset(textOff.dx, textOff.dy - STEP)}><ArrowUp /></Button><span />
                       <Button size="sm" variant="outline" mode="icon" aria-label="Nudge text left" onClick={() => setOffset(textOff.dx - STEP, textOff.dy)}><ArrowLeft /></Button>
                       <Button size="sm" variant="outline" mode="icon" aria-label="Nudge text down" onClick={() => setOffset(textOff.dx, textOff.dy + STEP)}><ArrowDown /></Button>
@@ -307,21 +307,21 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
               const current = design.content.logo ?? "green";
               return (
                 <fieldset className="space-y-2">
-                  <legend className="mb-1 text-xs text-brand-neutral-650">The mark&apos;s position is fixed by the template. Choose its color and, within limits, its size.</legend>
-                  <label className="block rounded-lg border border-brand-neutral-200 p-2.5 text-xs font-medium text-brand-neutral-650">Size <span className="tabular-nums">{Math.round((design.content.logoScale ?? 1) * 100)}%</span> <span className="font-normal">(allowed {Math.round(LOGO_SCALE_MIN * 100)}–{Math.round(LOGO_SCALE_MAX * 100)}%)</span>
-                    <input type="range" min={Math.round(LOGO_SCALE_MIN * 100)} max={Math.round(LOGO_SCALE_MAX * 100)} value={Math.round((design.content.logoScale ?? 1) * 100)} onChange={(e) => onChange(setLogoScale(design, Number(e.target.value) / 100))} className="mt-1 block w-full accent-brand-green-600" />
+                  <legend className="mb-0 text-xs text-brand-neutral-650">The mark&apos;s position is fixed by the template. Choose its color and, within limits, its size.</legend>
+                  <label className="block rounded-tight border border-brand-neutral-200 p-2 text-xs font-medium text-brand-neutral-650">Size <span className="tabular-nums">{Math.round((design.content.logoScale ?? 1) * 100)}%</span> <span className="font-normal">(allowed {Math.round(LOGO_SCALE_MIN * 100)}–{Math.round(LOGO_SCALE_MAX * 100)}%)</span>
+                    <input type="range" min={Math.round(LOGO_SCALE_MIN * 100)} max={Math.round(LOGO_SCALE_MAX * 100)} value={Math.round((design.content.logoScale ?? 1) * 100)} onChange={(e) => onChange(setLogoScale(design, Number(e.target.value) / 100))} className="mt-0 block w-full accent-brand-green-600" />
                   </label>
                   {LOGO_VARIANTS.map((v) => {
                     const ratio = logoContrast(v, bgs);
                     const ok = ratio >= LOGO_MIN_CONTRAST;
                     return (
-                      <label key={v} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-2.5 ${current === v ? "border-brand-green-600 bg-brand-green-100/40" : "border-brand-neutral-200 hover:bg-brand-neutral-50"}`}>
+                      <label key={v} className={`flex cursor-pointer items-center gap-4 rounded-tight border p-2 ${current === v ? "border-brand-green-600 bg-brand-green-100/40" : "border-brand-neutral-200 hover:bg-brand-neutral-50"}`}>
                         <input type="radio" name="logo" checked={current === v} onChange={() => onChange(setLogo(design, v))} className="accent-brand-green-600" />
-                        <span className="grid h-10 w-24 shrink-0 place-items-center rounded" style={{ background: bgs[0] }}><LogoMark variant={v} compact size="14px" /></span>
+                        <span className="grid h-10 w-24 shrink-0 place-items-center rounded-tight" style={{ background: bgs[0] }}><LogoMark variant={v} compact size="14px" /></span>
                         <span className="min-w-0 text-sm">
-                          <span className="flex flex-wrap items-center gap-1.5 font-medium">{LOGO_INFO[v].label}{v === "green" && <span className="rounded bg-brand-neutral-150 px-1.5 py-0.5 text-[10px] font-medium text-brand-neutral-750">Default</span>}{v === rec && v !== "green" && <span className="rounded bg-brand-green-100 px-1.5 py-0.5 text-[10px] font-medium text-brand-green-800">Recommended here</span>}</span>
+                          <span className="flex flex-wrap items-center gap-2 font-medium">{LOGO_INFO[v].label}{v === "green" && <span className="rounded-tight bg-brand-neutral-150 px-2 py-0 text-xs font-medium text-brand-neutral-750">Default</span>}{v === rec && v !== "green" && <span className="rounded-tight bg-brand-green-100 px-2 py-0 text-xs font-medium text-brand-green-800">Recommended here</span>}</span>
                           <span className="block text-xs text-brand-neutral-650">{LOGO_INFO[v].use}</span>
-                          <span className={`block text-[11px] ${ok ? "text-brand-neutral-550" : "text-brand-red-500"}`}>{ratio.toFixed(1)}:1 on this background{ok ? "" : ` (needs ${LOGO_MIN_CONTRAST}:1)`}</span>
+                          <span className={`block text-xs ${ok ? "text-brand-neutral-550" : "text-brand-red-500"}`}>{ratio.toFixed(1)}:1 on this background{ok ? "" : ` (needs ${LOGO_MIN_CONTRAST}:1)`}</span>
                         </span>
                       </label>
                     );
@@ -332,9 +332,9 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
             })()}
 
             {sel === "cta" && (
-              <div className="space-y-3">
-                <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={showCta} onChange={(e) => onChange(setCtaFor(design, placementKey, e.target.checked))} className="mt-0.5 accent-brand-green-600" /><span>Show a CTA button in the image<span className="block text-xs text-brand-neutral-650">{rule.uiAddsCta ? "Off by default: this platform adds its own CTA button." : "On by default: there is no platform button here."} Applies to every size in this placement.</span></span></label>
-                <label className="block text-xs font-medium text-brand-neutral-650">Button text<input value={t.cta} maxLength={40} onChange={(e) => onChange(setText(design, { cta: e.target.value }))} className={`${field} mt-1`} /></label>
+              <div className="space-y-4">
+                <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={showCta} onChange={(e) => onChange(setCtaFor(design, placementKey, e.target.checked))} className="mt-0 accent-brand-green-600" /><span>Show a CTA button in the image<span className="block text-xs text-brand-neutral-650">{rule.uiAddsCta ? "Off by default: this platform adds its own CTA button." : "On by default: there is no platform button here."} Applies to every size in this placement.</span></span></label>
+                <label className="block text-xs font-medium text-brand-neutral-650">Button text<input value={t.cta} maxLength={40} onChange={(e) => onChange(setText(design, { cta: e.target.value }))} className={`${field} mt-0`} /></label>
               </div>
             )}
           </Card>

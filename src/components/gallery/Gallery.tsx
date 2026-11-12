@@ -27,13 +27,13 @@ const SORTS: { value: SortKey | "ctr" | "impressions"; label: string }[] = [
   { value: "status", label: "Status" },
 ];
 
-const selectCls = "h-9 rounded-lg border border-brand-neutral-250 bg-white px-2.5 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
+const selectCls = "h-9 rounded-tight border border-brand-neutral-250 bg-white px-2 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
 
 function StatusSelect({ ad, onChange }: { ad: AdRecord; onChange: (s: AdStatus) => void }) {
   return (
     <label className="inline-flex items-center">
       <span className="sr-only">Status for {ad.name}</span>
-      <select value={ad.status} onChange={(e) => onChange(e.target.value as AdStatus)} className="h-7 rounded-md border border-brand-neutral-250 bg-white px-1.5 text-xs capitalize text-brand-neutral-800 focus-visible:outline-2 focus-visible:outline-brand-green-400/60">
+      <select value={ad.status} onChange={(e) => onChange(e.target.value as AdStatus)} className="h-7 rounded-tight border border-brand-neutral-250 bg-white px-2 text-xs capitalize text-brand-neutral-800 focus-visible:outline-2 focus-visible:outline-brand-green-400/60">
         {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
       </select>
     </label>
@@ -43,9 +43,9 @@ function StatusSelect({ ad, onChange }: { ad: AdRecord; onChange: (s: AdStatus) 
 function Tags({ ad, max = 5 }: { ad: AdRecord; max?: number }) {
   const tags = [...ad.tags.persona, ad.tags.funnel, ad.tags.offer, ...(ad.tags.geo ?? [])].filter(Boolean) as string[];
   return (
-    <ul className="flex flex-wrap gap-1">
-      {tags.slice(0, max).map((t) => <li key={t} className="rounded bg-brand-neutral-150 px-1.5 py-0.5 text-[11px] text-brand-neutral-750">{t}</li>)}
-      {tags.length > max && <li className="px-1 py-0.5 text-[11px] text-brand-neutral-650">+{tags.length - max}</li>}
+    <ul className="flex flex-wrap gap-2">
+      {tags.slice(0, max).map((t) => <li key={t} className="rounded-tight bg-brand-neutral-150 px-2 py-0 text-xs text-brand-neutral-750">{t}</li>)}
+      {tags.length > max && <li className="px-2 py-0 text-xs text-brand-neutral-650">+{tags.length - max}</li>}
     </ul>
   );
 }
@@ -53,7 +53,7 @@ function Tags({ ad, max = 5 }: { ad: AdRecord; max?: number }) {
 function Thumb({ ad, max }: { ad: AdRecord; max: number }) {
   const r = ad.width / ad.height;
   const w = r >= 1 ? max : Math.round(max * r);
-  return <div style={{ width: w }} className="overflow-hidden rounded-md border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={max > 90} composition={ad.composition} placementKey={ad.placement} imageUrl={ad.imageUrl} /></div>;
+  return <div style={{ width: w }} className="overflow-hidden rounded-tight border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={max > 90} composition={ad.composition} placementKey={ad.placement} imageUrl={ad.imageUrl} /></div>;
 }
 
 export function Gallery({ initial, stats, initialFilters = {} }: { initial: AdRecord[]; stats: Record<string, AdStat>; initialFilters?: { q?: string; status?: string; platform?: string } }) {
@@ -102,15 +102,15 @@ export function Gallery({ initial, stats, initialFilters = {} }: { initial: AdRe
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-brand-neutral-200 bg-white p-3">
+      <div className="flex flex-wrap items-end gap-4 rounded-loose border border-brand-neutral-200 bg-white p-4">
         <label className="text-xs font-medium text-brand-neutral-650">Search
-          <span className="relative mt-1 block"><Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-brand-neutral-550" /><input value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} placeholder="Ad or concept" className={`${selectCls} w-48 pl-8`} /></span>
+          <span className="relative mt-0 block"><Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-brand-neutral-550" /><input value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} placeholder="Ad or concept" className={`${selectCls} w-48 pl-8`} /></span>
         </label>
-        <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={platform} onChange={(e) => { setPlatform(e.target.value); setLimit(PAGE); }} className={`${selectCls} mt-1 block`}><option value="">All</option>{distinct(ads, (a) => [a.platform]).map((p) => <option key={p}>{p}</option>)}</select></label>
-        <label className="text-xs font-medium text-brand-neutral-650">Status<select value={status} onChange={(e) => { setStatusFilter(e.target.value); setLimit(PAGE); }} className={`${selectCls} mt-1 block capitalize`}><option value="">All</option>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select></label>
-        <label className="text-xs font-medium text-brand-neutral-650">Persona<select value={persona} onChange={(e) => { setPersona(e.target.value); setLimit(PAGE); }} className={`${selectCls} mt-1 block`}><option value="">All</option>{distinct(ads, (a) => a.tags.persona).map((p) => <option key={p}>{p}</option>)}</select></label>
-        <label className="text-xs font-medium text-brand-neutral-650">Funnel<select value={funnel} onChange={(e) => { setFunnel(e.target.value); setLimit(PAGE); }} className={`${selectCls} mt-1 block`}><option value="">All</option>{distinct(ads, (a) => (a.tags.funnel ? [a.tags.funnel] : [])).map((p) => <option key={p}>{p}</option>)}</select></label>
-        <label className="text-xs font-medium text-brand-neutral-650">Sort<select value={sort} onChange={(e) => setSort(e.target.value)} className={`${selectCls} mt-1 block`}>{SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}</select></label>
+        <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={platform} onChange={(e) => { setPlatform(e.target.value); setLimit(PAGE); }} className={`${selectCls} mt-0 block`}><option value="">All</option>{distinct(ads, (a) => [a.platform]).map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label className="text-xs font-medium text-brand-neutral-650">Status<select value={status} onChange={(e) => { setStatusFilter(e.target.value); setLimit(PAGE); }} className={`${selectCls} mt-0 block capitalize`}><option value="">All</option>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select></label>
+        <label className="text-xs font-medium text-brand-neutral-650">Persona<select value={persona} onChange={(e) => { setPersona(e.target.value); setLimit(PAGE); }} className={`${selectCls} mt-0 block`}><option value="">All</option>{distinct(ads, (a) => a.tags.persona).map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label className="text-xs font-medium text-brand-neutral-650">Funnel<select value={funnel} onChange={(e) => { setFunnel(e.target.value); setLimit(PAGE); }} className={`${selectCls} mt-0 block`}><option value="">All</option>{distinct(ads, (a) => (a.tags.funnel ? [a.tags.funnel] : [])).map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label className="text-xs font-medium text-brand-neutral-650">Sort<select value={sort} onChange={(e) => setSort(e.target.value)} className={`${selectCls} mt-0 block`}>{SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}</select></label>
         {filtersActive && <Button variant="ghost" size="md" onClick={clear}><X /> Clear</Button>}
         <div suppressHydrationWarning className="seg seg-md ml-auto" role="group" aria-label="View">
           {([["grid", LayoutGrid, "Grid"], ["gallery", Rows3, "Gallery"], ["list", List, "List"]] as const).map(([v, Icon, label]) => (
@@ -119,7 +119,7 @@ export function Gallery({ initial, stats, initialFilters = {} }: { initial: AdRe
         </div>
       </div>
 
-      <div className="flex min-h-9 flex-wrap items-center gap-3">
+      <div className="flex min-h-9 flex-wrap items-center gap-4">
         <p className="text-sm text-brand-neutral-650" aria-live="polite">{shown.length} of {ads.length} ads</p>
         {picked.size > 0 && (
           <div className="ml-auto flex items-center gap-2">
@@ -129,20 +129,20 @@ export function Gallery({ initial, stats, initialFilters = {} }: { initial: AdRe
           </div>
         )}
       </div>
-      {error && <p className="rounded-lg bg-brand-red-100 px-3 py-2 text-sm text-brand-red-700" role="alert">{error}</p>}
+      {error && <p className="rounded-tight bg-brand-red-100 px-4 py-2 text-sm text-brand-red-700" role="alert">{error}</p>}
 
       {shown.length === 0 && <EmptyState title="No ads match these filters" body="Try removing a filter or searching for a different concept." action={<Button variant="outline" onClick={clear}>Clear filters</Button>} />}
 
       {view === "grid" && (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {visible.map((ad) => (
-            <li key={ad.id} className="group flex flex-col gap-2 rounded-xl border border-brand-neutral-200 bg-white p-2.5">
-              <div className="relative flex h-36 items-center justify-center rounded-lg bg-brand-neutral-100 p-2">
+            <li key={ad.id} className="group flex flex-col gap-2 rounded-loose border border-brand-neutral-200 bg-white p-2">
+              <div className="relative flex h-36 items-center justify-center rounded-tight bg-brand-neutral-100 p-2">
                 <Link href={`/gallery/${ad.name}`} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500" aria-label={`Open ${ad.name}`}><Thumb ad={ad} max={110} /></Link>
                 <span className="absolute left-2 top-2 opacity-100 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">{pick(ad)}</span>
               </div>
               <Link href={`/gallery/${ad.name}`} className="truncate text-xs font-medium hover:underline" title={ad.name}>{ad.name}</Link>
-              <div className="flex items-center justify-between gap-1"><StatusChip status={ad.status} /><span className="text-[11px] tabular-nums text-brand-neutral-650">{fmtPct(stats[ad.name]?.ctr)}</span></div>
+              <div className="flex items-center justify-between gap-2"><StatusChip status={ad.status} /><span className="text-xs tabular-nums text-brand-neutral-650">{fmtPct(stats[ad.name]?.ctr)}</span></div>
             </li>
           ))}
         </ul>
@@ -151,16 +151,16 @@ export function Gallery({ initial, stats, initialFilters = {} }: { initial: AdRe
       {view === "gallery" && (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {visible.map((ad) => (
-            <li key={ad.id} className="flex flex-col gap-3 rounded-xl border border-brand-neutral-200 bg-white p-4">
-              <div className="flex h-72 items-center justify-center rounded-lg bg-brand-neutral-100 p-3"><Link href={`/gallery/${ad.name}`} aria-label={`Open ${ad.name}`}><Thumb ad={ad} max={260} /></Link></div>
+            <li key={ad.id} className="flex flex-col gap-4 rounded-loose border border-brand-neutral-200 bg-white p-4">
+              <div className="flex h-72 items-center justify-center rounded-tight bg-brand-neutral-100 p-4"><Link href={`/gallery/${ad.name}`} aria-label={`Open ${ad.name}`}><Thumb ad={ad} max={260} /></Link></div>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <Link href={`/gallery/${ad.name}`} className="block truncate text-sm font-semibold hover:underline">{ad.name}</Link>
-                  <p className="mt-0.5 text-xs text-brand-neutral-650">{ad.campaign} · {ad.launchedAt ? `launched ${fmtDate(ad.launchedAt)}` : "not launched"}{ad.pausedAt ? ` · paused ${fmtDate(ad.pausedAt)}` : ""}</p>
+                  <p className="mt-0 text-xs text-brand-neutral-650">{ad.campaign} · {ad.launchedAt ? `launched ${fmtDate(ad.launchedAt)}` : "not launched"}{ad.pausedAt ? ` · paused ${fmtDate(ad.pausedAt)}` : ""}</p>
                 </div>
                 {pick(ad)}
               </div>
-              <div className="flex items-center gap-3"><PlatformBadge platform={ad.platform} /><span className="text-xs text-brand-neutral-650">{fmtCompact(stats[ad.name]?.impressions ?? 0)} impr · CTR {fmtPct(stats[ad.name]?.ctr)}</span></div>
+              <div className="flex items-center gap-4"><PlatformBadge platform={ad.platform} /><span className="text-xs text-brand-neutral-650">{fmtCompact(stats[ad.name]?.impressions ?? 0)} impr · CTR {fmtPct(stats[ad.name]?.ctr)}</span></div>
               <Tags ad={ad} />
               <div className="mt-auto flex items-center justify-between"><StatusChip status={ad.status} /><StatusSelect ad={ad} onChange={(s) => update(ad, s)} /></div>
             </li>
@@ -169,16 +169,16 @@ export function Gallery({ initial, stats, initialFilters = {} }: { initial: AdRe
       )}
 
       {view === "list" && (
-        <div className="overflow-x-auto rounded-xl border border-brand-neutral-200 bg-white">
+        <div className="overflow-x-auto rounded-loose border border-brand-neutral-200 bg-white">
           <table className="w-full min-w-[860px] text-left text-sm">
             <caption className="sr-only">Ads</caption>
             <thead className="border-b border-brand-neutral-200 text-xs text-brand-neutral-650">
-              <tr><th className="w-10 px-3 py-2"><span className="sr-only">Select</span></th><th className="px-2 py-2 font-medium">Creative</th><th className="px-2 font-medium">Name</th><th className="px-2 font-medium">Platform</th><th className="px-2 font-medium">Launched</th><th className="px-2 text-right font-medium">Impr.</th><th className="px-2 text-right font-medium">CTR</th><th className="px-2 font-medium">Tags</th><th className="px-3 font-medium">Status</th></tr>
+              <tr><th className="w-10 px-4 py-2"><span className="sr-only">Select</span></th><th className="px-2 py-2 font-medium">Creative</th><th className="px-2 font-medium">Name</th><th className="px-2 font-medium">Platform</th><th className="px-2 font-medium">Launched</th><th className="px-2 text-right font-medium">Impr.</th><th className="px-2 text-right font-medium">CTR</th><th className="px-2 font-medium">Tags</th><th className="px-4 font-medium">Status</th></tr>
             </thead>
             <tbody className="divide-y divide-brand-neutral-150">
               {visible.map((ad) => (
                 <tr key={ad.id} className="hover:bg-brand-neutral-50">
-                  <td className="px-3 py-2">{pick(ad)}</td>
+                  <td className="px-4 py-2">{pick(ad)}</td>
                   <td className="px-2 py-2"><Link href={`/gallery/${ad.name}`} aria-label={`Open ${ad.name}`}><Thumb ad={ad} max={56} /></Link></td>
                   <td className="px-2"><Link href={`/gallery/${ad.name}`} className="font-medium hover:underline">{ad.name}</Link><span className="block text-xs text-brand-neutral-650">{ad.campaign}</span></td>
                   <td className="px-2"><PlatformBadge platform={ad.platform} /><span className="block text-xs text-brand-neutral-650">{ad.width}×{ad.height}</span></td>
@@ -186,7 +186,7 @@ export function Gallery({ initial, stats, initialFilters = {} }: { initial: AdRe
                   <td className="px-2 text-right tabular-nums">{fmtCompact(stats[ad.name]?.impressions ?? 0)}</td>
                   <td className="px-2 text-right tabular-nums">{fmtPct(stats[ad.name]?.ctr)}</td>
                   <td className="px-2"><Tags ad={ad} max={3} /></td>
-                  <td className="px-3"><div className="flex items-center gap-2"><StatusChip status={ad.status} /><StatusSelect ad={ad} onChange={(s) => update(ad, s)} /></div></td>
+                  <td className="px-4"><div className="flex items-center gap-2"><StatusChip status={ad.status} /><StatusSelect ad={ad} onChange={(s) => update(ad, s)} /></div></td>
                 </tr>
               ))}
             </tbody>

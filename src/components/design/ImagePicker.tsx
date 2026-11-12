@@ -19,7 +19,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 const toRef = (a: AssetDto): ImageRef => ({ source: "asset", id: a.id, name: a.name, naturalW: a.width, naturalH: a.height, approved: a.approved, origin: a.origin });
-const inputCls = "h-9 w-full rounded-lg border border-brand-neutral-250 bg-white px-2.5 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
+const inputCls = "h-9 w-full rounded-tight border border-brand-neutral-250 bg-white px-2 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -47,7 +47,7 @@ function measure(src: string): Promise<{ w: number; h: number } | null> {
 }
 
 function Setup({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div className="rounded-lg border border-dashed border-brand-neutral-300 bg-brand-neutral-50 p-3 text-xs text-brand-neutral-750"><p className="mb-1 text-sm font-medium text-brand-neutral-900">{title}</p>{children}</div>;
+  return <div className="rounded-tight border border-dashed border-brand-neutral-300 bg-brand-neutral-50 p-4 text-xs text-brand-neutral-750"><p className="mb-0 text-sm font-medium text-brand-neutral-900">{title}</p>{children}</div>;
 }
 
 /** Pick from the approved library, previously stored images, a new upload, Google Drive, or Figma. */
@@ -103,7 +103,7 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
   });
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div role="tablist" aria-label="Image source" suppressHydrationWarning className="seg max-w-full">
         {TABS.map((t) => (
           <button key={t.id} role="tab" type="button" aria-selected={tab === t.id} onClick={() => { setTab(t.id); setError(""); }} className="seg-item">{t.label}</button>
@@ -117,35 +117,35 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
               const on = value?.source === "gallery" && value.id === a.id;
               return (
                 <li key={a.id}>
-                  <button type="button" aria-pressed={on} onClick={() => onPick({ source: "gallery", id: a.id })} title={`${a.name} · ${a.license}`} className={`relative block w-full overflow-hidden rounded-lg border bg-brand-neutral-100 p-1 ${on ? "border-brand-green-600 ring-2 ring-brand-green-600/30" : "border-brand-neutral-200 hover:border-brand-neutral-300"}`}>
+                  <button type="button" aria-pressed={on} onClick={() => onPick({ source: "gallery", id: a.id })} title={`${a.name} · ${a.license}`} className={`relative block w-full overflow-hidden rounded-tight border bg-brand-neutral-100 p-2 ${on ? "border-brand-green-600 ring-2 ring-brand-green-600/30" : "border-brand-neutral-200 hover:border-brand-neutral-300"}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={assetUrl(a.id)} alt={a.name} loading="lazy" className="aspect-square w-full rounded object-contain" />
-                    {on && <span className="absolute right-1.5 top-1.5 grid size-4 place-items-center rounded-full bg-brand-green-600 text-white"><Check className="size-3" aria-hidden /></span>}
-                    <span className="mt-1 block truncate text-left text-[11px] text-brand-neutral-750">{a.name}</span>
+                    <img src={assetUrl(a.id)} alt={a.name} loading="lazy" className="aspect-square w-full rounded-tight object-contain" />
+                    {on && <span className="absolute right-1.5 top-1.5 grid size-4 place-items-center rounded-round bg-brand-green-600 text-white"><Check className="size-3" aria-hidden /></span>}
+                    <span className="mt-0 block truncate text-left text-xs text-brand-neutral-750">{a.name}</span>
                   </button>
                 </li>
               );
             })}
           </ul>
-          <p className="flex items-center gap-1.5 text-[11px] text-brand-neutral-650"><ShieldCheck className="size-3.5 text-brand-green-600" aria-hidden />Pre-approved and licensed for paid use.</p>
+          <p className="flex items-center gap-2 text-xs text-brand-neutral-650"><ShieldCheck className="size-3.5 text-brand-green-600" aria-hidden />Pre-approved and licensed for paid use.</p>
         </>
       )}
 
       {tab === "mine" && (
         mine === null || mineLoad !== "idle" ? <Loading leaving={mineLoad === "leaving"} /> : mine.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-brand-neutral-300 p-4 text-center text-xs text-brand-neutral-650">Nothing here yet. Upload an image, or import one from Drive or Figma, and it will be saved for reuse.</p>
+          <p className="rounded-tight border border-dashed border-brand-neutral-300 p-4 text-center text-xs text-brand-neutral-650">Nothing here yet. Upload an image, or import one from Drive or Figma, and it will be saved for reuse.</p>
         ) : (
           <ul className="grid grid-cols-3 gap-2" aria-label="Uploaded and imported images">
             {mine.map((a) => {
               const on = value?.source === "asset" && value.id === a.id;
               return (
                 <li key={a.id}>
-                  <button type="button" aria-pressed={on} onClick={() => onPick(toRef(a))} title={a.name} className={`relative block w-full overflow-hidden rounded-lg border bg-brand-neutral-100 p-1 ${on ? "border-brand-green-600 ring-2 ring-brand-green-600/30" : "border-brand-neutral-200 hover:border-brand-neutral-300"}`}>
+                  <button type="button" aria-pressed={on} onClick={() => onPick(toRef(a))} title={a.name} className={`relative block w-full overflow-hidden rounded-tight border bg-brand-neutral-100 p-2 ${on ? "border-brand-green-600 ring-2 ring-brand-green-600/30" : "border-brand-neutral-200 hover:border-brand-neutral-300"}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={a.url} alt={a.name} loading="lazy" className="aspect-square w-full rounded object-contain" />
-                    {a.approved && <span title="Approved" className="absolute right-1.5 top-1.5 grid size-4 place-items-center rounded-full bg-brand-green-600 text-white"><ShieldCheck className="size-3" aria-hidden /></span>}
-                    <span className="mt-1 block truncate text-left text-[11px] text-brand-neutral-750">{a.name}</span>
-                    <span className="block text-left text-[10px] capitalize text-brand-neutral-550">{a.origin} · {a.width}×{a.height}</span>
+                    <img src={a.url} alt={a.name} loading="lazy" className="aspect-square w-full rounded-tight object-contain" />
+                    {a.approved && <span title="Approved" className="absolute right-1.5 top-1.5 grid size-4 place-items-center rounded-round bg-brand-green-600 text-white"><ShieldCheck className="size-3" aria-hidden /></span>}
+                    <span className="mt-0 block truncate text-left text-xs text-brand-neutral-750">{a.name}</span>
+                    <span className="block text-left text-xs capitalize text-brand-neutral-550">{a.origin} · {a.width}×{a.height}</span>
                   </button>
                 </li>
               );
@@ -157,7 +157,7 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
       {tab === "upload" && (
         <div className="space-y-2">
           <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" id={`upload-${kind}`} disabled={busy} onChange={(e) => upload(e.target.files?.[0])} />
-          <label htmlFor={`upload-${kind}`} className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-brand-neutral-300 px-3 py-6 text-sm font-medium text-brand-neutral-800 hover:bg-brand-neutral-50 focus-within:outline-2 focus-within:outline-brand-periwinkle-500"><Upload className="size-4" aria-hidden />{busy ? "Uploading…" : "Choose a PNG, JPG or WebP"}</label>
+          <label htmlFor={`upload-${kind}`} className="flex cursor-pointer items-center justify-center gap-2 rounded-tight border border-dashed border-brand-neutral-300 px-4 py-6 text-sm font-medium text-brand-neutral-800 hover:bg-brand-neutral-50 focus-within:outline-2 focus-within:outline-brand-periwinkle-500"><Upload className="size-4" aria-hidden />{busy ? "Uploading…" : "Choose a PNG, JPG or WebP"}</label>
           <p className="text-xs text-brand-neutral-650">Up to 4 MB. {kind === "product" ? "Product images work best as transparent PNGs. " : ""}Uploads aren&apos;t pre-approved; an admin can approve them in the Library.</p>
           {storage !== "none" && caps?.persistent === false && <Setup title="Demo database">Image records live in the hosted demo&apos;s in-memory database, so saved images disappear when it resets. Connect a real database for them to last.</Setup>}
           {storage === "none" && caps && <Setup title="Image storage isn't connected">Uploads will only exist in this browser session, and generated ads will show a placeholder. Connect a Vercel Blob store to save them (see the README).</Setup>}
@@ -177,8 +177,8 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
             {drive?.type === "file" && <DriveRow file={drive.file} busy={busy} onUse={importDrive} />}
             {drive?.type === "folder" && (
               <div>
-                <p className="mb-1 flex items-center gap-1.5 text-xs font-medium"><FolderOpen className="size-3.5" aria-hidden />{drive.name} · {drive.files.length} image{drive.files.length === 1 ? "" : "s"}</p>
-                <ul className="max-h-48 divide-y divide-brand-neutral-150 overflow-y-auto rounded-lg border border-brand-neutral-200">{drive.files.map((f) => <li key={f.id}><DriveRow file={f} busy={busy} onUse={importDrive} /></li>)}{drive.files.length === 0 && <li className="p-3 text-xs text-brand-neutral-650">No PNG, JPG or WebP images in this folder.</li>}</ul>
+                <p className="mb-0 flex items-center gap-2 text-xs font-medium"><FolderOpen className="size-3.5" aria-hidden />{drive.name} · {drive.files.length} image{drive.files.length === 1 ? "" : "s"}</p>
+                <ul className="max-h-48 divide-y divide-brand-neutral-150 overflow-y-auto rounded-tight border border-brand-neutral-200">{drive.files.map((f) => <li key={f.id}><DriveRow file={f} busy={busy} onUse={importDrive} /></li>)}{drive.files.length === 0 && <li className="p-4 text-xs text-brand-neutral-650">No PNG, JPG or WebP images in this folder.</li>}</ul>
               </div>
             )}
           </div>
@@ -196,11 +196,11 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
             </form>
             <p className="text-xs text-brand-neutral-650">In Figma, select the layer, then Copy link to selection. It&apos;s rendered as a PNG at up to 2×.</p>
             {figma && (
-              <div className="flex items-center gap-3 rounded-lg border border-brand-neutral-200 p-2">
+              <div className="flex items-center gap-4 rounded-tight border border-brand-neutral-200 p-2">
                 {figma.previewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={figma.previewUrl} alt="" className="size-14 rounded bg-brand-neutral-100 object-contain" />
-                ) : <span className="grid size-14 place-items-center rounded bg-brand-neutral-100"><ImageIcon className="size-5 text-brand-neutral-550" aria-hidden /></span>}
+                  <img src={figma.previewUrl} alt="" className="size-14 rounded-tight bg-brand-neutral-100 object-contain" />
+                ) : <span className="grid size-14 place-items-center rounded-tight bg-brand-neutral-100"><ImageIcon className="size-5 text-brand-neutral-550" aria-hidden /></span>}
                 <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{figma.name}</p><p className="text-xs text-brand-neutral-650">{figma.width}×{figma.height}</p></div>
                 <Button size="sm" disabled={busy} onClick={() => run(async () => picked((await api<{ asset: AssetDto }>("/api/import/figma", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "import", url: figmaUrl, kind }) })).asset))}><Frame /> {busy ? "Importing…" : "Import"}</Button>
               </div>

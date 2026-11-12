@@ -43,13 +43,13 @@ export function VerifiedBadge({ platform = "LinkedIn", className }: { platform?:
             aria-describedby={`${id}-c`}
             aria-pressed={pinned}
             onClick={() => setPinned((p) => !p)}
-            className={cn("inline-flex size-5 items-center justify-center rounded-full text-brand-green-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500", className)}
+            className={cn("inline-flex size-5 items-center justify-center rounded-round text-brand-green-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500", className)}
           >
             <BadgeCheck className="size-4" aria-hidden />
           </button>
         </Tooltip.Trigger>
         <Tooltip.Positioner>
-          <Tooltip.Content className="z-50 max-w-60 rounded-lg bg-brand-neutral-850 px-3 py-2 text-xs leading-snug text-white shadow-lg">
+          <Tooltip.Content className="z-50 max-w-60 rounded-tight bg-brand-neutral-850 px-4 py-2 text-xs leading-snug text-white shadow-lg">
             <span className="font-medium">Verified.</span> This benchmark comes straight from {platform}&rsquo;s own reporting, not an estimate.
           </Tooltip.Content>
         </Tooltip.Positioner>

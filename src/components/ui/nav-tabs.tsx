@@ -16,7 +16,7 @@ function Tabs({ items, label }: { items: TabItem[]; label: string }) {
 
 function TabList({ items, label, pathname }: { items: TabItem[]; label: string; pathname: string }) {
   return (
-    <nav aria-label={label} className="mb-6 max-w-full overflow-x-auto pb-1">
+    <nav aria-label={label} className="mb-6 max-w-full overflow-x-auto pb-0">
       <ul suppressHydrationWarning className="seg seg-md min-w-max">
         {items.map((t, i) => {
           const active = i === 0 ? pathname === t.href : pathname === t.href || pathname.startsWith(`${t.href}/`);

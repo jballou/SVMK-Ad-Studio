@@ -95,18 +95,18 @@ export function LineChart({ series, unit = "int", label, height = H, area = fals
           )}
         </svg>
         {hover !== null && hoverX && (
-          <div className="pointer-events-none absolute top-1 rounded-lg border border-brand-neutral-200 bg-white px-2.5 py-1.5 text-xs shadow-sm" style={{ left: `${(x(hover) / W) * 100}%`, transform: `translateX(${hover > xs.length / 2 ? "-105%" : "5%"})` }}>
+          <div className="pointer-events-none absolute top-1 rounded-tight border border-brand-neutral-200 bg-white px-2 py-2 text-xs shadow-sm" style={{ left: `${(x(hover) / W) * 100}%`, transform: `translateX(${hover > xs.length / 2 ? "-105%" : "5%"})` }}>
             <p className="font-medium text-brand-neutral-900">{fmtDate(hoverX)}</p>
             {series.map((s) => {
               const p = s.points.find((q) => q.x === hoverX);
-              return p ? <p key={s.name} className="flex items-center gap-1.5 text-brand-neutral-750"><span aria-hidden className="size-2 rounded-full" style={{ background: s.color }} />{s.name}: <span className="tabular-nums font-medium">{format(p.y)}</span></p> : null;
+              return p ? <p key={s.name} className="flex items-center gap-2 text-brand-neutral-750"><span aria-hidden className="size-2 rounded-round" style={{ background: s.color }} />{s.name}: <span className="tabular-nums font-medium">{format(p.y)}</span></p> : null;
             })}
           </div>
         )}
       </div>
       {series.length > 1 && (
-        <figcaption className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-brand-neutral-750">
-          {series.map((s) => <span key={s.name} className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-full" style={{ background: s.color }} />{s.name}</span>)}
+        <figcaption className="mt-2 flex flex-wrap gap-x-4 gap-y-0 text-xs text-brand-neutral-750">
+          {series.map((s) => <span key={s.name} className="inline-flex items-center gap-2"><span aria-hidden className="size-2 rounded-round" style={{ background: s.color }} />{s.name}</span>)}
         </figcaption>
       )}
     </figure>

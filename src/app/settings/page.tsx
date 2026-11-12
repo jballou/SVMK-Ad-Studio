@@ -18,17 +18,17 @@ const BADGE: Record<Status, { v: ChipVariant; label: string }> = { connected: { 
 
 export default function Integrations() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <p className="text-sm text-brand-neutral-650">Until a platform API is approved, upload its CSV export on the Scorecards page; it uses the same schema.</p>
       <ul className="grid gap-4 lg:grid-cols-2">
         {INTEGRATIONS.map((i) => (
           <li key={i.name}>
-            <Card title={i.name} description={i.blurb} actions={<Chip variant={BADGE[i.status].v} chevron={false} className="!px-2.5 !py-1 !text-xs">{BADGE[i.status].label}</Chip>}>
+            <Card title={i.name} description={i.blurb} actions={<Chip variant={BADGE[i.status].v} chevron={false} className="!px-2 !py-0 !text-xs">{BADGE[i.status].label}</Chip>}>
               <p className="text-sm text-brand-neutral-750">{i.detail}</p>
               {i.needs && (
-                <details className="mt-3 text-sm">
+                <details className="mt-4 text-sm">
                   <summary className="cursor-pointer text-xs font-medium text-brand-green-700">What&apos;s needed to connect</summary>
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-brand-neutral-750">{i.needs.map((n) => <li key={n}>{n}</li>)}</ul>
+                  <ul className="mt-2 list-disc space-y-0 pl-4 text-brand-neutral-750">{i.needs.map((n) => <li key={n}>{n}</li>)}</ul>
                 </details>
               )}
             </Card>

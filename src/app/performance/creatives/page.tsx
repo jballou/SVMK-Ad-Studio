@@ -39,10 +39,10 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav aria-label="Group by" className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <nav aria-label="Group by" className="flex flex-wrap gap-2">
           {Object.entries(DIMS).map(([k, d]) => (
-            <Link key={k} href={href(k)} aria-current={k === dimKey ? "true" : undefined} className={`rounded-full border px-3 py-1 text-xs font-medium ${k === dimKey ? "border-brand-green-600 bg-brand-green-100 text-brand-green-800" : "border-brand-neutral-250 bg-white text-brand-neutral-750 hover:bg-brand-neutral-100"}`}>{d.label}</Link>
+            <Link key={k} href={href(k)} aria-current={k === dimKey ? "true" : undefined} className={`rounded-round border px-4 py-0 text-xs font-medium ${k === dimKey ? "border-brand-green-600 bg-brand-green-100 text-brand-green-800" : "border-brand-neutral-250 bg-white text-brand-neutral-750 hover:bg-brand-neutral-100"}`}>{d.label}</Link>
           ))}
         </nav>
         <RangePicker current={range} basePath="/performance/creatives" extra={{ by: dimKey }} />
@@ -55,7 +55,7 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
       )}
 
       <Card title={`By ${dim.label.toLowerCase()}`} description="Sorted by CTR. Tags are multi-valued, so an ad with two personas counts in both." padded={false}>
-        <div className="px-5 py-3">
+        <div className="px-4 py-4">
           <DataTable caption={`Performance by ${dim.label}`} columns={[{ label: dim.label }, { label: "Ads", align: "right" }, { label: "Spend", align: "right" }, { label: "Impr.", align: "right" }, { label: "CTR", align: "right" }, { label: "Cost / conv.", align: "right" }, ...(dimKey === "concept" ? [{ label: "Trend" }] : [])]}>
             {groups.map(([k, t]) => {
               const rr = rates(t);
@@ -65,18 +65,18 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
               const idx = ads.length ? performanceIndex(ads[0], sumPoints(pts.filter((p) => ads.some((a) => a.name === p.adName))), ws.benchmarks) : undefined;
               return (
                 <tr key={k}>
-                  <td className="py-2.5 pr-3">
-                    <div className="flex items-center gap-3">
+                  <td className="py-2 pr-4">
+                    <div className="flex items-center gap-4">
                       {dimKey === "concept" && first && <AdThumb ad={first} w={56} h={44} />}
                       <span><span className="font-medium">{k}</span>{dimKey === "concept" && first?.copy && <span className="block max-w-xs truncate text-xs text-brand-neutral-650">{first.copy.headline}</span>}</span>
                     </div>
                   </td>
-                  <td className="px-3 text-right tabular-nums">{ads.length}</td>
-                  <td className="px-3 text-right tabular-nums">{fmtMoney(t.spend)}</td>
-                  <td className="px-3 text-right tabular-nums">{fmtCompact(t.impressions)}</td>
-                  <td className="px-3 text-right tabular-nums">{fmtPct(rr.ctr)}{idx !== undefined && dimKey === "concept" && <span className={`block text-xs ${idx >= 1 ? "text-brand-green-600" : "text-brand-red-500"}`}>{idx.toFixed(2)}× bench.</span>}</td>
-                  <td className="px-3 text-right tabular-nums">{rr.cpa === undefined ? "—" : fmtMoney(rr.cpa, 2)}</td>
-                  {dimKey === "concept" && <td className="py-2.5 pl-3"><Sparkline values={trend} label={`Weekly CTR for ${k}`} /></td>}
+                  <td className="px-4 text-right tabular-nums">{ads.length}</td>
+                  <td className="px-4 text-right tabular-nums">{fmtMoney(t.spend)}</td>
+                  <td className="px-4 text-right tabular-nums">{fmtCompact(t.impressions)}</td>
+                  <td className="px-4 text-right tabular-nums">{fmtPct(rr.ctr)}{idx !== undefined && dimKey === "concept" && <span className={`block text-xs ${idx >= 1 ? "text-brand-green-600" : "text-brand-red-500"}`}>{idx.toFixed(2)}× bench.</span>}</td>
+                  <td className="px-4 text-right tabular-nums">{rr.cpa === undefined ? "—" : fmtMoney(rr.cpa, 2)}</td>
+                  {dimKey === "concept" && <td className="py-2 pl-4"><Sparkline values={trend} label={`Weekly CTR for ${k}`} /></td>}
                 </tr>
               );
             })}

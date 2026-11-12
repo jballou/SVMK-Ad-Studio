@@ -30,7 +30,7 @@ const CRITERIA: { key: Criterion; label: string; manual?: boolean }[] = [
 const BANDS: Band[] = ["keep-scale", "monitor-optimize", "optimize-test", "refresh-pause"];
 const markLabel = (v: boolean | null) => (v === null ? "not applicable" : v ? "met" : "not met");
 const PAGE = 12;
-const sel = "h-9 rounded-lg border border-brand-neutral-250 bg-white px-2.5 text-sm";
+const sel = "h-9 rounded-tight border border-brand-neutral-250 bg-white px-2 text-sm";
 
 function Mark({ result }: { result: boolean | null }) {
   if (result === null) return <span aria-hidden>—</span>;
@@ -106,13 +106,13 @@ export function Scorecards({ ads, benchmarks, totals, checks, today, gate, perio
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         {BANDS.map((b) => (
-          <button key={b} type="button" onClick={() => { setBand(band === b ? "" : b); reset(); }} aria-pressed={band === b} className={`rounded-xl text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500 ${band === b ? "ring-2 ring-brand-green-600" : ""}`}>
+          <button key={b} type="button" onClick={() => { setBand(band === b ? "" : b); reset(); }} aria-pressed={band === b} className={`rounded-tight text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500 ${band === b ? "ring-2 ring-brand-green-600" : ""}`}>
             <Stat label={BAND_LABEL[b]} value={String(counts.get(b) ?? 0)} sub={{ "keep-scale": "90–100%", "monitor-optimize": "70–89%", "optimize-test": "50–69%", "refresh-pause": "below 50%" }[b]} />
           </button>
         ))}
-        <button type="button" onClick={() => { setBand(band === "too-early" ? "" : "too-early"); reset(); }} aria-pressed={band === "too-early"} className={`rounded-xl text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500 ${band === "too-early" ? "ring-2 ring-brand-green-600" : ""}`}>
+        <button type="button" onClick={() => { setBand(band === "too-early" ? "" : "too-early"); reset(); }} aria-pressed={band === "too-early"} className={`rounded-tight text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500 ${band === "too-early" ? "ring-2 ring-brand-green-600" : ""}`}>
           <Stat label="Too early" value={String(counts.get("too-early") ?? 0)} sub={`under ${gate.minDays} days or ${gate.minImpressions.toLocaleString("en-US")} impr.`} />
         </button>
       </div>
@@ -122,11 +122,11 @@ export function Scorecards({ ads, benchmarks, totals, checks, today, gate, perio
         {msg && <p className="mt-2 text-sm" role="status">{msg}</p>}
       </Card>
 
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-brand-neutral-200 bg-white p-3">
-        <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={platform} onChange={(e) => { setPlatform(e.target.value); reset(); }} className={`${sel} mt-1 block`}><option value="">All</option>{platformKeys().map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}</select></label>
-        <label className="text-xs font-medium text-brand-neutral-650">Status<select value={status} onChange={(e) => { setStatus(e.target.value); reset(); }} className={`${sel} mt-1 block capitalize`}><option value="">All</option>{["live", "paused", "retired"].map((p) => <option key={p}>{p}</option>)}</select></label>
-        <label className="text-xs font-medium text-brand-neutral-650">Band<select value={band} onChange={(e) => { setBand(e.target.value); reset(); }} className={`${sel} mt-1 block`}><option value="">All</option>{BANDS.map((b) => <option key={b} value={b}>{BAND_LABEL[b]}</option>)}<option value="too-early">Too early</option></select></label>
-        <label className="text-xs font-medium text-brand-neutral-650">Sort<select value={sort} onChange={(e) => setSort(e.target.value)} className={`${sel} mt-1 block`}><option value="score-asc">Lowest score first</option><option value="score-desc">Highest score first</option><option value="name">Name</option></select></label>
+      <div className="flex flex-wrap items-end gap-4 rounded-loose border border-brand-neutral-200 bg-white p-4">
+        <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={platform} onChange={(e) => { setPlatform(e.target.value); reset(); }} className={`${sel} mt-0 block`}><option value="">All</option>{platformKeys().map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}</select></label>
+        <label className="text-xs font-medium text-brand-neutral-650">Status<select value={status} onChange={(e) => { setStatus(e.target.value); reset(); }} className={`${sel} mt-0 block capitalize`}><option value="">All</option>{["live", "paused", "retired"].map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label className="text-xs font-medium text-brand-neutral-650">Band<select value={band} onChange={(e) => { setBand(e.target.value); reset(); }} className={`${sel} mt-0 block`}><option value="">All</option>{BANDS.map((b) => <option key={b} value={b}>{BAND_LABEL[b]}</option>)}<option value="too-early">Too early</option></select></label>
+        <label className="text-xs font-medium text-brand-neutral-650">Sort<select value={sort} onChange={(e) => setSort(e.target.value)} className={`${sel} mt-0 block`}><option value="score-asc">Lowest score first</option><option value="score-desc">Highest score first</option><option value="name">Name</option></select></label>
         <p className="ml-auto text-sm text-brand-neutral-650" aria-live="polite">{shown.length} scorecards · {period}</p>
       </div>
 
@@ -134,17 +134,17 @@ export function Scorecards({ ads, benchmarks, totals, checks, today, gate, perio
 
       <div className="grid gap-4 xl:grid-cols-2">
         {visible.map(({ ad, card }) => (
-          <article key={ad.id} className="min-w-0 space-y-3 rounded-xl border border-brand-neutral-200 bg-white p-4">
-            <header className="flex items-start gap-3">
+          <article key={ad.id} className="min-w-0 space-y-4 rounded-loose border border-brand-neutral-200 bg-white p-4">
+            <header className="flex items-start gap-4">
               <Link href={`/gallery/${ad.name}`} className="shrink-0" aria-label={`Open ${ad.name}`}><AdThumb ad={ad} w={72} h={56} /></Link>
               <div className="min-w-0 flex-1">
                 <h3 className="truncate text-sm font-semibold"><Link href={`/gallery/${ad.name}`} className="hover:underline">{ad.name}</Link></h3>
-                <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1"><PlatformBadge platform={ad.platform} /><StatusChip status={ad.status} /><span className="text-xs text-brand-neutral-650">{ad.tags.funnel} · {daysLive(ad, today)} days live</span></p>
+                <p className="mt-0 flex flex-wrap items-center gap-x-4 gap-y-0"><PlatformBadge platform={ad.platform} /><StatusChip status={ad.status} /><span className="text-xs text-brand-neutral-650">{ad.tags.funnel} · {daysLive(ad, today)} days live</span></p>
               </div>
               {card.state === "scored" ? <BandChip band={card.score.band} percent={card.score.percent} /> : <TooEarlyChip />}
             </header>
             {card.state === "too-early" && <p className="text-xs text-brand-neutral-650">Still in the learning phase ({card.daysLive}/{card.gate.minDays} days, {card.impressions.toLocaleString("en-US")}/{card.gate.minImpressions.toLocaleString("en-US")} impressions). The score is withheld until both are met.</p>}
-            <ul className="space-y-1 text-sm">
+            <ul className="space-y-0 text-sm">
               {CRITERIA.map((c) => {
                 const result = card.state === "scored" ? card.criteria[c.key] : null;
                 return (
@@ -153,7 +153,7 @@ export function Scorecards({ ads, benchmarks, totals, checks, today, gate, perio
                       <label className="flex flex-1 items-center gap-2"><input type="checkbox" checked={!!manual[ad.name]?.[c.key as ManualCriterion]} onChange={() => toggle(ad.name, c.key as ManualCriterion)} className="accent-brand-green-600" /><span>{c.label}</span></label>
                     ) : <span className="flex-1 text-brand-neutral-800">{c.label}</span>}
                     {card.state === "scored" && (
-                      <span className="flex w-20 items-center justify-end gap-1 text-xs tabular-nums text-brand-neutral-650"><Mark result={result} /><span className="sr-only">{markLabel(result)}</span>{result === null ? "" : `${result ? MAX_POINTS[c.key] : 0}/${MAX_POINTS[c.key]}`}</span>
+                      <span className="flex w-20 items-center justify-end gap-2 text-xs tabular-nums text-brand-neutral-650"><Mark result={result} /><span className="sr-only">{markLabel(result)}</span>{result === null ? "" : `${result ? MAX_POINTS[c.key] : 0}/${MAX_POINTS[c.key]}`}</span>
                     )}
                   </li>
                 );

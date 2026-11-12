@@ -48,7 +48,7 @@ async function Content({ searchParams }: { searchParams: Promise<Search> }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <FilterBar basePath="/performance" platform={platform} from={custom?.from} to={custom?.to} />
         {!custom && <RangePicker current={range} basePath="/performance" extra={extra} />}
       </div>
@@ -56,7 +56,7 @@ async function Content({ searchParams }: { searchParams: Promise<Search> }) {
         {platform ? `${PLATFORM_LABEL[platform]} only. ` : ""}{custom ? `${custom.from} to ${custom.to}. ` : ""}
         {hasPrev ? "Changes compare with the previous period of the same length." : "No earlier period to compare with."}
       </p>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Spend" value={fmtMoney(cur.spend)} delta={hasPrev ? pctChange(cur.spend, prev.spend) : undefined} />
         <Stat label="Impressions" value={fmtCompact(cur.impressions)} delta={hasPrev ? pctChange(cur.impressions, prev.impressions) : undefined} />
         <Stat label="CTR" value={fmtPct(rc.ctr)} delta={hasPrev ? pctChange(rc.ctr, rp.ctr) : undefined} />
@@ -65,7 +65,7 @@ async function Content({ searchParams }: { searchParams: Promise<Search> }) {
       <Card title={platform ? `Weekly spend, ${PLATFORM_LABEL[platform]}` : "Weekly spend by platform"}><LineChart label="Weekly spend by platform" unit="usd" series={spend} area /></Card>
       <div>
         <h2 className="text-base font-semibold text-brand-neutral-900">Top performers by funnel stage</h2>
-        <p className="mt-1 text-sm text-brand-neutral-650">Each stage is judged on its own KPI, min {fmtCompact(MIN_IMPRESSIONS)} impressions. Not final: confirm with channel leads once 2027 strategy is set.</p>
+        <p className="mt-0 text-sm text-brand-neutral-650">Each stage is judged on its own KPI, min {fmtCompact(MIN_IMPRESSIONS)} impressions. Not final: confirm with channel leads once 2027 strategy is set.</p>
       </div>
       {byStage.length === 0 ? <EmptyState title="No ads with enough data" body="Try a longer date range or another platform." /> : (
         <div className="grid gap-6 lg:grid-cols-2">

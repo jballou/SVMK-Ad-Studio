@@ -14,10 +14,10 @@ const TEAM = [
 export default function Team() {
   return (
     <Card title="People" description="Sign-in will use the company SSO provider once the hosted environment is set up." padded={false}>
-      <div className="px-5 py-3">
+      <div className="px-4 py-4">
         <DataTable caption="Team members" columns={[{ label: "Name" }, { label: "Role" }, { label: "Team" }, { label: "Last active" }]}>
           {TEAM.map((m) => (
-            <tr key={m.name}><td className="py-2.5 pr-3 font-medium">{m.name}</td><td className="px-3"><Chip variant={m.role === "Admin" ? "completed" : m.role === "Editor" ? "information" : "label"} chevron={false} className="!px-2.5 !py-1 !text-xs">{m.role}</Chip></td><td className="px-3 text-brand-neutral-750">{m.team}</td><td className="py-2.5 pl-3 text-brand-neutral-650">{m.last}</td></tr>
+            <tr key={m.name}><td className="py-2 pr-4 font-medium">{m.name}</td><td className="px-4"><Chip variant={m.role === "Admin" ? "completed" : m.role === "Editor" ? "information" : "label"} chevron={false} className="!px-2 !py-0 !text-xs">{m.role}</Chip></td><td className="px-4 text-brand-neutral-750">{m.team}</td><td className="py-2 pl-4 text-brand-neutral-650">{m.last}</td></tr>
           ))}
         </DataTable>
       </div>

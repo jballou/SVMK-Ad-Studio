@@ -47,12 +47,12 @@ const buttonVariants = cva(
       },
       shape: {
         default: '',
-        circle: 'rounded-full',
+        circle: 'rounded-round',
       },
       mode: {
         default: 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         icon: 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        link: 'text-primary h-auto p-0 bg-transparent rounded-none hover:bg-transparent data-[state=open]:bg-transparent',
+        link: 'text-primary h-auto p-0 bg-transparent rounded-tight hover:bg-transparent data-[state=open]:bg-transparent',
         input: `
             justify-start font-normal hover:bg-background [&_svg]:transition-colors [&_svg]:hover:text-foreground data-[state=open]:bg-background 
             focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-[3px] focus-visible:ring-ring/30 
@@ -332,19 +332,19 @@ const buttonVariants = cva(
         mode: 'input',
         variant: 'outline',
         size: 'sm',
-        className: 'gap-1.25',
+        className: 'gap-2',
       },
       {
         mode: 'input',
         variant: 'outline',
         size: 'md',
-        className: 'gap-1.5',
+        className: 'gap-2',
       },
       {
         mode: 'input',
         variant: 'outline',
         size: 'lg',
-        className: 'gap-1.5',
+        className: 'gap-2',
       },
     ],
     defaultVariants: {
@@ -406,7 +406,7 @@ interface ButtonArrowProps extends React.SVGProps<SVGSVGElement> {
 }
 
 function ButtonArrow({ icon: Icon = ChevronDown, className, ...props }: ButtonArrowProps) {
-  return <Icon data-slot="button-arrow" className={cn('ms-auto -me-1', className)} {...props} />;
+  return <Icon data-slot="button-arrow" className={cn('ms-auto -me-2', className)} {...props} />;
 }
 
 export { Button, ButtonArrow, buttonVariants };

@@ -16,13 +16,13 @@ export const metadata = { title: "A/B tests · Ad Studio" };
 
 function Side({ ad, ctr, impressions, win, label }: { ad: AdRecord; ctr: number; impressions: number; win: boolean; label: string }) {
   return (
-    <Link href={`/gallery/${ad.name}`} className={`block rounded-lg border p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500 ${win ? "border-brand-green-400 bg-brand-green-100/40" : "border-brand-neutral-200"}`}>
-      <div className="flex items-start gap-3">
-        <span className="w-20 shrink-0 overflow-hidden rounded border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={false} composition={ad.composition} placementKey={ad.placement} imageUrl={ad.imageUrl} /></span>
+    <Link href={`/gallery/${ad.name}`} className={`block rounded-tight border p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500 ${win ? "border-brand-green-400 bg-brand-green-100/40" : "border-brand-neutral-200"}`}>
+      <div className="flex items-start gap-4">
+        <span className="w-20 shrink-0 overflow-hidden rounded-tight border border-brand-neutral-200"><AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={false} composition={ad.composition} placementKey={ad.placement} imageUrl={ad.imageUrl} /></span>
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-brand-neutral-650">Variant {label}{win && <span className="ml-1.5 text-brand-green-600">Winner</span>}</p>
+          <p className="text-xs font-semibold text-brand-neutral-650">Variant {label}{win && <span className="ml-2 text-brand-green-600">Winner</span>}</p>
           <p className="truncate text-sm font-medium" title={ad.name}>{ad.conceptKey}</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums">{fmtPct(ctr)}</p>
+          <p className="mt-0 text-lg font-semibold tabular-nums">{fmtPct(ctr)}</p>
           <p className="text-xs text-brand-neutral-650">{fmtCompact(impressions)} impressions</p>
         </div>
       </div>
@@ -59,27 +59,27 @@ async function Content({ searchParams }: { searchParams: Promise<{ status?: stri
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Tests" value={String(rows.length)} sub={`${rows.filter((r) => r.e.status === "running").length} running`} />
         <Stat label="Clear winners" value={String(decided.length)} sub={`${Math.round((decided.length / Math.max(1, rows.length)) * 100)}% of tests`} />
         <Stat label="Avg. winner lift" value={decided.length ? `+${(decided.reduce((s, r) => s + Math.abs(r.res.lift), 0) / decided.length).toFixed(0)}%` : "—"} sub="CTR" />
         <Stat label="Most decisive variable" value={[...byVar].sort((x, y) => y[1] - x[1])[0]?.[0] ?? "—"} />
       </div>
-      <nav aria-label="Filter tests" className="flex gap-1.5">
+      <nav aria-label="Filter tests" className="flex gap-2">
         {[["", "All"], ["running", "Running"], ["concluded", "Concluded"]].map(([v, l]) => (
-          <Link key={v} href={v ? `/performance/tests?status=${v}` : "/performance/tests"} aria-current={(status ?? "") === v ? "true" : undefined} className={`rounded-full border px-3 py-1 text-xs font-medium ${(status ?? "") === v ? "border-brand-green-600 bg-brand-green-100 text-brand-green-800" : "border-brand-neutral-250 bg-white hover:bg-brand-neutral-100"}`}>{l}</Link>
+          <Link key={v} href={v ? `/performance/tests?status=${v}` : "/performance/tests"} aria-current={(status ?? "") === v ? "true" : undefined} className={`rounded-round border px-4 py-0 text-xs font-medium ${(status ?? "") === v ? "border-brand-green-600 bg-brand-green-100 text-brand-green-800" : "border-brand-neutral-250 bg-white hover:bg-brand-neutral-100"}`}>{l}</Link>
         ))}
       </nav>
       {shown.length === 0 && <EmptyState title="No tests here" body="Tests pair two ads on the same platform and size that differ in one variable." />}
       <div className="grid gap-4 xl:grid-cols-2">
         {shown.map(({ e, a, b, ta, tb, res }) => (
-          <Card key={e.id} title={e.name} description={`Tests ${e.variable} · started ${fmtDate(e.startedAt)}`} actions={<Chip variant={e.status === "running" ? "pending" : "completed"} chevron={false} className="!px-2.5 !py-1 !text-xs">{e.status === "running" ? "Running" : "Concluded"}</Chip>}>
-            <p className="mb-3 flex items-start gap-2 text-sm text-brand-neutral-750"><Beaker className="mt-0.5 size-4 shrink-0 text-brand-periwinkle-600" aria-hidden />Hypothesis: {e.hypothesis}</p>
-            <div className="grid grid-cols-2 gap-3">
+          <Card key={e.id} title={e.name} description={`Tests ${e.variable} · started ${fmtDate(e.startedAt)}`} actions={<Chip variant={e.status === "running" ? "pending" : "completed"} chevron={false} className="!px-2 !py-0 !text-xs">{e.status === "running" ? "Running" : "Concluded"}</Chip>}>
+            <p className="mb-4 flex items-start gap-2 text-sm text-brand-neutral-750"><Beaker className="mt-0 size-4 shrink-0 text-brand-periwinkle-600" aria-hidden />Hypothesis: {e.hypothesis}</p>
+            <div className="grid grid-cols-2 gap-4">
               <Side ad={a} ctr={res.ctrA} impressions={ta.impressions} win={res.winner === "A"} label="A" />
               <Side ad={b} ctr={res.ctrB} impressions={tb.impressions} win={res.winner === "B"} label="B" />
             </div>
-            <p className="mt-3 text-sm">
+            <p className="mt-4 text-sm">
               {res.underpowered ? <span className="text-brand-neutral-650">Not enough volume to call yet.</span> : res.significant ? <span><strong>Variant {res.winner}</strong> wins with {winnerLift(res).toFixed(0)}% higher CTR <span className="text-brand-neutral-650">(p = {res.pValue < 0.001 ? "<0.001" : res.pValue.toFixed(3)})</span>.</span> : <span className="text-brand-neutral-650">No significant difference (p = {res.pValue.toFixed(2)}, {res.lift >= 0 ? "+" : ""}{res.lift.toFixed(0)}% CTR for B).</span>}
             </p>
           </Card>

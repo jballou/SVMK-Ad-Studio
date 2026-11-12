@@ -72,7 +72,7 @@ async function Content() {
         actions={<Button variant="outline" asChild><Link href="/scorecards"><Upload /> Upload performance</Link></Button>}
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         <Stat label="Spend" value={fmtMoney(cur.spend)} delta={pctChange(cur.spend, prev.spend)} goodWhen="up" href="/performance" />
         <Stat label="Impressions" value={fmtCompact(cur.impressions)} delta={pctChange(cur.impressions, prev.impressions)} href="/performance" />
         <Stat label="CTR" value={fmtPct(rc.ctr)} delta={pctChange(rc.ctr, rp.ctr)} href="/performance/platforms" />
@@ -101,11 +101,11 @@ async function Content() {
           <ul className="divide-y divide-brand-neutral-150">
             {top.map(({ ad, idx }) => (
               <li key={ad.id}>
-                <Link href={`/gallery/${ad.name}`} className="flex items-center gap-3 px-5 py-3 hover:bg-brand-neutral-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-periwinkle-500">
+                <Link href={`/gallery/${ad.name}`} className="flex items-center gap-4 px-4 py-4 hover:bg-brand-neutral-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-periwinkle-500">
                   <AdThumb ad={ad} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{ad.name}</span>
-                    <span className="mt-0.5 flex items-center gap-2"><PlatformBadge platform={ad.platform} /><span className="text-xs text-brand-neutral-650">{ad.tags.funnel}</span></span>
+                    <span className="mt-0 flex items-center gap-2"><PlatformBadge platform={ad.platform} /><span className="text-xs text-brand-neutral-650">{ad.tags.funnel}</span></span>
                   </span>
                   <span className="text-right text-sm tabular-nums"><span className="font-semibold text-brand-green-600">{idx.toFixed(2)}×</span><span className="block text-xs text-brand-neutral-650">CTR {fmtPct(rates(totals.get(ad.name)!).ctr)}</span></span>
                 </Link>
@@ -115,11 +115,11 @@ async function Content() {
         </Card>
 
         <Card title="Fatigue alerts" description="Live ads whose 7-day CTR is falling from its peak" actions={<AlertTriangle className="size-4 text-brand-orange-500" aria-hidden />} padded={false}>
-          {fatigue.length === 0 ? <p className="p-5 text-sm text-brand-neutral-650">No live ads show signs of fatigue.</p> : (
+          {fatigue.length === 0 ? <p className="p-4 text-sm text-brand-neutral-650">No live ads show signs of fatigue.</p> : (
             <ul className="divide-y divide-brand-neutral-150">
               {fatigue.slice(0, 5).map((f) => (
                 <li key={f.ad.id}>
-                  <Link href={`/gallery/${f.ad.name}`} className="flex items-center gap-3 px-5 py-3 hover:bg-brand-neutral-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-periwinkle-500">
+                  <Link href={`/gallery/${f.ad.name}`} className="flex items-center gap-4 px-4 py-4 hover:bg-brand-neutral-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-periwinkle-500">
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{f.ad.name}</span>
                       <span className="text-xs text-brand-neutral-650">{f.daysLive} days live · peak {fmtPct(f.peakCtr)} → now {fmtPct(f.currentCtr)}</span>
@@ -141,7 +141,7 @@ async function Content() {
               const c = cards.get(ad.name)!;
               return (
                 <li key={ad.id}>
-                  <Link href={`/gallery/${ad.name}`} className="flex items-center gap-3 px-5 py-3 hover:bg-brand-neutral-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-periwinkle-500">
+                  <Link href={`/gallery/${ad.name}`} className="flex items-center gap-4 px-4 py-4 hover:bg-brand-neutral-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-periwinkle-500">
                     <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{ad.name}</span><PlatformBadge platform={ad.platform} /></span>
                     <span className="text-sm tabular-nums text-brand-red-500">{idx.toFixed(2)}×</span>
                     {c.state === "scored" ? <BandChip band={c.score.band} percent={c.score.percent} /> : <TooEarlyChip />}
@@ -152,13 +152,13 @@ async function Content() {
           </ul>
         </Card>
 
-        <Card title="Recent batches" actions={<Link href="/batches" className="inline-flex items-center gap-1 text-xs font-medium text-brand-green-600 hover:underline">All batches <ArrowRight className="size-3" aria-hidden /></Link>}>
+        <Card title="Recent batches" actions={<Link href="/batches" className="inline-flex items-center gap-2 text-xs font-medium text-brand-green-600 hover:underline">All batches <ArrowRight className="size-3" aria-hidden /></Link>}>
           <DataTable caption="Recent batches" columns={[{ label: "Batch" }, { label: "Ads", align: "right" }, { label: "Created" }]}>
             {batches.map((b) => (
               <tr key={b.id}>
-                <td className="py-2.5 pr-3 font-medium"><span className="line-clamp-1">{b.name}</span></td>
-                <td className="px-3 py-2.5 text-right tabular-nums">{b.adCount}</td>
-                <td className="py-2.5 pl-3 text-brand-neutral-650">{fmtDate(b.createdAt.toISOString())}</td>
+                <td className="py-2 pr-4 font-medium"><span className="line-clamp-1">{b.name}</span></td>
+                <td className="px-4 py-2 text-right tabular-nums">{b.adCount}</td>
+                <td className="py-2 pl-4 text-brand-neutral-650">{fmtDate(b.createdAt.toISOString())}</td>
               </tr>
             ))}
           </DataTable>

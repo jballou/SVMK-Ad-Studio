@@ -42,7 +42,7 @@ function GeneratedArt({ art = FALLBACK, copy, width, height, className = "", sho
           <span style={{ fontSize: banner ? "26cqh" : "3.4cqmin", background: art.accent, color: art.bg, padding: banner ? "0.5em 1em" : "0.7em 1.4em", borderRadius: 999, fontWeight: 600, whiteSpace: "nowrap" }}>{copy.cta}</span>
         )}
       </div>
-      <div aria-hidden className="absolute -right-[12cqmin] -bottom-[12cqmin] rounded-full" style={{ width: "42cqmin", height: "42cqmin", background: art.accent, opacity: 0.16 }} />
+      <div aria-hidden className="absolute -right-[12cqmin] -bottom-[12cqmin] rounded-round" style={{ width: "42cqmin", height: "42cqmin", background: art.accent, opacity: 0.16 }} />
     </div>
   );
 }

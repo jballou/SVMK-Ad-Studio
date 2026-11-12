@@ -29,7 +29,7 @@ export function StatusControl({ name, status }: { name: string; status: AdStatus
       {status === "paused" && <Button size="md" disabled={pending} onClick={() => set("live")}>Resume ad</Button>}
       <label className="text-xs text-brand-neutral-650">
         <span className="sr-only">Set status</span>
-        <select value={status} disabled={pending} onChange={(e) => set(e.target.value as AdStatus)} className="h-8.5 rounded-md border border-brand-neutral-250 bg-white px-2 text-sm capitalize">
+        <select value={status} disabled={pending} onChange={(e) => set(e.target.value as AdStatus)} className="h-8.5 rounded-tight border border-brand-neutral-250 bg-white px-2 text-sm capitalize">
           {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       </label>
@@ -75,18 +75,18 @@ export function TagEditor({ name, tags, taxonomy }: { name: string; tags: Tags; 
         const addable = g.options.filter((o) => !values.includes(o));
         return (
           <div key={g.key}>
-            <p className="mb-1.5 text-xs font-medium text-brand-neutral-650">{g.label}</p>
-            <div className="flex flex-wrap items-center gap-1.5">
+            <p className="mb-2 text-xs font-medium text-brand-neutral-650">{g.label}</p>
+            <div className="flex flex-wrap items-center gap-2">
               {values.map((v) => (
-                <span key={v} className="inline-flex items-center gap-1 rounded-full bg-brand-periwinkle-100 py-1 pl-2.5 pr-1 text-xs font-medium text-brand-periwinkle-800">
+                <span key={v} className="inline-flex items-center gap-2 rounded-round bg-brand-periwinkle-100 py-0 pl-2 pr-2 text-xs font-medium text-brand-periwinkle-800">
                   {v}
-                  <button type="button" aria-label={`Remove ${v} from ${g.label}`} onClick={() => save({ ...current, [g.key]: values.filter((x) => x !== v) })} className="grid size-4 place-items-center rounded-full hover:bg-brand-periwinkle-200"><X className="size-3" /></button>
+                  <button type="button" aria-label={`Remove ${v} from ${g.label}`} onClick={() => save({ ...current, [g.key]: values.filter((x) => x !== v) })} className="grid size-4 place-items-center rounded-round hover:bg-brand-periwinkle-200"><X className="size-3" /></button>
                 </span>
               ))}
               {addable.length > 0 && (
                 <label className="inline-flex items-center">
                   <span className="sr-only">Add {g.label}</span>
-                  <select value="" onChange={(e) => e.target.value && save({ ...current, [g.key]: [...values, e.target.value] })} className="h-7 rounded-full border border-dashed border-brand-neutral-300 bg-white px-2 text-xs text-brand-neutral-750">
+                  <select value="" onChange={(e) => e.target.value && save({ ...current, [g.key]: [...values, e.target.value] })} className="h-7 rounded-round border border-dashed border-brand-neutral-300 bg-white px-2 text-xs text-brand-neutral-750">
                     <option value="">+ Add</option>
                     {addable.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
@@ -96,20 +96,20 @@ export function TagEditor({ name, tags, taxonomy }: { name: string; tags: Tags; 
           </div>
         );
       })}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <label className="text-xs font-medium text-brand-neutral-650">Funnel stage
-          <select value={current.funnel ?? ""} onChange={(e) => save({ ...current, funnel: e.target.value || undefined })} className="mt-1 h-9 w-full rounded-lg border border-brand-neutral-250 bg-white px-2 text-sm">
+          <select value={current.funnel ?? ""} onChange={(e) => save({ ...current, funnel: e.target.value || undefined })} className="mt-0 h-9 w-full rounded-tight border border-brand-neutral-250 bg-white px-2 text-sm">
             <option value="">None</option>{taxonomy.funnels.map((f) => <option key={f}>{f}</option>)}
           </select>
         </label>
         <label className="text-xs font-medium text-brand-neutral-650">Offer
-          <select value={current.offer ?? ""} onChange={(e) => save({ ...current, offer: e.target.value || undefined })} className="mt-1 h-9 w-full rounded-lg border border-brand-neutral-250 bg-white px-2 text-sm">
+          <select value={current.offer ?? ""} onChange={(e) => save({ ...current, offer: e.target.value || undefined })} className="mt-0 h-9 w-full rounded-tight border border-brand-neutral-250 bg-white px-2 text-sm">
             <option value="">None</option>{taxonomy.offers.map((f) => <option key={f}>{f}</option>)}
           </select>
         </label>
       </div>
       {error && <p role="alert" className="text-xs text-brand-red-500">{error}</p>}
-      <p className="flex items-center gap-1 text-[11px] text-brand-neutral-550"><Plus className="size-3" aria-hidden /> Changes save automatically.</p>
+      <p className="flex items-center gap-2 text-xs text-brand-neutral-550"><Plus className="size-3" aria-hidden /> Changes save automatically.</p>
     </div>
   );
 }

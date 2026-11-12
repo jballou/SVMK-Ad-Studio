@@ -27,7 +27,7 @@ async function Content() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Fatigued" value={String(fatigued.length)} sub={`CTR down ${FATIGUE_THRESHOLDS.fatigued}%+ from peak`} />
         <Stat label="Approaching" value={String(approaching.length)} sub={`down ${FATIGUE_THRESHOLDS.approaching}–${FATIGUE_THRESHOLDS.fatigued}%`} />
         <Stat label="Past 75 days live" value={String(old.length)} sub="nearing the 90-day mark" />
@@ -41,7 +41,7 @@ async function Content() {
       )}
 
       <Card title="Ads to refresh" description="Live ads with at least 14 days of data whose CTR has dropped from its peak" padded={false}>
-        {report.length === 0 ? <div className="p-5"><EmptyState title="No fatigue detected" body="Live ads are holding their click-through rate." /></div> : (
+        {report.length === 0 ? <div className="p-4"><EmptyState title="No fatigue detected" body="Live ads are holding their click-through rate." /></div> : (
           <ul className="divide-y divide-brand-neutral-150">
             {report.map((f) => (
               <li key={f.ad.id}>
@@ -49,7 +49,7 @@ async function Content() {
                   <span className="flex items-center gap-4">
                     <span className="hidden text-right text-xs text-brand-neutral-650 sm:block">{f.daysLive} days live<br />{fmtPct(f.peakCtr)} → {fmtPct(f.currentCtr)}</span>
                     <Sparkline values={f.series.map((s) => s.y)} color={f.level === "fatigued" ? "#AE453F" : "#D07A2F"} label={`CTR trend for ${f.ad.name}`} />
-                    <Chip variant={f.level === "fatigued" ? "failed" : "pending"} chevron={false} className="!px-2.5 !py-1 !text-xs">−{f.declinePct.toFixed(0)}%</Chip>
+                    <Chip variant={f.level === "fatigued" ? "failed" : "pending"} chevron={false} className="!px-2 !py-0 !text-xs">−{f.declinePct.toFixed(0)}%</Chip>
                   </span>
                 } />
               </li>
@@ -65,7 +65,7 @@ async function Content() {
       )}
 
       <Card title="Refresh a fatigued concept">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="max-w-xl text-sm text-brand-neutral-650">Start a new batch from the same Figma template with fresh copy to replace the creatives above.</p>
           <Button asChild><Link href="/batches/new"><Sparkles /> New batch</Link></Button>
         </div>

@@ -40,7 +40,7 @@ export function Stat({ label, value, sub, delta, goodWhen = "up", href }: { labe
       <p className="mt-2 text-2xl font-bold tabular-nums text-ink">{value}</p>
       <div className="mt-2 flex items-center gap-2 text-xs">
         {delta !== undefined && Number.isFinite(delta) && (
-          <span className={`inline-flex items-center gap-1 font-medium ${good ? "text-data-ok" : "text-data-late"}`}>
+          <span className={`inline-flex items-center gap-2 font-medium ${good ? "text-data-ok" : "text-data-late"}`}>
             {delta >= 0 ? <ArrowUpRight className="size-3.5" aria-hidden /> : <ArrowDownRight className="size-3.5" aria-hidden />}
             {Math.abs(delta).toFixed(1)}%
             <span className="sr-only">{good ? " improvement" : " decline"}</span>
@@ -71,7 +71,7 @@ export function DataTable({ columns, children, caption }: { columns: { label: st
         <thead>
           <tr className="border-b border-brand-neutral-200 text-xs text-brand-neutral-650">
             {columns.map((c) => (
-              <th key={c.label} scope="col" className={`whitespace-nowrap px-3 py-2 font-medium first:pl-0 last:pr-0 ${c.align === "right" ? "text-right" : ""} ${c.className ?? ""}`}>{c.label}</th>
+              <th key={c.label} scope="col" className={`whitespace-nowrap px-4 py-2 font-medium first:pl-0 last:pr-0 ${c.align === "right" ? "text-right" : ""} ${c.className ?? ""}`}>{c.label}</th>
             ))}
           </tr>
         </thead>

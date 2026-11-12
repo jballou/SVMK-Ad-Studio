@@ -17,14 +17,14 @@ function Row({ label, sub, t, ads }: { label: string; sub?: string; t: Totals; a
   const r = rates(t);
   return (
     <tr>
-      <td className="py-2.5 pr-3 font-medium">{label}{sub && <span className="block text-xs font-normal text-brand-neutral-650">{sub}</span>}</td>
-      {ads !== undefined && <td className="px-3 text-right tabular-nums">{ads}</td>}
-      <td className="px-3 text-right tabular-nums">{fmtMoney(t.spend)}</td>
-      <td className="px-3 text-right tabular-nums">{fmtCompact(t.impressions)}</td>
-      <td className="px-3 text-right tabular-nums">{fmtPct(r.ctr)}</td>
-      <td className="px-3 text-right tabular-nums">{r.cpc === undefined ? "—" : fmtMoney(r.cpc, 2)}</td>
-      <td className="px-3 text-right tabular-nums">{fmtPct(r.cvr, 1)}</td>
-      <td className="py-2.5 pl-3 text-right tabular-nums">{r.cpa === undefined ? "—" : fmtMoney(r.cpa, 2)}</td>
+      <td className="py-2 pr-4 font-medium">{label}{sub && <span className="block text-xs font-normal text-brand-neutral-650">{sub}</span>}</td>
+      {ads !== undefined && <td className="px-4 text-right tabular-nums">{ads}</td>}
+      <td className="px-4 text-right tabular-nums">{fmtMoney(t.spend)}</td>
+      <td className="px-4 text-right tabular-nums">{fmtCompact(t.impressions)}</td>
+      <td className="px-4 text-right tabular-nums">{fmtPct(r.ctr)}</td>
+      <td className="px-4 text-right tabular-nums">{r.cpc === undefined ? "—" : fmtMoney(r.cpc, 2)}</td>
+      <td className="px-4 text-right tabular-nums">{fmtPct(r.cvr, 1)}</td>
+      <td className="py-2 pl-4 text-right tabular-nums">{r.cpa === undefined ? "—" : fmtMoney(r.cpa, 2)}</td>
     </tr>
   );
 }
@@ -46,7 +46,7 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
     <div className="space-y-6">
       <div className="flex justify-end"><RangePicker current={range} basePath="/performance/platforms" /></div>
       <Card title="By platform" padded={false}>
-        <div className="px-5 py-3"><DataTable caption="Performance by platform" columns={cols("Platform", true)}>
+        <div className="px-4 py-4"><DataTable caption="Performance by platform" columns={cols("Platform", true)}>
           {by((a) => a.platform).map(([k, t]) => <Row key={k} label={PLATFORM_LABEL[k as PlatformKey]} t={t} ads={`${adCount((a) => a.platform === k)} live`} />)}
         </DataTable></div>
       </Card>
@@ -55,12 +55,12 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
       </Card>
       <div className="grid gap-6 xl:grid-cols-2">
         <Card title="By placement" description="Which platform surfaces earn their spend" padded={false}>
-          <div className="px-5 py-3"><DataTable caption="Performance by placement" columns={cols("Placement")}>
+          <div className="px-4 py-4"><DataTable caption="Performance by placement" columns={cols("Placement")}>
             {by((a) => a.placement).map(([k, t]) => <Row key={k} label={allPlacements().find((p) => p.key === k)?.label ?? k} t={t} />)}
           </DataTable></div>
         </Card>
         <Card title="By creative size" description="Top 10 sizes by spend" padded={false}>
-          <div className="px-5 py-3"><DataTable caption="Performance by size" columns={cols("Size")}>
+          <div className="px-4 py-4"><DataTable caption="Performance by size" columns={cols("Size")}>
             {sizes.map(([k, t]) => <Row key={k} label={k} sub={`${fmtInt(t.impressions)} impressions`} t={t} />)}
           </DataTable></div>
         </Card>

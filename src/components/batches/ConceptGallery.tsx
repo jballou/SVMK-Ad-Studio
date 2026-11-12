@@ -8,8 +8,8 @@ import { Card } from "@/components/ui/primitives";
 import { filterGallery, galleryItems, intentCounts } from "@/lib/batches/gallery";
 import { STARTER_TEMPLATES } from "@/lib/templates/intents";
 
-const chip = (on: boolean) => `rounded-full border px-3 py-1 text-xs font-medium ${on ? "border-brand-green-600 bg-brand-green-100 text-brand-green-800" : "border-brand-neutral-250 bg-white text-brand-neutral-750 hover:bg-brand-neutral-100"}`;
-const select = "h-9 rounded-lg border border-brand-neutral-250 bg-white px-2.5 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
+const chip = (on: boolean) => `rounded-round border px-4 py-0 text-xs font-medium ${on ? "border-brand-green-600 bg-brand-green-100 text-brand-green-800" : "border-brand-neutral-250 bg-white text-brand-neutral-750 hover:bg-brand-neutral-100"}`;
+const select = "h-9 rounded-tight border border-brand-neutral-250 bg-white px-2 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
 
 export function ConceptGallery({ selected, onToggle, customRequestUrl }: { selected: string[]; onToggle: (key: string) => void; customRequestUrl: string }) {
   const all = useMemo(() => galleryItems(), []);
@@ -35,7 +35,7 @@ export function ConceptGallery({ selected, onToggle, customRequestUrl }: { selec
         )
       }
     >
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <label className="relative min-w-0 flex-1 basis-64">
             <span className="sr-only">Search concepts</span>
@@ -48,7 +48,7 @@ export function ConceptGallery({ selected, onToggle, customRequestUrl }: { selec
           <select id="gal-persona" value={persona} onChange={(e) => setPersona(e.target.value)} className={select}><option value="">All personas</option>{personas.map((p) => <option key={p}>{p}</option>)}</select>
         </div>
 
-        <div role="group" aria-label="Creative intent" className="flex flex-wrap gap-1.5">
+        <div role="group" aria-label="Creative intent" className="flex flex-wrap gap-2">
           <button type="button" aria-pressed={intent === null} onClick={() => setIntent(null)} className={chip(intent === null)}>All intents <span className="tabular-nums text-brand-neutral-650">{all.length}</span></button>
           {STARTER_TEMPLATES.filter((t) => counts.has(t.slug)).map((t) => (
             <button key={t.slug} type="button" aria-pressed={intent === t.slug} onClick={() => setIntent(intent === t.slug ? null : t.slug)} title={t.description} className={chip(intent === t.slug)}>{t.name} <span className="tabular-nums text-brand-neutral-650">{counts.get(t.slug)}</span></button>
@@ -57,22 +57,22 @@ export function ConceptGallery({ selected, onToggle, customRequestUrl }: { selec
 
         <div className="flex items-center justify-between text-xs text-brand-neutral-650" role="status">
           <span>{shown.length} of {all.length} concepts</span>
-          {filtered && <button type="button" onClick={() => { setQuery(""); setIntent(null); setFunnel(""); setPersona(""); }} className="inline-flex items-center gap-1 font-medium text-brand-green-600 hover:underline"><X className="size-3" aria-hidden />Clear filters</button>}
+          {filtered && <button type="button" onClick={() => { setQuery(""); setIntent(null); setFunnel(""); setPersona(""); }} className="inline-flex items-center gap-2 font-medium text-brand-green-600 hover:underline"><X className="size-3" aria-hidden />Clear filters</button>}
         </div>
 
         {shown.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-brand-neutral-250 p-8 text-center text-sm text-brand-neutral-650">
+          <div className="rounded-loose border border-dashed border-brand-neutral-250 p-8 text-center text-sm text-brand-neutral-650">
             <p className="font-medium text-brand-neutral-850">No concepts match.</p>
-            <p className="mt-1">Try fewer filters, or request something custom from the Brand Creative Hub.</p>
+            <p className="mt-0">Try fewer filters, or request something custom from the Brand Creative Hub.</p>
           </div>
         ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1800px]:grid-cols-6">
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1800px]:grid-cols-6">
             {shown.map(({ concept: c, intentName }) => {
               const on = selected.includes(c.key);
               return (
                 <li key={c.key}>
-                  <label className={`block h-full cursor-pointer rounded-xl border p-2 ${on ? "border-brand-green-600 bg-brand-green-100/40" : "border-brand-neutral-200 hover:bg-brand-neutral-50"}`}>
-                    <span className="mb-2 block overflow-hidden rounded"><ConceptThumb concept={c} /></span>
+                  <label className={`block h-full cursor-pointer rounded-loose border p-2 ${on ? "border-brand-green-600 bg-brand-green-100/40" : "border-brand-neutral-200 hover:bg-brand-neutral-50"}`}>
+                    <span className="mb-2 block overflow-hidden rounded-tight"><ConceptThumb concept={c} /></span>
                     <span className="flex items-center gap-2 text-sm"><input type="checkbox" checked={on} onChange={() => onToggle(c.key)} aria-label={`Select ${c.key}`} className="accent-brand-green-600" /><span className="truncate font-medium">{c.key}</span></span>
                     <span className="ml-6 block text-xs font-medium text-brand-green-700">{intentName}</span>
                     <span className="ml-6 block text-xs text-brand-neutral-650">{c.funnel} · {c.personas.join(", ")}</span>

@@ -16,7 +16,7 @@ export function StatusChip({ status, className }: { status: AdStatus; className?
   const s = STATUS[status];
   const icon = status === "paused" ? Pause : status === "retired" ? Archive : status === "draft" ? FileEdit : undefined;
   return (
-    <Chip variant={s.variant} icon={icon} chevron={false} className={`!px-2.5 !py-1 !text-xs ${className ?? ""}`}>
+    <Chip variant={s.variant} icon={icon} chevron={false} className={`!px-2 !py-0 !text-xs ${className ?? ""}`}>
       {s.label}
     </Chip>
   );
@@ -26,20 +26,20 @@ const BAND: Record<Band, ChipVariant> = { "keep-scale": "completed", "monitor-op
 
 export function BandChip({ band, percent, className }: { band: Band; percent: number; className?: string }) {
   return (
-    <Chip variant={BAND[band]} className={`!px-2.5 !py-1 !text-xs ${className ?? ""}`}>
+    <Chip variant={BAND[band]} className={`!px-2 !py-0 !text-xs ${className ?? ""}`}>
       {percent}% · {BAND_LABEL[band]}
     </Chip>
   );
 }
 
 export function TooEarlyChip({ className }: { className?: string }) {
-  return <Chip variant="label" icon={Dot} chevron={false} className={`!px-2.5 !py-1 !text-xs ${className ?? ""}`}>Too early</Chip>;
+  return <Chip variant="label" icon={Dot} chevron={false} className={`!px-2 !py-0 !text-xs ${className ?? ""}`}>Too early</Chip>;
 }
 
 export function PlatformBadge({ platform }: { platform: PlatformKey }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-neutral-700">
-      <span aria-hidden className="size-2 rounded-full" style={{ background: PLATFORM_COLOR[platform] }} />
+    <span className="inline-flex items-center gap-2 text-xs font-medium text-brand-neutral-700">
+      <span aria-hidden className="size-2 rounded-round" style={{ background: PLATFORM_COLOR[platform] }} />
       {PLATFORM_LABEL[platform]}
     </span>
   );

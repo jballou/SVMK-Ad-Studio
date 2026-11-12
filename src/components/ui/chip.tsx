@@ -4,7 +4,7 @@ import { ChevronDown, CircleCheck, CircleX, Clock, Dot, type LucideIcon } from "
 import { cn } from "@/lib/utils";
 
 const chipVariants = cva(
-  "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-base font-normal leading-none [&_svg]:shrink-0 [&_svg]:size-4",
+  "inline-flex items-center gap-2 whitespace-nowrap rounded-round px-4 py-2 text-base font-normal leading-none [&_svg]:shrink-0 [&_svg]:size-4",
   {
     variants: {
       variant: {

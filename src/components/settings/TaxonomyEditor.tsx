@@ -41,21 +41,21 @@ export function TaxonomyEditor({ taxonomy }: { taxonomy: Taxonomy }) {
       <div className="grid gap-4 lg:grid-cols-2">
         {GROUPS.map((g) => (
           <Card key={g.key} title={g.label} description={g.hint}>
-            <ul className="mb-3 flex flex-wrap gap-1.5">
+            <ul className="mb-4 flex flex-wrap gap-2">
               {tax[g.key].map((v) => (
-                <li key={v} className="inline-flex items-center gap-1 rounded-full bg-brand-periwinkle-100 py-1 pl-2.5 pr-1 text-xs font-medium text-brand-periwinkle-800">{v}
-                  <button type="button" aria-label={`Remove ${v} from ${g.label}`} onClick={() => setTax({ ...tax, [g.key]: tax[g.key].filter((x) => x !== v) })} className="grid size-4 place-items-center rounded-full hover:bg-brand-periwinkle-200"><X className="size-3" /></button></li>
+                <li key={v} className="inline-flex items-center gap-2 rounded-round bg-brand-periwinkle-100 py-0 pl-2 pr-2 text-xs font-medium text-brand-periwinkle-800">{v}
+                  <button type="button" aria-label={`Remove ${v} from ${g.label}`} onClick={() => setTax({ ...tax, [g.key]: tax[g.key].filter((x) => x !== v) })} className="grid size-4 place-items-center rounded-round hover:bg-brand-periwinkle-200"><X className="size-3" /></button></li>
               ))}
               {tax[g.key].length === 0 && <li className="text-xs text-brand-neutral-650">None yet</li>}
             </ul>
             <div className="flex gap-2">
-              <label className="flex-1"><span className="sr-only">Add to {g.label}</span><input value={draft[g.key] ?? ""} onChange={(e) => setDraft({ ...draft, [g.key]: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(g.key); } }} maxLength={40} placeholder="Add a tag" className="h-9 w-full rounded-lg border border-brand-neutral-250 bg-white px-2.5 text-sm" /></label>
+              <label className="flex-1"><span className="sr-only">Add to {g.label}</span><input value={draft[g.key] ?? ""} onChange={(e) => setDraft({ ...draft, [g.key]: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(g.key); } }} maxLength={40} placeholder="Add a tag" className="h-9 w-full rounded-tight border border-brand-neutral-250 bg-white px-2 text-sm" /></label>
               <Button variant="outline" size="md" onClick={() => add(g.key)}><Plus /> Add</Button>
             </div>
           </Card>
         ))}
       </div>
-      <div className="flex items-center gap-3"><Button disabled={!dirty || pending} onClick={save}>Save changes</Button>{dirty && <Button variant="ghost" onClick={() => setTax(taxonomy)}>Discard</Button>}{msg && <span role="status" className="text-sm text-brand-neutral-750">{msg}</span>}</div>
+      <div className="flex items-center gap-4"><Button disabled={!dirty || pending} onClick={save}>Save changes</Button>{dirty && <Button variant="ghost" onClick={() => setTax(taxonomy)}>Discard</Button>}{msg && <span role="status" className="text-sm text-brand-neutral-750">{msg}</span>}</div>
     </div>
   );
 }

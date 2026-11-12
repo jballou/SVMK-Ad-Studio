@@ -56,11 +56,11 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
   return (
     <>
       <PlatformRegistry platforms={customPlatforms()} />
-      <Link href="/gallery" className="mb-3 inline-flex items-center gap-1 text-sm text-brand-neutral-650 hover:text-brand-neutral-900"><ChevronLeft className="size-4" aria-hidden /> Ad gallery</Link>
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <Link href="/gallery" className="mb-4 inline-flex items-center gap-2 text-sm text-brand-neutral-650 hover:text-brand-neutral-900"><ChevronLeft className="size-4" aria-hidden /> Ad gallery</Link>
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="break-all text-2xl font-semibold tracking-tight">{ad.name}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
+          <div className="mt-2 flex flex-wrap items-center gap-4">
             <StatusChip status={ad.status} /><PlatformBadge platform={ad.platform} />
             <span className="text-sm text-brand-neutral-650">{placement?.label ?? ad.placement} · {ad.width}×{ad.height}</span>
             <span className="text-sm text-brand-neutral-650">{ad.campaign}</span>
@@ -77,11 +77,11 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
           <Card title="Preview" description="The creative inside the platform UI. Platform text comes from the copy deck."><PreviewSwitcher ad={ad} /></Card>
           {siblings.length > 0 && (
             <Card title={`Other sizes of ${ad.conceptKey}`} description="Same concept, other platforms and sizes">
-              <ul className="flex flex-wrap items-end gap-3">
+              <ul className="flex flex-wrap items-end gap-4">
                 {siblings.map((s) => (
-                  <li key={s.id} className="w-24"><Link href={`/gallery/${s.name}`} className="block space-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500">
-                    <span className="block overflow-hidden rounded border border-brand-neutral-200"><AdArt art={s.art} copy={s.copy} width={s.width} height={s.height} showCta={false} composition={s.composition} placementKey={s.placement} imageUrl={s.imageUrl} /></span>
-                    <span className="block truncate text-[11px] text-brand-neutral-650" title={s.name}>{s.width}×{s.height} · {s.platform}</span>
+                  <li key={s.id} className="w-24"><Link href={`/gallery/${s.name}`} className="block space-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-periwinkle-500">
+                    <span className="block overflow-hidden rounded-tight border border-brand-neutral-200"><AdArt art={s.art} copy={s.copy} width={s.width} height={s.height} showCta={false} composition={s.composition} placementKey={s.placement} imageUrl={s.imageUrl} /></span>
+                    <span className="block truncate text-xs text-brand-neutral-650" title={s.name}>{s.width}×{s.height} · {s.platform}</span>
                   </Link></li>
                 ))}
               </ul>
@@ -92,7 +92,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
         <div className="min-w-0 space-y-6">
           {points.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 <Stat label="Impressions" value={fmtCompact(t.impressions)} />
                 <Stat label="CTR" value={fmtPct(r.ctr)} sub={fatigue && fatigue.level !== "healthy" ? `−${fatigue.declinePct.toFixed(0)}% from peak` : undefined} />
                 <Stat label="CPC" value={r.cpc === undefined ? "—" : fmtMoney(r.cpc, 2)} />
@@ -111,9 +111,9 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
 
           <Card title="Scorecard" actions={<Link href="/scorecards" className="text-xs font-medium text-brand-green-600 hover:underline">Open scorecards</Link>}>
             {card?.state === "scored" ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <BandChip band={card.score.band} percent={card.score.percent} />
-                <ul className="space-y-1.5 text-sm">
+                <ul className="space-y-2 text-sm">
                   {CRITERIA.map(([k, label]) => {
                     const v = card.criteria[k];
                     return (
@@ -136,9 +136,9 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card title="Copy" description={`From the copy deck · ${ad.campaign}`}>
           {copy ? (
-            <dl className="space-y-3 text-sm">
+            <dl className="space-y-4 text-sm">
               {([["In-image headline", copy.headline, undefined], ["Intro text", copy.intro, lim("intro")], ["Platform headline", copy.platformHeadline, lim("headline")], ["CTA", copy.cta, undefined], ["Landing page", copy.landing, undefined]] as [string, string, number | undefined][]).map(([k, v, max]) => (
-                <div key={k}><dt className="text-xs font-medium text-brand-neutral-650">{k}</dt><dd className="mt-0.5">{v}{max !== undefined && <span className={`ml-2 text-xs tabular-nums ${v.length > max ? "text-brand-red-500" : "text-brand-neutral-550"}`}>{v.length}/{max}</span>}</dd></div>
+                <div key={k}><dt className="text-xs font-medium text-brand-neutral-650">{k}</dt><dd className="mt-0">{v}{max !== undefined && <span className={`ml-2 text-xs tabular-nums ${v.length > max ? "text-brand-red-500" : "text-brand-neutral-550"}`}>{v.length}/{max}</span>}</dd></div>
               ))}
             </dl>
           ) : <p className="text-sm text-brand-neutral-650">No copy linked.</p>}

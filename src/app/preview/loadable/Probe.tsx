@@ -25,11 +25,11 @@ export function Probe() {
     return () => obs.disconnect();
   }, []);
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <nav className="flex flex-wrap gap-2 text-sm">
-        {[0, 100, 300, 600, 1500].map((ms) => <Link key={ms} href={`/preview/loadable?ms=${ms}`} prefetch={false} className="rounded-full border border-brand-neutral-250 bg-white px-3 py-1">load takes {ms}ms</Link>)}
+        {[0, 100, 300, 600, 1500].map((ms) => <Link key={ms} href={`/preview/loadable?ms=${ms}`} prefetch={false} className="rounded-round border border-brand-neutral-250 bg-white px-4 py-0">load takes {ms}ms</Link>)}
       </nav>
-      <pre id="timeline" className="rounded-lg bg-brand-neutral-100 p-3 text-xs">{log.join("\n") || "waiting…"}</pre>
+      <pre id="timeline" className="rounded-tight bg-brand-neutral-100 p-4 text-xs">{log.join("\n") || "waiting…"}</pre>
     </div>
   );
 }

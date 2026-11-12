@@ -8,7 +8,7 @@ export function AdThumb({ ad, w = 64, h = 48, className = "" }: { ad: { art?: Ad
   const width = ratio >= w / h ? w : Math.round(h * ratio);
   return (
     <span className={`flex shrink-0 items-center justify-center ${className}`} style={{ width: w, height: h }}>
-      <span className="block overflow-hidden rounded border border-brand-neutral-200" style={{ width }}>
+      <span className="block overflow-hidden rounded-tight border border-brand-neutral-200" style={{ width }}>
         <AdArt art={ad.art} copy={ad.copy} width={ad.width} height={ad.height} showCta={false} composition={ad.composition} placementKey={ad.placement} imageUrl={ad.imageUrl} />
       </span>
     </span>
