@@ -1,46 +1,335 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/*
+ * Look and feel follows Brand Creative Hub (Studio Hub): the tokens, type scale, buttons, cards, segmented controls and
+ * shell below are copied from its app/globals.css so the two apps read as one product. When the Hub changes a token,
+ * change it here too. Hub is the parent; do not diverge in this file.
+ */
 
-:root {
-  --background: #FEFDFB;
-  --foreground: #2F2E2D;
-  --primary: #08794A;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F7F5F3;
-  --secondary-foreground: #2F2E2D;
-  --muted: #F7F5F3;
-  --muted-foreground: #686764;
-  --accent: #F7F5F3;
-  --accent-foreground: #2F2E2D;
-  --destructive: #AE453F;
-  --destructive-foreground: #FFFFFF;
-  --border: #E2DFDA;
-  --input: #D7D3CC;
-  --ring: #39C67F;
+/* National 2, served from SurveyMonkey's asset host (CORS is open). 600 uses the bold file; there is no semibold. */
+@font-face { font-family: "National 2"; font-weight: 400; font-style: normal; font-display: swap; src: url("https://prod.smassets.net/assets/static/fonts/national2/regular.woff2") format("woff2"); }
+@font-face { font-family: "National 2"; font-weight: 500; font-style: normal; font-display: swap; src: url("https://prod.smassets.net/assets/static/fonts/national2/medium.woff2") format("woff2"); }
+@font-face { font-family: "National 2"; font-weight: 600 800; font-style: normal; font-display: swap; src: url("https://prod.smassets.net/assets/static/fonts/national2/bold.woff2") format("woff2"); }
+
+/* SurveyMonkey brand palette (brand-visuals/colors.md). No hexes outside this file. */
+@theme {
+  /* Wide-screen step: the My Day timeline row sits on the same three columns as the tiles above it, so their edges line up. */
+  --breakpoint-3xl: 106.25rem;
+
+  /* Corners: three shapes and no others. Tight for controls, Loose for cards and floating panels, Round for pills and circles. */
+  --radius-tight: 8px;
+  --radius-loose: 24px;
+  --radius-round: 9999px;
+  /* Ad Studio was written with Tailwind's stock radii. Map them onto the same three shapes so every existing
+     rounded-md / rounded-lg / rounded-xl lands on Tight or Loose without touching each call site. */
+  --radius-xs: 8px; --radius-sm: 8px; --radius-md: 8px; --radius-lg: 8px; --radius-xl: 24px; --radius-2xl: 24px; --radius-3xl: 24px;
+
+  /* Core */
+  --color-brand: #089b5e; /* Green 500: primary interaction color (buttons, selection, focus of action) */
+  --color-brand-dark: #08794a; /* Green 600: hover/pressed */
+  --color-brand-fill: #089b5e; /* Green 500: large fills, icons, graphics only */
+  --color-brand-soft: #d6f5de; /* Green 100 */
+  --color-ink: #0f2e21; /* Green 900: primary text [CONFIRM vs Neutral 900] */
+  --color-paper: #f7f5f3; /* Neutral 100 */
+
+  /* Neutrals */
+  --color-n-50: #fefdfb;
+  --color-n-100: #f7f5f3;
+  --color-n-150: #edebe8;
+  --color-n-200: #e2dfda;
+  --color-n-500: #908d89;
+  --color-n-650: #686764;
+  --color-n-700: #5b5a57;
+  --color-n-800: #464543;
+  --color-n-1000: #1a1919;
+
+  /* Roles */
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-line: var(--color-n-200); /* dividers, card borders */
+  --color-control: var(--color-n-500); /* interactive control outlines (Neutral 400 and lighter not allowed) */
+  --color-muted: var(--color-n-700); /* secondary text */
+
+  /* Semantic status tints: 100 surface / 200 border / 600-800 text (status always has icon + label) */
+  --color-info-bg: #ededfd; --color-info-line: #c5ccf9; --color-info-fg: #3f4d94; /* Periwinkle 100/200/700 */
+  --color-progress-bg: #d9f0f2; --color-progress-line: #a6dce1; --color-progress-fg: #255b60; /* Teal 100/300/800 */
+  --color-warn-bg: #f9e8d2; --color-warn-line: #f2d0a3; --color-warn-fg: #854813; /* Orange 100/200/700 */
+  --color-ok-bg: #d6f5de; --color-ok-line: #b0e8c3; --color-ok-fg: #0f2e21; /* Green 100/200/900 */
+  --color-bad-bg: #f7dbd4; --color-bad-line: #eab0a9; --color-bad-fg: #8a3734; /* Red 100/200/600 */
+  --color-gold-bg: #f9f2d2; --color-gold-line: #f2e2a6; --color-gold-fg: #7c6403; /* Yellow 100/200/700 */
+  --color-focus: #5568bf; /* Periwinkle 600 [CONFIRM] */
+
+  /* Data colors for charts, bars and calendar types. Lighter in dark mode so they keep their contrast. */
+  --color-data-ok: #08794a; --color-data-watch: #a95c18; --color-data-late: #8a3734; --color-data-none: #908d89;
+  --color-data-progress: #348289; --color-data-social: #5568bf; --color-data-product: #a18102; --color-data-other: #686764; --color-data-task: #464543;
+
+  --font-sans: "National 2", system-ui, sans-serif;
+
+  /*
+   * Type scale from the Project Catalyst Figma frame (National 2). Sizes and tracking are the Figma values.
+   * Line-heights sit on a 4px grid and are tighter than the frame's (which are tuned for marketing layouts).
+   *   Labels / body-XS .. xs 12, sm 14      Body .. base 16, lg 18, xl 20
+   *   Title SM/MD/LG .. lg 18, xl 20, 2xl 24      Headline SM/MD/LG .. 3xl 28, 4xl 36, headline-lg 42
+   *   Display SM/MD/LG .. 5xl 48, display-md 60, display-lg 76
+   * No other font sizes in the app.
+   */
+  --text-xs: 12px;  --text-xs--line-height: 20px;
+  --text-sm: 14px;  --text-sm--line-height: 24px;
+  --text-base: 16px; --text-base--line-height: 24px;
+  --text-lg: 18px;  --text-lg--line-height: 28px;
+  --text-xl: 20px;  --text-xl--line-height: 28px;
+  --text-2xl: 24px; --text-2xl--line-height: 32px; --text-2xl--letter-spacing: -0.48px;
+  --text-3xl: 28px; --text-3xl--line-height: 32px;
+  --text-4xl: 36px; --text-4xl--line-height: 40px; --text-4xl--letter-spacing: -0.72px;
+  --text-headline-lg: 42px; --text-headline-lg--line-height: 48px; --text-headline-lg--letter-spacing: -0.84px;
+  --text-5xl: 48px; --text-5xl--line-height: 48px; --text-5xl--letter-spacing: -0.96px;
+  --text-display-md: 60px; --text-display-md--line-height: 64px; --text-display-md--letter-spacing: -1.2px;
+  --text-display-lg: 76px; --text-display-lg--line-height: 80px; --text-display-lg--letter-spacing: -1.52px;
 }
 
+/* The one content column. The top bar and every page sit in it, so their left and right edges always line up.
+   Centered above 80rem so a wide monitor gets even margins instead of a ragged right edge. */
+@utility column {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 16px;
+  @media (min-width: 768px) { padding-inline: 32px; }
+}
+
+/* The one page container: the column plus vertical padding. Narrow reading pages add [&>*]:max-w-3xl. */
+@utility page {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding: 16px;
+  @media (min-width: 768px) { padding: 32px; }
+}
+
+/* Keep the scrollbar's width reserved so pages with and without one share the same right edge. */
+html { scrollbar-gutter: stable; }
+
+/* Tabs sliding (transitions.dev): the motion tokens every segmented control and tab bar shares.
+   The pill is .seg::before, positioned by SegIndicator the way the recipe's script writes offsetLeft / offsetWidth. */
+/* One motion for the whole app: every transition and ease-in uses these two values, so everything moves the same way.
+   --motion-dur / --motion-ease are the source; the tabs tokens keep the recipe's names. Tailwind's own transition-*
+   utilities read them too (see @theme below). */
+:root {
+  --motion-dur: 250ms;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tabs-dur: var(--motion-dur);
+  --tabs-ease: var(--motion-ease);
+}
+/* People who ask for less motion get none: every transition above collapses to an instant change. */
+@media (prefers-reduced-motion: reduce) { :root { --motion-dur: 0.01ms; } }
+@theme { --default-transition-duration: var(--motion-dur); --default-transition-timing-function: var(--motion-ease); }
+
+/* ---- Buttons: one system, three sizes, four looks ----
+   Sizes:  btn-sm (32px, chips and toolbars)  btn-md (40px, default)  btn-lg (48px, the one big action on a screen)
+   Looks:  btn-primary (solid green)  btn-secondary (outline)  btn-danger (outline red)  btn-ghost (no frame)
+   Icon only: btn-icon (32px) or btn-icon btn-icon-lg (40px). Text links keep .link. */
+@layer components {
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    white-space: nowrap; user-select: none; cursor: pointer; max-width: 100%;    border: 1px solid transparent; border-radius: var(--radius-tight); font-weight: 500;
+    transition: background-color var(--motion-dur) var(--motion-ease), border-color var(--motion-dur) var(--motion-ease);
+  }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn-sm { height: 32px; padding: 0 16px; font-size: 12px; line-height: 20px; }
+  .btn-md { height: 40px; padding: 0 16px; font-size: 14px; line-height: 24px; }
+  .btn-lg { height: 48px; padding: 0 24px; font-size: 16px; line-height: 24px; font-weight: 600; }
+  .btn-primary { background: var(--color-brand); color: var(--color-n-50); }
+  .btn-primary:hover:not(:disabled) { background: var(--color-brand-dark); }
+  .btn-secondary { background: var(--card); border-color: var(--color-control); color: var(--color-ink); }
+  .btn-danger { background: var(--card); border-color: var(--color-bad-line); color: var(--color-bad-fg); }
+  .btn-ghost { color: var(--color-ink); }
+  /* One hover for everything that isn't solid green: a neutral wash. */
+  .btn-secondary:hover:not(:disabled), .btn-danger:hover:not(:disabled), .btn-ghost:hover:not(:disabled) { background: var(--color-n-150); }
+  .btn-icon { width: 32px; height: 32px; padding: 0; }
+  .btn-icon.btn-icon-lg { width: 40px; height: 40px; }
+  /* Touch screens get the 44px target. */
+  @media (pointer: coarse) { .btn-icon { width: 44px; height: 44px; } }
+
+  /* Segmented control: a group of exclusive choices (views, ranges, tabs). Items use aria-pressed / aria-selected.
+     The green highlight is ::before, positioned by SegIndicator, so it slides to the chosen item. */
+  .seg { position: relative; display: inline-flex; align-items: stretch; gap: 0; height: 32px; padding: 2px; border: 1px solid var(--color-control); border-radius: var(--radius-round); background: var(--card); }
+  .seg::before { content: ""; position: absolute; top: 2px; bottom: 2px; left: 0; width: var(--seg-w, 0); transform: translateX(var(--seg-x, 0)); border-radius: var(--radius-round); background: var(--color-brand); opacity: var(--seg-on, 0); pointer-events: none; }
+  .seg[data-ready]::before { transition: transform var(--tabs-dur) var(--tabs-ease), width var(--tabs-dur) var(--tabs-ease); will-change: transform, width; }
+  .seg-item { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border-radius: var(--radius-round); font-size: 12px; line-height: 20px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color var(--motion-dur) var(--motion-ease), color var(--motion-dur) var(--motion-ease); }
+  .seg-item:hover { background: var(--color-n-150); }
+  .seg-item[aria-pressed="true"], .seg-item[aria-selected="true"], .seg-item[aria-current="true"], .seg-item[aria-current="page"] { color: var(--color-n-50); background: transparent; }
+  .seg-md { height: 40px; }
+  .seg-md .seg-item { font-size: 14px; line-height: 24px; }
+
+  /* Chip: a filter or option pill. Selected via aria-pressed / aria-selected / data-on. chip-lg is the roomier wizard answer. */
+  .chip { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 16px; border: 1px solid var(--color-control); border-radius: var(--radius-round); background: var(--card); font-size: 14px; line-height: 24px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color var(--motion-dur) var(--motion-ease), border-color var(--motion-dur) var(--motion-ease); }
+  .chip:hover { background: var(--color-n-150); }
+  .chip[aria-pressed="true"], .chip[aria-selected="true"], .chip[data-on="true"] { border-color: var(--color-brand); background: var(--color-brand-soft); }
+  .chip-lg { height: 40px; }
+
+  /* Cards: soft corners, a hairline border and a faint lift. */
+  .card { background: var(--card); border: 1px solid var(--color-line); border-radius: var(--radius-loose); box-shadow: 0 1px 2px rgb(30 40 35 / 0.04), 0 8px 24px -12px rgb(30 40 35 / 0.12); }
+  .card-hover { transition: box-shadow var(--motion-dur) var(--motion-ease), transform var(--motion-dur) var(--motion-ease), border-color var(--motion-dur) var(--motion-ease); }
+  .card-hover:hover { border-color: var(--color-brand); box-shadow: 0 2px 4px rgb(30 40 35 / 0.06), 0 16px 32px -12px rgb(30 40 35 / 0.18); transform: translateY(-1px); }
+}
+
+/* Native dropdowns: our own chevron with room on the right, instead of the browser's, which hugs the edge. */
+select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23464543' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px 16px;
+}
+:root[data-theme="dark"] select:not([multiple]) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23c9d1cc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Text fields share the control corner. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea { border-radius: var(--radius-tight); }
+
+/* While a dialog is open the page behind it doesn't scroll. */
+body:has([role="dialog"][aria-modal="true"], [role="alertdialog"][aria-modal="true"]) { overflow: hidden; }
+
+/* Eyebrow (Figma "Label Eyebrow Small"): small caps-style label above a heading or group. */
+@utility eyebrow {
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Green 500 is too light for small text on white (3.6:1), so text uses the darker link green. */
+.text-brand, .hover\:text-brand:hover { color: var(--link); }
+
+body {
+  background: var(--shell);
+  color: var(--color-ink);
+  font-family: "National 2", system-ui, sans-serif;
+}
+
+/* Paper: dot grid on Neutral 100. Background only; never inside cards or controls. */
+.paper {
+  background-color: var(--color-paper);
+  background-image: radial-gradient(circle at 1px 1px, var(--paper-dot) 0.5px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Wizard messages ease in; skipped entirely for people who prefer reduced motion. */
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise var(--motion-dur) var(--motion-ease) both; }
+@media (prefers-reduced-motion: reduce) {
+  .rise { animation: none; }
+  /* Motion that only decorates a change of state: the state still changes, it just doesn't travel. */
+  .seg[data-ready]::before { transition: none; }
+  .seg-item, .btn, .card-hover { transition: none; }
+}
+
+/* ---- Light values for the pieces that aren't palette tokens ---- */
+:root { --shell: #ebe8e3; --paper-dot: #e4e2dd; --card: #ffffff; --surface: #fefdfb; --link: #08794a; }
+
+/* The flip board on My Day is a physical object, so its colors are the same in light and dark mode.
+   --flap-0 is a blank tile; the rest are the brand palette steps the board draws with. */
+:root {
+  --board-bg: #0c1a13;
+  --flap-0: #163326;
+  --flap-1: #08794a; --flap-2: #089b5e; --flap-3: #b0e8c3; --flap-4: #a6dce1; --flap-5: #348289;
+  --flap-6: #f2e2a6; --flap-7: #d07a2f; --flap-8: #c5ccf9; --flap-9: #5568bf; --flap-10: #f7f5f3;
+  --flap-11: #255b60; --flap-12: #a95c18;
+}
+
+/* ---- Dark mode ----
+   The palette tokens are swapped here, so every utility that reads them follows. A few utilities that name
+   a fixed color (white cards, the dark video bar, links, solid red badges) are patched below. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-paper: #111714;
+  --shell: #0b100d;
+  --paper-dot: #1d2621;
+  --card: #1a221e;
+  --surface: #151c18;
+  --link: #3fd08f;
+
+  --color-ink: #e8efe9;
+  --color-brand-soft: #1d3a2b;
+  --color-n-100: #202924;
+  --color-n-150: #27312c;
+  --color-n-200: #34403a;
+  --color-n-500: #7c8781;
+  --color-n-650: #9fa9a3;
+  --color-n-700: #a9b3ad;
+  --color-n-800: #c9d2cc;
+
+  --color-info-bg: #232846; --color-info-line: #3b4585; --color-info-fg: #bcc5f7;
+  --color-progress-bg: #153a3e; --color-progress-line: #2b6a70; --color-progress-fg: #a6dce1;
+  --color-warn-bg: #3d2b15; --color-warn-line: #6e4a21; --color-warn-fg: #f2c48a;
+  --color-ok-bg: #163a2b; --color-ok-line: #2a6b4c; --color-ok-fg: #b6ebc8;
+  --color-bad-bg: #3e201d; --color-bad-line: #7c3b37; --color-bad-fg: #f3aaa3;
+  --color-gold-bg: #3a3110; --color-gold-line: #6d5c1b; --color-gold-fg: #f2e2a6;
+  --color-focus: #93a0f2;
+  --color-data-ok: #3fd08f; --color-data-watch: #f2c48a; --color-data-late: #f3aaa3; --color-data-none: #7c8781;
+  --color-data-progress: #6fc0c7; --color-data-social: #93a0f2; --color-data-product: #e0c455; --color-data-other: #9fa9a3; --color-data-task: #c9d2cc;
+}
+:root[data-theme="dark"] .bg-white,
+:root[data-theme="dark"] .bg-white\/60,
+:root[data-theme="dark"] .bg-white\/70,
+:root[data-theme="dark"] .bg-white\/90,
+:root[data-theme="dark"] .hover\:bg-white:hover,
+:root[data-theme="dark"] .hover\:bg-white\/60:hover { background-color: var(--card); }
+:root[data-theme="dark"] .bg-n-50 { background-color: var(--surface); }
+:root[data-theme="dark"] .ring-n-50 { --tw-ring-color: var(--surface); }
+:root[data-theme="dark"] .ring-white { --tw-ring-color: var(--card); }
+:root[data-theme="dark"] .text-brand,
+:root[data-theme="dark"] .hover\:text-brand:hover { color: var(--link); }
+:root[data-theme="dark"] .border-brand { border-color: var(--link); }
+/* Solid chips and bars keep their own contrast: light text on a deep red or near-black fill. */
+:root[data-theme="dark"] .bg-bad-fg { background-color: #b5413d; }
+:root[data-theme="dark"] .bg-ink { background-color: #0b100d; }
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select { color: var(--color-ink); }
+:root[data-theme="dark"] ::placeholder { color: var(--color-n-650); }
+
+/* ---- Ad Studio's older component tokens (shadcn-style names), pointed at the Hub values ---- */
+:root {
+  --primary: var(--color-brand);
+  --primary-foreground: var(--color-n-50);
+  --secondary: var(--color-n-100);
+  --secondary-foreground: var(--color-ink);
+  --accent: var(--color-n-150);
+  --accent-foreground: var(--color-ink);
+  --destructive: var(--color-bad-fg);
+  --destructive-foreground: var(--color-n-50);
+  --input: var(--color-control);
+  --ring: var(--color-focus);
+}
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-surface: var(--surface);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
+  --color-muted-foreground: var(--color-muted);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
+  --color-border: var(--color-line);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Brand palette (source: brand-colors.md) */
+  /* Brand palette (source: brand-colors.md). Same hexes as the Hub's n-/status tokens above. */
   --color-brand-neutral-0: #FFFFFF;
   --color-brand-neutral-50: #FEFDFB;
   --color-brand-neutral-100: #F7F5F3;
@@ -134,12 +423,6 @@
   --color-brand-red-1000: #2D1616;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
-}
-
 /* Logo loading animation. Swap %23089B5E (brand green) in the URL to recolor (background images can't use currentColor). */
 .logo-loader {
   display: inline-block;
@@ -155,9 +438,9 @@ body {
   gap: 8px;
   font-size: 14px;
   line-height: 20px;
-  color: var(--color-brand-neutral-650);
+  color: var(--color-n-650);
   opacity: 0;
-  animation: loading-in 0.2s ease-out 0.15s forwards;
+  animation: loading-in var(--motion-dur) var(--motion-ease) 0.15s forwards;
 }
 .loading-indicator.is-instant {
   opacity: 1;
@@ -165,7 +448,7 @@ body {
 }
 .loading-indicator.is-leaving {
   opacity: 1;
-  animation: loading-out 0.2s ease-in forwards;
+  animation: loading-out var(--motion-dur) var(--motion-ease) forwards;
 }
 .loading-dots {
   display: inline-block;

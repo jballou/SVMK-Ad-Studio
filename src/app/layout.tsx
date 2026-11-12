@@ -1,17 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/shell/AppShell";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Ad Studio",
@@ -20,10 +9,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className="h-full antialiased">
+      <head>
+        {/* National 2, the same face and files as Brand Creative Hub (declared in globals.css). */}
+        <link rel="preload" as="font" type="font/woff2" crossOrigin="anonymous" href="https://prod.smassets.net/assets/static/fonts/national2/regular.woff2" />
+        <link rel="preload" as="font" type="font/woff2" crossOrigin="anonymous" href="https://prod.smassets.net/assets/static/fonts/national2/bold.woff2" />
+      </head>
       <body className="min-h-full"><AppShell>{children}</AppShell></body>
     </html>
   );

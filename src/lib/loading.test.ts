@@ -15,6 +15,6 @@ describe("loader timing", () => {
     expect(holdTimeMs(SHOW_DELAY_MS + MIN_VISIBLE_MS)).toBe(0);
     expect(holdTimeMs(5000)).toBe(0);
     expect(MIN_VISIBLE_MS).toBe(1500);
-    expect(FADE_MS).toBe(200);
+    expect(FADE_MS).toBe(250);
   });
 });

@@ -112,9 +112,9 @@ export function Gallery({ initial, stats, initialFilters = {} }: { initial: AdRe
         <label className="text-xs font-medium text-brand-neutral-650">Funnel<select value={funnel} onChange={(e) => { setFunnel(e.target.value); setLimit(PAGE); }} className={`${selectCls} mt-1 block`}><option value="">All</option>{distinct(ads, (a) => (a.tags.funnel ? [a.tags.funnel] : [])).map((p) => <option key={p}>{p}</option>)}</select></label>
         <label className="text-xs font-medium text-brand-neutral-650">Sort<select value={sort} onChange={(e) => setSort(e.target.value)} className={`${selectCls} mt-1 block`}>{SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}</select></label>
         {filtersActive && <Button variant="ghost" size="md" onClick={clear}><X /> Clear</Button>}
-        <div className="ml-auto inline-flex gap-1 rounded-lg bg-brand-neutral-150 p-1" role="group" aria-label="View">
+        <div suppressHydrationWarning className="seg seg-md ml-auto" role="group" aria-label="View">
           {([["grid", LayoutGrid, "Grid"], ["gallery", Rows3, "Gallery"], ["list", List, "List"]] as const).map(([v, Icon, label]) => (
-            <Button key={v} variant={view === v ? "outline" : "ghost"} size="sm" aria-pressed={view === v} onClick={() => setView(v)} className={view === v ? "" : "bg-transparent"}><Icon /> {label}</Button>
+            <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className="seg-item"><Icon className="size-4" aria-hidden /> {label}</button>
           ))}
         </div>
       </div>

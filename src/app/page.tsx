@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { AlertTriangle, ArrowRight, Trophy, Upload, Plus } from "lucide-react";
+import { AlertTriangle, ArrowRight, Trophy, Upload } from "lucide-react";
 import { AdThumb } from "@/components/ads/AdThumb";
 import { BandChip, PlatformBadge, TooEarlyChip } from "@/components/ads/badges";
 import { HBar } from "@/components/charts/HBar";
@@ -69,10 +69,7 @@ async function Content() {
       <PageHeader
         title="Dashboard"
         description={`Performance across ${live.length} live ads. Data as of ${fmtDate(asOf)}; changes compare the last 30 days with the 30 before.`}
-        actions={<>
-          <Button variant="outline" asChild><Link href="/scorecards"><Upload /> Upload performance</Link></Button>
-          <Button asChild><Link href="/batches/new"><Plus /> New batch</Link></Button>
-        </>}
+        actions={<Button variant="outline" asChild><Link href="/scorecards"><Upload /> Upload performance</Link></Button>}
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">

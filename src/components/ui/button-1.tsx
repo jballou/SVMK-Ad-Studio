@@ -9,16 +9,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-primary-foreground hover:bg-primary/90 data-[state=open]:bg-primary/90',
+        primary: 'bg-brand text-n-50 hover:bg-brand-dark data-[state=open]:bg-brand-dark',
         mono: 'bg-zinc-950 text-white dark:bg-zinc-300 dark:text-black hover:bg-zinc-950/90 dark:hover:bg-zinc-300/90 data-[state=open]:bg-zinc-950/90 dark:data-[state=open]:bg-zinc-300/90',
         destructive:
-          'bg-destructive text-destructive-foreground hover:bg-destructive/90 data-[state=open]:bg-destructive/90',
+          'bg-card text-bad-fg border border-bad-line hover:bg-n-150 data-[state=open]:bg-n-150',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/90 data-[state=open]:bg-secondary/90',
-        outline: 'bg-background text-accent-foreground border border-input hover:bg-accent data-[state=open]:bg-accent',
+        outline: 'bg-card text-ink border border-control hover:bg-n-150 data-[state=open]:bg-n-150',
         dashed:
           'text-accent-foreground border border-input border-dashed bg-background hover:bg-accent hover:text-accent-foreground data-[state=open]:text-accent-foreground',
         ghost:
-          'text-accent-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
+          'text-ink hover:bg-n-150 data-[state=open]:bg-n-150',
         dim: 'text-muted-foreground hover:text-foreground data-[state=open]:text-foreground',
         foreground: '',
         inverse: '',
@@ -36,10 +36,10 @@ const buttonVariants = cva(
         dashed: '',
       },
       size: {
-        lg: 'h-10 rounded-md px-4 text-sm gap-1.5 [&_svg:not([class*=size-])]:size-4',
-        md: 'h-8.5 rounded-md px-3 gap-1.5 text-[0.8125rem] leading-(--text-sm--line-height) [&_svg:not([class*=size-])]:size-4',
-        sm: 'h-7 rounded-md px-2.5 gap-1.25 text-xs [&_svg:not([class*=size-])]:size-3.5',
-        icon: 'size-8.5 rounded-md [&_svg:not([class*=size-])]:size-4 shrink-0',
+        lg: 'h-12 rounded-tight px-6 text-base font-semibold gap-2 [&_svg:not([class*=size-])]:size-4',
+        md: 'h-10 rounded-tight px-4 gap-2 text-sm [&_svg:not([class*=size-])]:size-4',
+        sm: 'h-8 rounded-tight px-4 gap-2 text-xs [&_svg:not([class*=size-])]:size-4',
+        icon: 'size-8 rounded-tight [&_svg:not([class*=size-])]:size-4 shrink-0',
       },
       autoHeight: {
         true: '',

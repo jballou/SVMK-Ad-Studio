@@ -146,9 +146,9 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
             {sizes.map((s, i) => { const n = counts(all.get(sizeKey(s.width, s.height)) ?? []); return <option key={`${s.placementKey}-${s.width}x${s.height}`} value={i}>{s.width}×{s.height} · {s.label}{n.errors ? ` (${n.errors} error${n.errors === 1 ? "" : "s"})` : n.warnings ? ` (${n.warnings} warning${n.warnings === 1 ? "" : "s"})` : ""}</option>; })}
           </select>
         </label>
-        <div role="group" aria-label="Canvas view" className="inline-flex gap-1 rounded-lg bg-brand-neutral-150 p-1">
+        <div role="group" aria-label="Canvas view" suppressHydrationWarning className="seg">
           {([["edit", "Edit"], ["platform", `In ${rule.platform === "linkedin" ? "LinkedIn" : rule.platform === "meta" ? "Meta" : rule.platform === "newsletter" ? "newsletter" : rule.platform === "youtube" ? "YouTube" : rule.platform === "ctv" ? "CTV" : rule.platform === "audio" ? "Audio" : "page"}`]] as const).map(([v, l]) => (
-            <Button key={v} size="sm" variant={view === v ? "outline" : "ghost"} aria-pressed={view === v} className={view === v ? "" : "bg-transparent"} onClick={() => setView(v)}>{l}</Button>
+            <button key={v} type="button" aria-pressed={view === v} className="seg-item" onClick={() => setView(v)}>{l}</button>
           ))}
         </div>
         {view === "edit" && <label className="flex items-center gap-2 pb-2 text-sm"><input type="checkbox" checked={guides} onChange={(e) => setGuides(e.target.checked)} className="accent-brand-green-600" />Show guides{rule.safe ? " and safe zones" : ""}</label>}

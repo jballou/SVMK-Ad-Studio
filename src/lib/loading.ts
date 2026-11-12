@@ -5,7 +5,7 @@
  */
 export const SHOW_DELAY_MS = 150;
 export const MIN_VISIBLE_MS = 1500;
-export const FADE_MS = 200;
+export const FADE_MS = 250;
 
 /**
  * How long to keep the loader up after the content is ready, given how long loading took.

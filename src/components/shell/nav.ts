@@ -24,9 +24,11 @@ export const NAV: { heading: string; items: NavItem[] }[] = [
   { heading: "Manage", items: [
     { href: "/export", label: "Export", icon: Download },
     { href: "/library", label: "Library", icon: Library },
-    { href: "/settings", label: "Settings", icon: Settings },
   ] },
 ];
+
+/** Pinned to the bottom of the sidebar, like Preferences in the Hub. */
+export const SETTINGS_ITEM: NavItem = { href: "/settings", label: "Settings", icon: Settings };
 
 export function isActive(pathname: string, item: NavItem): boolean {
   if (item.href === "/") return pathname === "/";

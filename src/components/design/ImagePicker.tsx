@@ -104,9 +104,9 @@ export function ImagePicker({ kind, value, onPick }: { kind: "photo" | "product"
 
   return (
     <div className="space-y-3">
-      <div role="tablist" aria-label="Image source" className="flex flex-wrap gap-1 rounded-lg bg-brand-neutral-150 p-1">
+      <div role="tablist" aria-label="Image source" suppressHydrationWarning className="seg max-w-full">
         {TABS.map((t) => (
-          <button key={t.id} role="tab" type="button" aria-selected={tab === t.id} onClick={() => { setTab(t.id); setError(""); }} className={`rounded-md px-2.5 py-1 text-xs font-medium ${tab === t.id ? "bg-white text-brand-neutral-900 shadow-xs" : "text-brand-neutral-650 hover:text-brand-neutral-900"}`}>{t.label}</button>
+          <button key={t.id} role="tab" type="button" aria-selected={tab === t.id} onClick={() => { setTab(t.id); setError(""); }} className="seg-item">{t.label}</button>
         ))}
       </div>
 
