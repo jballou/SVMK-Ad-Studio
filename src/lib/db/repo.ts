@@ -7,6 +7,7 @@ import type { MetricRow, Totals } from "@/lib/metrics/csv";
 import type { Benchmark, ManualChecks } from "@/lib/scorecard/build";
 import { STARTER_TEMPLATES } from "@/lib/templates/intents";
 import { DEFAULT_CONFIG, type Benchmark as ScoreBenchmark, type FunnelStage, type KpiKey, type RawInputs, type ScoreConfig } from "@/lib/scoring/creative-score";
+import { cleanStored, type CustomPlatform } from "@/lib/specs/custom";
 import { DEFAULT_GATE, DEFAULT_TAXONOMY, SETTING_KEYS, type LearningGate, type Taxonomy } from "@/lib/settings";
 
 // All functions take the db so tests can pass an in-memory instance.
@@ -235,6 +236,11 @@ async function putSetting(db: Db, key: string, value: object) {
 export const getGate = (db: Db) => getSetting<LearningGate>(db, SETTING_KEYS.gate, DEFAULT_GATE);
 export const saveGate = (db: Db, gate: LearningGate) => putSetting(db, SETTING_KEYS.gate, gate);
 export const getTaxonomy = (db: Db) => getSetting<Taxonomy>(db, SETTING_KEYS.taxonomy, DEFAULT_TAXONOMY);
+export async function getCustomPlatforms(db: Db): Promise<CustomPlatform[]> {
+  const row = await getSetting<{ platforms?: unknown }>(db, SETTING_KEYS.platforms, {});
+  return cleanStored(row.platforms);
+}
+export const saveCustomPlatforms = (db: Db, platforms: CustomPlatform[]) => putSetting(db, SETTING_KEYS.platforms, { platforms });
 export const saveTaxonomy = (db: Db, tax: Taxonomy) => putSetting(db, SETTING_KEYS.taxonomy, tax);
 
 export interface BenchmarkRow extends Benchmark {

@@ -4,13 +4,13 @@ import { useState } from "react";
 import { PlacementPreview } from "@/components/ads/PlacementPreview";
 import type { AdRecord } from "@/lib/ads/types";
 import { checkFit } from "@/lib/specs/fit";
-import { PLACEMENTS } from "@/lib/specs/platforms";
+import { allPlacements } from "@/lib/specs/platforms";
 
 /** Shows the creative in its platform UI; Meta creatives can be previewed in every Meta placement they fit. */
 export function PreviewSwitcher({ ad }: { ad: Pick<AdRecord, "art" | "copy" | "width" | "height" | "placement" | "platform"> }) {
-  const options = PLACEMENTS.filter((p) => p.platform === ad.platform && (p.key === ad.placement || checkFit(ad.width, ad.height, p).status !== "unsupported"));
+  const options = allPlacements().filter((p) => p.platform === ad.platform && (p.key === ad.placement || checkFit(ad.width, ad.height, p).status !== "unsupported"));
   const [placement, setPlacement] = useState(ad.placement);
-  const current = PLACEMENTS.find((p) => p.key === placement);
+  const current = allPlacements().find((p) => p.key === placement);
   const fit = current ? checkFit(ad.width, ad.height, current) : { status: "ok" as const };
   return (
     <div className="space-y-3">

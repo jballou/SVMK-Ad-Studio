@@ -147,7 +147,7 @@ export function DesignEditor({ concept, design, onChange, sizes, platformCopy }:
           </select>
         </label>
         <div role="group" aria-label="Canvas view" className="inline-flex gap-1 rounded-lg bg-brand-neutral-150 p-1">
-          {([["edit", "Edit"], ["platform", `In ${rule.platform === "linkedin" ? "LinkedIn" : rule.platform === "meta" ? "Meta" : rule.platform === "newsletter" ? "newsletter" : "page"}`]] as const).map(([v, l]) => (
+          {([["edit", "Edit"], ["platform", `In ${rule.platform === "linkedin" ? "LinkedIn" : rule.platform === "meta" ? "Meta" : rule.platform === "newsletter" ? "newsletter" : rule.platform === "youtube" ? "YouTube" : rule.platform === "ctv" ? "CTV" : rule.platform === "audio" ? "Audio" : "page"}`]] as const).map(([v, l]) => (
             <Button key={v} size="sm" variant={view === v ? "outline" : "ghost"} aria-pressed={view === v} className={view === v ? "" : "bg-transparent"} onClick={() => setView(v)}>{l}</Button>
           ))}
         </div>

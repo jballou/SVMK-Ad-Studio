@@ -1,4 +1,4 @@
-import { PLACEMENTS } from "@/lib/specs/platforms";
+import { allPlacements } from "@/lib/specs/platforms";
 import type { Safe } from "./geometry";
 
 export interface PlacementRule {
@@ -11,9 +11,9 @@ export interface PlacementRule {
 }
 
 export function placementRule(placementKey: string): PlacementRule {
-  const p = PLACEMENTS.find((x) => x.key === placementKey);
+  const p = allPlacements().find((x) => x.key === placementKey);
   const platform = p?.platform ?? "display";
-  const uiAddsCta = platform === "linkedin" || platform === "meta";
+  const uiAddsCta = p?.ctaRequired !== undefined ? !p.ctaRequired : platform === "linkedin" || platform === "meta";
   return { uiAddsCta, ctaRequired: !uiAddsCta, safe: p?.safeZone, platform };
 }
 

@@ -11,6 +11,7 @@ import { loadWorkspace } from "@/lib/db/workspace";
 import { fmtCompact, fmtMoney, fmtPct } from "@/lib/format";
 import type { PlatformKey } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@/lib/ui/colors";
+import { platformKeys } from "@/lib/specs/platforms";
 import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Performance · Ad Studio" };
@@ -40,7 +41,7 @@ async function Content({ searchParams }: { searchParams: Promise<Search> }) {
     .map((stage) => ({ stage, kpi: kpiForStage(stage === "Untagged" ? undefined : stage), rows: ranked.filter((r) => (r.ad.tags.funnel ? r.kpi.stage : "Untagged") === stage) }))
     .filter((g, i, all) => g.rows.length > 0 && all.findIndex((x) => x.stage === g.stage) === i);
 
-  const platforms = (Object.keys(PLATFORM_LABEL) as PlatformKey[]).filter((p) => !platform || p === platform);
+  const platforms = platformKeys().filter((p) => !platform || p === platform);
   const spend = platforms.map((p) => ({ name: PLATFORM_LABEL[p], color: PLATFORM_COLOR[p], points: weeklySeries(pts.filter((d) => ws.adsByName.get(d.adName)?.platform === p), (t) => t.spend).slice(0, -1) }));
   const hasPrev = prevPts.length > 0;
   const extra = { platform, from: undefined, to: undefined };

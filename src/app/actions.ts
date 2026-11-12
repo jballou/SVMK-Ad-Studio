@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getDb } from "@/db";
-import { addBenchmark, createBatch, deleteBenchmark, importMetricRows, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, setAssetApproved, updateAdTags, type ImportSummary } from "@/lib/db/repo";
+import { getDb, invalidatePlatforms } from "@/db";
+import { addBenchmark, createBatch, getCustomPlatforms, saveCustomPlatforms, deleteBenchmark, importMetricRows, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, setAssetApproved, updateAdTags, type ImportSummary } from "@/lib/db/repo";
 import { planBatch } from "@/lib/batches/plan";
 import { artFor, conceptByKey, conceptImagery, designForConcept } from "@/lib/dummy/library";
 import { resolveComposition } from "@/lib/composition/defaults";
@@ -11,6 +11,8 @@ import { hydrateAssetRefs } from "@/lib/assets/hydrate";
 import { removeAsset } from "@/lib/assets/ingest";
 import { hasErrors, qaComposition } from "@/lib/composition/qa";
 import type { Design } from "@/lib/composition/types";
+import { allPlacements, isBuiltin, platformKeys } from "@/lib/specs/platforms";
+import { buildPlatform } from "@/lib/specs/custom";
 import { conceptIntent, THEMES } from "@/lib/dummy/concepts";
 import { getAsset, getPreset } from "@/lib/imagery/library";
 
@@ -207,7 +209,7 @@ export async function saveTaxonomySettings(input: unknown): Promise<{ ok: boolea
 }
 
 const benchmarkInput = z.object({
-  platform: z.enum(["linkedin", "meta", "display", "newsletter"]),
+  platform: z.string().min(1).max(40),
   funnel: z.enum(["Awareness", "Consideration", "Intent"]),
   metric: z.enum(["ctr", "cpc", "cvr"]),
   value: z.number().positive().max(100_000),
@@ -219,7 +221,9 @@ export async function createBenchmark(input: unknown): Promise<{ ok: boolean; er
   const parsed = benchmarkInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Check the values and try again." };
   const b = parsed.data;
-  await addBenchmark(await getDb(), { ...b, direction: b.metric === "cpc" ? "lower" : "higher", asOf: new Date().toLocaleDateString("en-CA") });
+  const db = await getDb(); // also refreshes the platform list
+  if (!platformKeys().includes(b.platform)) return { ok: false, error: "Unknown platform." };
+  await addBenchmark(db, { ...b, direction: b.metric === "cpc" ? "lower" : "higher", asOf: new Date().toLocaleDateString("en-CA") });
   revalidatePath("/", "layout");
   return { ok: true };
 }
@@ -230,6 +234,39 @@ export async function removeBenchmark(id: unknown): Promise<{ ok: boolean }> {
   const ok = await deleteBenchmark(await getDb(), parsed.data);
   revalidatePath("/", "layout");
   return { ok };
+}
+
+const platformInput = z.object({ label: z.string().max(60), color: z.string().max(9), ctaRequired: z.boolean(), placements: z.string().max(2000) });
+
+/** Adds a platform ("vendor") from Settings. It shows up in filters, batches, scorecards and exports straight away. */
+export async function addPlatform(input: unknown): Promise<{ ok: true; warnings: string[] } | { ok: false; error: string }> {
+  const parsed = platformInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the form and try again." };
+  const db = await getDb();
+  const existing = await getCustomPlatforms(db);
+  const sizes = new Map<string, string>();
+  for (const p of allPlacements()) for (const s of p.sizes) if (!sizes.has(`${s.w}x${s.h}`)) sizes.set(`${s.w}x${s.h}`, p.label);
+  const built = buildPlatform(parsed.data, platformKeys(), sizes);
+  if (!built.ok) return built;
+  if (existing.length >= 30) return { ok: false, error: "That's the maximum number of added platforms." };
+  await saveCustomPlatforms(db, [...existing, built.platform]);
+  invalidatePlatforms();
+  revalidatePath("/", "layout");
+  return { ok: true, warnings: built.warnings };
+}
+
+/** Removes an added platform. Refused while ads or benchmarks still use it, so nothing is left pointing at a name that no longer exists. */
+export async function removePlatform(key: unknown): Promise<{ ok: boolean; error?: string }> {
+  const parsed = z.string().min(1).max(40).safeParse(key);
+  if (!parsed.success || isBuiltin(parsed.data)) return { ok: false, error: "That platform can't be removed." };
+  const db = await getDb();
+  const ads = (await listAds(db)).filter((a) => a.platform === parsed.data).length;
+  if (ads > 0) return { ok: false, error: `${ads} ad${ads === 1 ? "" : "s"} still use it. Retire or delete those first.` };
+  const existing = await getCustomPlatforms(db);
+  await saveCustomPlatforms(db, existing.filter((p) => p.key !== parsed.data));
+  invalidatePlatforms();
+  revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 const assetId = z.string().uuid();

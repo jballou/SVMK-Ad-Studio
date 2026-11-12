@@ -5,7 +5,7 @@ export interface AdRecord {
   id: string;
   name: string; // {ConceptKey}{MMYYYY}_{W}x{H}
   conceptKey: string;
-  platform: "linkedin" | "meta" | "display" | "newsletter";
+  platform: PlatformKey;
   placement: string;
   width: number;
   height: number;
@@ -29,6 +29,7 @@ export interface AdRecord {
 }
 
 import type { Composition } from "@/lib/composition/types";
+import type { PlatformKey } from "@/lib/specs/platforms";
 
 export interface AdCopy {
   headline: string; // in-image headline

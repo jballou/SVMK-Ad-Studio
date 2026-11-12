@@ -1,5 +1,5 @@
 import { adName } from "@/lib/figma/parse-frame-name";
-import { PLACEMENTS, type Placement } from "@/lib/specs/platforms";
+import { allPlacements, type Placement } from "@/lib/specs/platforms";
 
 export interface PlanAd {
   name: string;
@@ -13,7 +13,7 @@ export interface PlanAd {
 
 /** concept x placement x size. `existing` is the set of ad names already in the library (those are skipped). */
 export function planBatch(input: { conceptKeys: string[]; placementKeys: string[]; month: number; year: number; existing: Set<string> }): PlanAd[] {
-  const placements = input.placementKeys.map((k) => PLACEMENTS.find((p) => p.key === k)).filter((p): p is Placement => !!p);
+  const placements = input.placementKeys.map((k) => allPlacements().find((p) => p.key === k)).filter((p): p is Placement => !!p);
   const out: PlanAd[] = [];
   const seen = new Set<string>();
   for (const conceptKey of input.conceptKeys) {

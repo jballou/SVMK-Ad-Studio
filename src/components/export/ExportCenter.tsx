@@ -9,6 +9,8 @@ import { Chip } from "@/components/ui/chip";
 import { Card, DataTable } from "@/components/ui/primitives";
 import type { AdRecord } from "@/lib/ads/types";
 import { estimateBytes, exportPath, manifestRows, MANIFEST_HEADER, toCsv, type Format, type Structure } from "@/lib/export/manifest";
+import { platformKeys } from "@/lib/specs/platforms";
+import { PLATFORM_LABEL } from "@/lib/ui/colors";
 import { fmtDate, fmtInt } from "@/lib/format";
 
 interface HistoryItem { id: string; at: string; by: string; files: number; bytes: number; format: string; scale: number; scope: string; status: "ready" | "building" }
@@ -80,7 +82,7 @@ export function ExportCenter({ ads, initial }: { ads: AdRecord[]; initial: strin
       <div className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-end gap-3 rounded-xl border border-brand-neutral-200 bg-white p-3">
           <label className="text-xs font-medium text-brand-neutral-650">Search<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ad or concept" className={`${sel} mt-1 block w-44`} /></label>
-          <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={platform} onChange={(e) => setPlatform(e.target.value)} className={`${sel} mt-1 block`}><option value="">All</option>{["linkedin", "meta", "display", "newsletter"].map((p) => <option key={p}>{p}</option>)}</select></label>
+          <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={platform} onChange={(e) => setPlatform(e.target.value)} className={`${sel} mt-1 block`}><option value="">All</option>{platformKeys().map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}</select></label>
           <label className="text-xs font-medium text-brand-neutral-650">Status<select value={status} onChange={(e) => setStatus(e.target.value)} className={`${sel} mt-1 block capitalize`}><option value="">Launched</option>{["live", "paused", "retired", "draft"].map((p) => <option key={p}>{p}</option>)}</select></label>
           <Button variant="outline" size="md" onClick={() => setPicked((s) => { const x = new Set(s); for (const a of filtered) { if (allFilteredPicked) x.delete(a.name); else x.add(a.name); } return x; })}>{allFilteredPicked ? "Deselect" : "Select"} all {filtered.length}</Button>
         </div>

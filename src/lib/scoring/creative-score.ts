@@ -51,7 +51,7 @@ export const DEFAULT_CONFIG: ScoreConfig = {
   familyByAdType: {
     Static: "Static", Carousel: "Static", Display: "Static", Native: "Static", InMail: "Static",
     // Video family assumed from the sheet's usage; confirm on its Config tab.
-    Video: "Video", CTV: "Video", Bumper: "Video", "Non-skippable": "Video",
+    Video: "Video", CTV: "Video", Audio: "Video", Bumper: "Video", "Non-skippable": "Video",
   },
   weights: {
     "Awareness|Static": { cpm: 50, ctr: 30, convRate: 20 },

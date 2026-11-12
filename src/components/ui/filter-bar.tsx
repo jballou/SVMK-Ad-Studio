@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { platformKeys } from "@/lib/specs/platforms";
 import { PLATFORM_LABEL } from "@/lib/ui/colors";
-import type { PlatformKey } from "@/lib/specs/platforms";
 
 const field = "h-8.5 rounded-md border border-brand-neutral-250 bg-white px-2 text-sm";
 
@@ -12,7 +12,7 @@ export function FilterBar({ basePath, platform, from, to }: { basePath: string; 
       <label className="text-xs font-medium text-brand-neutral-650">Platform
         <select name="platform" defaultValue={platform ?? ""} className={`${field} mt-1 block`}>
           <option value="">All platforms</option>
-          {(Object.keys(PLATFORM_LABEL) as PlatformKey[]).map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}
+          {platformKeys().map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}
         </select>
       </label>
       <label className="text-xs font-medium text-brand-neutral-650">From

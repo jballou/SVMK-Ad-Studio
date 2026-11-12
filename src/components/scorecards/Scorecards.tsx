@@ -12,6 +12,8 @@ import { Card, EmptyState, Stat } from "@/components/ui/primitives";
 import type { AdRecord } from "@/lib/ads/types";
 import { importMetrics, type Totals } from "@/lib/metrics/csv";
 import { buildScorecard, daysLive, type Benchmark, type ManualChecks, type ManualCriterion, type Scorecard } from "@/lib/scorecard/build";
+import { platformKeys } from "@/lib/specs/platforms";
+import { PLATFORM_LABEL } from "@/lib/ui/colors";
 import { BAND_LABEL, MAX_POINTS, type Band, type Criterion, type LearningGate } from "@/lib/scorecard/score";
 
 const CRITERIA: { key: Criterion; label: string; manual?: boolean }[] = [
@@ -121,7 +123,7 @@ export function Scorecards({ ads, benchmarks, totals, checks, today, gate, perio
       </Card>
 
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-brand-neutral-200 bg-white p-3">
-        <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={platform} onChange={(e) => { setPlatform(e.target.value); reset(); }} className={`${sel} mt-1 block`}><option value="">All</option>{["linkedin", "meta", "display", "newsletter"].map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={platform} onChange={(e) => { setPlatform(e.target.value); reset(); }} className={`${sel} mt-1 block`}><option value="">All</option>{platformKeys().map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}</select></label>
         <label className="text-xs font-medium text-brand-neutral-650">Status<select value={status} onChange={(e) => { setStatus(e.target.value); reset(); }} className={`${sel} mt-1 block capitalize`}><option value="">All</option>{["live", "paused", "retired"].map((p) => <option key={p}>{p}</option>)}</select></label>
         <label className="text-xs font-medium text-brand-neutral-650">Band<select value={band} onChange={(e) => { setBand(e.target.value); reset(); }} className={`${sel} mt-1 block`}><option value="">All</option>{BANDS.map((b) => <option key={b} value={b}>{BAND_LABEL[b]}</option>)}<option value="too-early">Too early</option></select></label>
         <label className="text-xs font-medium text-brand-neutral-650">Sort<select value={sort} onChange={(e) => setSort(e.target.value)} className={`${sel} mt-1 block`}><option value="score-asc">Lowest score first</option><option value="score-desc">Highest score first</option><option value="name">Name</option></select></label>

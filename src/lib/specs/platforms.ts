@@ -1,6 +1,12 @@
 // Placement specs are data, not code. `verifiedOn: null` means not yet checked against the
 // platform's current docs; do not treat those rows as authoritative.
-export type PlatformKey = "linkedin" | "meta" | "display" | "newsletter";
+import type { CustomPlatform } from "./custom";
+
+/** Platforms the app ships with. More can be added in Settings; see custom.ts. */
+export const BUILTIN_PLATFORMS = ["meta", "linkedin", "native", "display", "audio", "ctv", "youtube", "newsletter"] as const;
+export type BuiltinPlatform = (typeof BUILTIN_PLATFORMS)[number];
+/** A built-in key or one added in Settings. */
+export type PlatformKey = string;
 
 export interface CopyLimit {
   field: string;
@@ -23,6 +29,8 @@ export interface Placement {
   notes?: string;
   sourceUrl?: string;
   verifiedOn: string | null;
+  /** Set on added platforms: whether the creative must carry its own CTA. Built-ins are decided by platform in rules.ts. */
+  ctaRequired?: boolean;
 }
 
 export const PLACEMENTS: Placement[] = [
@@ -109,8 +117,79 @@ export const PLACEMENTS: Placement[] = [
     mockup: "newsletter",
     verifiedOn: null,
   },
+  // Native, audio, CTV and YouTube were added from the paid team's platform list. Slots and sizes below are
+  // placeholders (common industry sizes) until the channel leads confirm what they actually buy.
+  {
+    key: "native-feed",
+    platform: "native",
+    label: "Native in-feed",
+    sizes: [{ w: 1200, h: 675 }, { w: 800, h: 800 }],
+    copyLimits: [{ field: "headline", max: 90 }],
+    notes: "Placeholder sizes until the native vendors' specs are confirmed.",
+    mockup: "display-page",
+    verifiedOn: null,
+  },
+  {
+    key: "audio-companion",
+    platform: "audio",
+    label: "Audio companion banner",
+    sizes: [{ w: 640, h: 640 }],
+    notes: "The spot itself is audio; this is the banner shown while it plays.",
+    mockup: "display-page",
+    verifiedOn: null,
+  },
+  {
+    key: "ctv-spot",
+    platform: "ctv",
+    label: "CTV end card",
+    sizes: [{ w: 1920, h: 1080 }],
+    notes: "Placeholder: the end card for a 15s or 30s CTV spot.",
+    mockup: "display-page",
+    verifiedOn: null,
+  },
+  {
+    key: "youtube-video",
+    platform: "youtube",
+    label: "YouTube video",
+    sizes: [{ w: 1920, h: 1080 }, { w: 1280, h: 720 }],
+    notes: "Placeholder: in-stream end frames. Sizes avoid the Meta and LinkedIn ones so size lookups stay unambiguous.",
+    mockup: "display-page",
+    verifiedOn: null,
+  },
 ];
 
+// ---- Registry: built-ins plus platforms added in Settings ----
+// Server pages call hydratePlatforms (lib/db/platforms.ts) before rendering; client components get the same list from
+// <PlatformRegistry> (components/ui/platform-registry.tsx), which sets it during render. The list is global, not per user.
+let custom: CustomPlatform[] = [];
+export function setCustomPlatforms(list: CustomPlatform[]) { custom = list; }
+export const customPlatforms = () => custom;
+
+export const platformKeys = (): PlatformKey[] => [...BUILTIN_PLATFORMS, ...custom.map((c) => c.key)];
+export const isBuiltin = (k: string) => (BUILTIN_PLATFORMS as readonly string[]).includes(k);
+
+const BUILTIN_LABEL: Record<BuiltinPlatform, string> = { linkedin: "LinkedIn", meta: "Meta", native: "Native", display: "Display", audio: "Audio", ctv: "CTV", youtube: "YouTube", newsletter: "Newsletter" };
+const BUILTIN_COLOR: Record<BuiltinPlatform, string> = {
+  linkedin: "#5568BF", meta: "#43A6AF", display: "#D07A2F", newsletter: "#99A532", native: "#7068EB", audio: "#08794A", ctv: "#AE453F", youtube: "#6F5BB5",
+};
+export function platformLabel(k: PlatformKey): string {
+  return custom.find((c) => c.key === k)?.label ?? BUILTIN_LABEL[k as BuiltinPlatform] ?? k;
+}
+export function platformColor(k: PlatformKey): string {
+  return custom.find((c) => c.key === k)?.color ?? BUILTIN_COLOR[k as BuiltinPlatform] ?? "#8A8A85";
+}
+
+/** Every placement, built-in and added. */
+export function allPlacements(): Placement[] {
+  return [
+    ...PLACEMENTS,
+    ...custom.flatMap((c) => c.placements.map((p): Placement => ({
+      key: p.key, platform: c.key, label: p.label, sizes: p.sizes, mockup: "display-page", ctaRequired: c.ctaRequired,
+      notes: "Added in Settings. Sizes are as entered; not checked against the platform.", verifiedOn: null,
+    }))),
+  ];
+}
+
 export function placementsFor(platform: PlatformKey): Placement[] {
-  return PLACEMENTS.filter((p) => p.platform === platform);
+  return allPlacements().filter((p) => p.platform === platform);
 }

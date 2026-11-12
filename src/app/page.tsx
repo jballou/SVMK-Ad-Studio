@@ -15,7 +15,7 @@ import { getChecks, listBatches, periodFor } from "@/lib/db/repo";
 import { loadWorkspace } from "@/lib/db/workspace";
 import { fmtCompact, fmtDate, fmtMoney, fmtPct } from "@/lib/format";
 import { BAND_LABEL, type Band } from "@/lib/scorecard/score";
-import type { PlatformKey } from "@/lib/specs/platforms";
+import { platformKeys } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@/lib/ui/colors";
 import { Loadable } from "@/components/ui/loadable";
 
@@ -57,7 +57,7 @@ async function Content() {
   }
   const attention = [...fatigue.filter((f) => f.level === "fatigued").map((f) => f.ad.name), ...live.filter((a) => cards.get(a.name)?.state === "scored" && (cards.get(a.name) as { score: { band: Band } }).score.band === "refresh-pause").map((a) => a.name)];
 
-  const platforms = ["linkedin", "meta", "display", "newsletter"] as PlatformKey[];
+  const platforms = platformKeys();
   const since = shiftDate(asOf, -83);
   const ctrByPlatform = platforms.map((p) => ({
     name: PLATFORM_LABEL[p], color: PLATFORM_COLOR[p],

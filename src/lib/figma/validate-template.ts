@@ -1,5 +1,5 @@
 import { placementRule } from "@/lib/composition/rules";
-import { PLACEMENTS } from "@/lib/specs/platforms";
+import { allPlacements } from "@/lib/specs/platforms";
 import type { FigmaNode } from "./client";
 import { discoverFrames, groupByConcept, type DiscoveredFrame } from "./discover";
 
@@ -51,7 +51,7 @@ const fractionOutside = (box: { x: number; y: number; w: number; h: number }, ba
 function validateFrame(f: DiscoveredFrame): SizeReport {
   const issues: TemplateIssue[] = [];
   const add = (severity: Severity, code: string, message: string, nodeId?: string) => issues.push({ severity, code, message, nodeId: nodeId ?? f.nodeId });
-  const placements = PLACEMENTS.filter((p) => p.sizes.some((s) => s.w === f.width && s.h === f.height)).map((p) => p.key);
+  const placements = allPlacements().filter((p) => p.sizes.some((s) => s.w === f.width && s.h === f.height)).map((p) => p.key);
 
   if (f.legacy) add("warn", "name-legacy", `Rename to "AD | ${f.conceptKey} | ${f.width}x${f.height}" so Ad Studio reads it without the legacy fallback.`);
   if (!/[A-Za-z]$/.test(f.conceptKey)) add("error", "key-ends-digit", `The concept key "${f.conceptKey}" ends in a digit, which makes ad names like ${f.conceptKey}112026_${f.width}x${f.height} ambiguous. End the key with a letter (e.g. "Enterprise80" → "80Enterprise").`);
@@ -134,7 +134,7 @@ export function validateTemplate(root: FigmaNode, opts: { expect?: string[]; all
     }
 
     const have = new Set(sizes.map((s) => `${s.width}x${s.height}`));
-    const wanted = [...new Set(expect.flatMap((k) => PLACEMENTS.find((p) => p.key === k)?.sizes.map((s) => `${s.w}x${s.h}`) ?? []))];
+    const wanted = [...new Set(expect.flatMap((k) => allPlacements().find((p) => p.key === k)?.sizes.map((s) => `${s.w}x${s.h}`) ?? []))];
     const missingSizes = wanted.filter((x) => !have.has(x));
     if (missingSizes.length) issues.push({ severity: "info", code: "missing-sizes", message: `No frame yet for ${missingSizes.join(", ")}. Add them (or leave them out of the batch's placements).` });
     return { conceptKey: g.conceptKey, sizes, missingSizes, issues };

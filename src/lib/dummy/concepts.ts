@@ -96,6 +96,7 @@ export const CONCEPTS: ConceptSeed[] = [
 export const CONCEPT_PLATFORMS: PlatformKey[][] = [
   ["linkedin", "meta"], ["linkedin", "display"], ["meta", "display"], ["linkedin", "newsletter"],
   ["meta", "newsletter"], ["linkedin", "meta"], ["display", "newsletter"], ["linkedin", "display"],
+  ["meta", "native"], ["linkedin", "youtube"], ["display", "ctv"], ["native", "audio"],
 ];
 
 /** The creative-intent template slug for a concept (same mapping the seeded ads use). */

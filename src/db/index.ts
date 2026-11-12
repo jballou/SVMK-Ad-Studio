@@ -6,6 +6,10 @@ import { migrate as migratePglite } from "drizzle-orm/pglite/migrator";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import { drizzle as drizzlePg } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { eq } from "drizzle-orm";
+import { cleanStored } from "@/lib/specs/custom";
+import { setCustomPlatforms } from "@/lib/specs/platforms";
+import { SETTING_KEYS } from "@/lib/settings";
 import * as schema from "./schema";
 import { seedIfEmpty } from "./seed";
 
@@ -31,10 +35,25 @@ async function init(): Promise<Db> {
   return db as unknown as Db;
 }
 
-export function getDb(): Promise<Db> {
+// Platforms added in Settings are global, so every request refreshes the in-memory registry from the database here
+// (at most every few seconds). That way pages, actions and exports all see the same list without each loading it.
+const PLATFORM_REFRESH_MS = 3000;
+let platformsAt = 0;
+async function refreshPlatforms(db: Db) {
+  if (Date.now() - platformsAt < PLATFORM_REFRESH_MS) return;
+  platformsAt = Date.now();
+  const [row] = await db.select().from(schema.appSettings).where(eq(schema.appSettings.key, SETTING_KEYS.platforms));
+  setCustomPlatforms(cleanStored((row?.value as { platforms?: unknown } | undefined)?.platforms));
+}
+/** Call after saving platforms so the next getDb() reloads them immediately. */
+export const invalidatePlatforms = () => { platformsAt = 0; };
+
+export async function getDb(): Promise<Db> {
   g.__adStudioDb ??= init().catch((e) => {
     g.__adStudioDb = undefined; // don't cache a failed startup
     throw e;
   });
-  return g.__adStudioDb;
+  const db = await g.__adStudioDb;
+  await refreshPlatforms(db);
+  return db;
 }

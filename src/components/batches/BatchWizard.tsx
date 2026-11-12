@@ -17,7 +17,7 @@ import { Card } from "@/components/ui/primitives";
 import { checkCopy, planBatch } from "@/lib/batches/plan";
 import { conceptByKey, COPY_DECKS, DECK_LIMITS, designForConcept, type DeckRowData } from "@/lib/dummy/library";
 import { fmtDate } from "@/lib/format";
-import { PLACEMENTS, type PlatformKey } from "@/lib/specs/platforms";
+import { allPlacements, platformKeys } from "@/lib/specs/platforms";
 import { PLATFORM_LABEL } from "@/lib/ui/colors";
 
 const STEPS = ["Concepts", "Copy deck", "Platforms", "Preview", "Review"] as const;
@@ -62,7 +62,7 @@ export function BatchWizard({ existing, defaultMonth, customRequestUrl }: { exis
     const seen = new Set<string>();
     const out: SizeOption[] = [];
     for (const k of placements) {
-      const p = PLACEMENTS.find((x) => x.key === k);
+      const p = allPlacements().find((x) => x.key === k);
       if (!p) continue;
       for (const sz of p.sizes) {
         const id = `${sz.w}x${sz.h}`;
@@ -183,11 +183,11 @@ export function BatchWizard({ existing, defaultMonth, customRequestUrl }: { exis
         {step === 2 && (
           <Card title="Platforms and placements" description="Sizes and platform UI come from the spec table.">
             <div className="space-y-5">
-              {(["linkedin", "meta", "display", "newsletter"] as PlatformKey[]).map((pf) => (
+              {platformKeys().map((pf) => (
                 <fieldset key={pf}>
                   <legend className="mb-2 text-sm font-semibold">{PLATFORM_LABEL[pf]}</legend>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {PLACEMENTS.filter((p) => p.platform === pf).map((p) => (
+                    {allPlacements().filter((p) => p.platform === pf).map((p) => (
                       <label key={p.key} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 ${placements.includes(p.key) ? "border-brand-green-600 bg-brand-green-100/40" : "border-brand-neutral-200 hover:bg-brand-neutral-50"}`}>
                         <input type="checkbox" checked={placements.includes(p.key)} onChange={() => setPlacements(toggle(placements, p.key))} className="mt-1 accent-brand-green-600" />
                         <span className="min-w-0 text-sm"><span className="block font-medium">{p.label}</span><span className="block text-xs text-brand-neutral-650">{p.sizes.map((s) => `${s.w}×${s.h}`).join(", ")}</span>{p.verifiedOn === null && <span className="mt-0.5 block text-[11px] text-brand-orange-600">Spec not yet verified</span>}{p.notes && <span className="block text-[11px] text-brand-neutral-650">{p.notes}</span>}</span>

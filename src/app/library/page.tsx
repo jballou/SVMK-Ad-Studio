@@ -10,7 +10,7 @@ import { Card, DataTable, PageHeader } from "@/components/ui/primitives";
 import { checkCopy } from "@/lib/batches/plan";
 import { COPY_DECKS, DECK_LIMITS, TEMPLATE_FILES } from "@/lib/dummy/library";
 import { fmtDate } from "@/lib/format";
-import { PLACEMENTS } from "@/lib/specs/platforms";
+import { allPlacements } from "@/lib/specs/platforms";
 import { PLATFORM_LABEL } from "@/lib/ui/colors";
 import { Loadable } from "@/components/ui/loadable";
 
@@ -80,7 +80,7 @@ export default function Library() {
         <Card title="Placement specs" description="Sizes and safe zones used for previews and generation" padded={false}>
           <div className="px-5 py-3">
             <DataTable caption="Placement specs" columns={[{ label: "Placement" }, { label: "Sizes" }, { label: "Verified" }]}>
-              {PLACEMENTS.map((p) => (
+              {allPlacements().map((p) => (
                 <tr key={p.key}><td className="py-2 pr-3"><span className="font-medium">{p.label}</span><span className="block text-xs text-brand-neutral-650">{PLATFORM_LABEL[p.platform]}</span></td><td className="px-3 text-xs text-brand-neutral-750">{p.sizes.map((s) => `${s.w}×${s.h}`).join(", ")}</td><td className="py-2 pl-3 text-xs">{p.verifiedOn ? <span className="text-brand-green-600">{fmtDate(p.verifiedOn)}</span> : <span className="text-brand-orange-600">Not yet</span>}</td></tr>
               ))}
             </DataTable>

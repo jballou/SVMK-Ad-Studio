@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseAdName } from "@/lib/figma/parse-frame-name";
+import { BUILTIN_PLATFORMS } from "@/lib/specs/platforms";
 import { DUMMY_TODAY, generateDummyData } from "./generate";
 
 const data = generateDummyData();
@@ -46,7 +47,7 @@ describe("generateDummyData", () => {
     }
   });
   it("covers every platform/funnel with a primary benchmark", () => {
-    for (const p of ["linkedin", "meta", "display", "newsletter"]) {
+    for (const p of BUILTIN_PLATFORMS) {
       for (const f of ["Awareness", "Consideration", "Intent"]) {
         expect(data.benchmarks.some((b) => b.platform === p && b.funnel === f && b.tier === "primary")).toBe(true);
       }

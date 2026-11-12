@@ -98,13 +98,25 @@ const SLOTS: Record<PlatformKey, { placement: string; sizes: [number, number][] 
   ],
   display: [{ placement: "display-standard", sizes: [[300, 250], [728, 90], [300, 600]] }],
   newsletter: [{ placement: "newsletter", sizes: [[600, 200], [600, 300]] }],
+  native: [{ placement: "native-feed", sizes: [[1200, 675], [800, 800]] }],
+  audio: [{ placement: "audio-companion", sizes: [[640, 640]] }],
+  ctv: [{ placement: "ctv-spot", sizes: [[1920, 1080]] }],
+  youtube: [{ placement: "youtube-video", sizes: [[1920, 1080], [1280, 720]] }],
 };
+
+/** Ad type per platform, which decides how the Creative Score weighs it (Static or Video family). */
+const AD_TYPE: Record<PlatformKey, string> = { linkedin: "Static", meta: "Static", display: "Display", newsletter: "Static", native: "Native", audio: "Audio", ctv: "CTV", youtube: "Video" };
 
 const MODEL: Record<PlatformKey, { cpm: number; ctr: number; cvr: number; daily: number }> = {
   linkedin: { cpm: 42, ctr: 0.0055, cvr: 0.03, daily: 16_000 },
   meta: { cpm: 12, ctr: 0.0095, cvr: 0.022, daily: 42_000 },
   display: { cpm: 4.5, ctr: 0.0014, cvr: 0.012, daily: 85_000 },
   newsletter: { cpm: 28, ctr: 0.009, cvr: 0.04, daily: 11_000 },
+  // Placeholder rates for the newer platforms until real exports are imported.
+  native: { cpm: 7, ctr: 0.0035, cvr: 0.015, daily: 40_000 },
+  audio: { cpm: 18, ctr: 0.002, cvr: 0.01, daily: 22_000 },
+  ctv: { cpm: 30, ctr: 0.0008, cvr: 0.008, daily: 30_000 },
+  youtube: { cpm: 9, ctr: 0.0045, cvr: 0.012, daily: 55_000 },
 };
 // Each concept's layout picks a family of intents; the concept index picks one. Intents carry a small
 // performance lift so the by-template breakdown has something to show.
@@ -180,7 +192,7 @@ export function generateDummyData(seed = 20261103): DummyData {
           const checks = launch
             ? { campaignActive: status === "live" || r() < 0.2, landingPageClear: r() < 0.85, ctaMatch: r() < 0.9, icpMatch: r() < 0.8 }
             : undefined;
-          const ad: DummyAd = { name, conceptKey: concept.key, platform, placement: slot.placement, width: w, height: h, status, adType: platform === "display" ? "Display" : "Static", stage: STAGE_FOR[concept.funnel], template, launchedAt: launch, pausedAt, geo, quality, checks };
+          const ad: DummyAd = { name, conceptKey: concept.key, platform, placement: slot.placement, width: w, height: h, status, adType: AD_TYPE[platform], stage: STAGE_FOR[concept.funnel], template, launchedAt: launch, pausedAt, geo, quality, checks };
           ads.push(ad);
           daily.push(...dailyFor(r, ad, concept.funnel, today));
         }
@@ -263,7 +275,7 @@ function makeScoreBenchmarks(): DummyScoreBenchmark[] {
   const out: DummyScoreBenchmark[] = [];
   for (const platform of Object.keys(MODEL) as PlatformKey[]) {
     const m = MODEL[platform];
-    const adType = platform === "display" ? "Display" : "Static";
+    const adType = AD_TYPE[platform];
     for (const stage of ["Awareness", "Interest", "Conversion"] as const) {
       const convRate = m.cvr * stageCvr[stage] * 0.9;
       const kpis: Record<string, number> =
@@ -280,11 +292,13 @@ function makeBenchmarks(): DummyBenchmark[] {
   // Targets sit a little under each platform's typical performance so roughly a third of ads clear them.
   const CTR: Record<string, [number, number, number]> = {
     linkedin: [0.4, 0.45, 0.5], meta: [0.7, 0.75, 0.8], display: [0.1, 0.11, 0.12], newsletter: [0.65, 0.7, 0.75],
+    native: [0.3, 0.33, 0.36], audio: [0.17, 0.19, 0.2], ctv: [0.06, 0.07, 0.07], youtube: [0.4, 0.42, 0.45],
   };
   const CPC: Record<string, [number, number, number]> = {
     linkedin: [11, 10, 10], meta: [1.8, 1.7, 1.7], display: [4.2, 4, 4], newsletter: [4, 3.8, 3.8],
+    native: [2.2, 2.1, 2.1], audio: [9, 8.5, 8.5], ctv: [35, 33, 33], youtube: [1.9, 1.8, 1.8],
   };
-  const CVR: Record<string, [number, number]> = { linkedin: [2.4, 3.6], meta: [1.8, 2.6], display: [1, 1.5], newsletter: [3, 4.5] };
+  const CVR: Record<string, [number, number]> = { linkedin: [2.4, 3.6], meta: [1.8, 2.6], display: [1, 1.5], newsletter: [3, 4.5], native: [1.2, 1.8], audio: [0.8, 1.2], ctv: [0.6, 0.9], youtube: [1, 1.5] };
   const funnels = ["Awareness", "Consideration", "Intent"] as const;
   const out: DummyBenchmark[] = [];
   for (const p of Object.keys(CTR)) {

@@ -1,4 +1,6 @@
 import { connection } from "next/server";
+import { customPlatforms } from "@/lib/specs/platforms";
+import { PlatformRegistry } from "@/components/ui/platform-registry";
 import { Scorecards } from "@/components/scorecards/Scorecards";
 import { PageHeader } from "@/components/ui/primitives";
 import { totalsByAd } from "@/lib/analytics/aggregate";
@@ -14,7 +16,7 @@ async function Content() {
   const ws = await loadWorkspace();
   const period = periodFor(ws.today);
   const checks = await getChecks(ws.db, period);
-  return <Scorecards ads={ws.ads} benchmarks={ws.benchmarks} totals={Object.fromEntries(totalsByAd(ws.daily))} checks={checks} today={ws.today} gate={ws.gate} period={period} />;
+  return <><PlatformRegistry platforms={customPlatforms()} /><Scorecards ads={ws.ads} benchmarks={ws.benchmarks} totals={Object.fromEntries(totalsByAd(ws.daily))} checks={checks} today={ws.today} gate={ws.gate} period={period} /></>;
 }
 
 export default function ScorecardsPage() {

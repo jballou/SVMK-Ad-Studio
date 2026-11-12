@@ -6,7 +6,7 @@ import { inRange, rates, totalsByDimension, weeklySeries } from "@/lib/analytics
 import { parseRange, rangeBounds } from "@/lib/analytics/range";
 import { loadWorkspace } from "@/lib/db/workspace";
 import { fmtCompact, fmtInt, fmtMoney, fmtPct } from "@/lib/format";
-import { PLACEMENTS, type PlatformKey } from "@/lib/specs/platforms";
+import { allPlacements, platformKeys, type PlatformKey } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@/lib/ui/colors";
 import type { Totals } from "@/lib/metrics/csv";
 import { Loadable } from "@/components/ui/loadable";
@@ -38,7 +38,7 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
   const b = rangeBounds(range, ws.asOf);
   const pts = inRange(ws.daily, b.from, b.to);
   const by = (dim: Parameters<typeof totalsByDimension>[2]) => [...totalsByDimension(pts, ws.adsByName, dim)].sort(([, x], [, y]) => y.spend - x.spend);
-  const platforms = ["linkedin", "meta", "display", "newsletter"] as PlatformKey[];
+  const platforms = platformKeys();
   const adCount = (f: (a: (typeof ws.ads)[number]) => boolean) => ws.ads.filter((a) => a.status === "live" && f(a)).length;
   const sizes = by((a) => `${a.width}×${a.height}`).slice(0, 10);
 
@@ -56,7 +56,7 @@ async function Content({ searchParams }: { searchParams: Promise<{ range?: strin
       <div className="grid gap-6 xl:grid-cols-2">
         <Card title="By placement" description="Which platform surfaces earn their spend" padded={false}>
           <div className="px-5 py-3"><DataTable caption="Performance by placement" columns={cols("Placement")}>
-            {by((a) => a.placement).map(([k, t]) => <Row key={k} label={PLACEMENTS.find((p) => p.key === k)?.label ?? k} t={t} />)}
+            {by((a) => a.placement).map(([k, t]) => <Row key={k} label={allPlacements().find((p) => p.key === k)?.label ?? k} t={t} />)}
           </DataTable></div>
         </Card>
         <Card title="By creative size" description="Top 10 sizes by spend" padded={false}>

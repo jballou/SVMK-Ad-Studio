@@ -1,4 +1,6 @@
 import { connection } from "next/server";
+import { customPlatforms } from "@/lib/specs/platforms";
+import { PlatformRegistry } from "@/components/ui/platform-registry";
 import { BatchWizard } from "@/components/batches/BatchWizard";
 import { PageHeader } from "@/components/ui/primitives";
 import { getDb } from "@/db";
@@ -13,7 +15,7 @@ async function Content() {
   const d = new Date();
   const next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
   const defaultMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
-  return <BatchWizard existing={names} defaultMonth={defaultMonth} customRequestUrl={process.env.BRAND_CREATIVE_HUB_URL ?? ""} />;
+  return <><PlatformRegistry platforms={customPlatforms()} /><BatchWizard existing={names} defaultMonth={defaultMonth} customRequestUrl={process.env.BRAND_CREATIVE_HUB_URL ?? ""} /></>;
 }
 
 export default function NewBatch() {

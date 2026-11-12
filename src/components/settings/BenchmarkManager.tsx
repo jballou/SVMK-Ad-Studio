@@ -11,7 +11,7 @@ import { verifiedPlatformFor } from "@/lib/benchmarks/verified";
 import type { BenchmarkRow } from "@/lib/db/repo";
 import { fmtDate } from "@/lib/format";
 import { PLATFORM_LABEL } from "@/lib/ui/colors";
-import type { PlatformKey } from "@/lib/specs/platforms";
+import { platformKeys, type PlatformKey } from "@/lib/specs/platforms";
 
 const field = "h-9 w-full rounded-lg border border-brand-neutral-250 bg-white px-2.5 text-sm focus-visible:border-brand-green-400 focus-visible:outline-2 focus-visible:outline-brand-green-400/40";
 const unit = (m: string) => (m === "cpc" ? "$" : "%");
@@ -39,7 +39,7 @@ export function BenchmarkManager({ rows }: { rows: BenchmarkRow[] }) {
     <div className="space-y-6">
       <Card title="Add a benchmark" description="CTR and CVR are percentages (higher is better). CPC is dollars (lower is better). A scorecard tier passes only when every benchmark in it is met.">
         <form onSubmit={add} className="grid gap-3 sm:grid-cols-3 lg:grid-cols-7 lg:items-end">
-          <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} className={`${field} mt-1`}>{(["linkedin", "meta", "display", "newsletter"] as PlatformKey[]).map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}</select></label>
+          <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} className={`${field} mt-1`}>{platformKeys().map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}</select></label>
           <label className="text-xs font-medium text-brand-neutral-650">Funnel<select value={form.funnel} onChange={(e) => setForm({ ...form, funnel: e.target.value })} className={`${field} mt-1`}>{["Awareness", "Consideration", "Intent"].map((f) => <option key={f}>{f}</option>)}</select></label>
           <label className="text-xs font-medium text-brand-neutral-650">Metric<select value={form.metric} onChange={(e) => setForm({ ...form, metric: e.target.value })} className={`${field} mt-1 uppercase`}>{["ctr", "cpc", "cvr"].map((f) => <option key={f}>{f}</option>)}</select></label>
           <label className="text-xs font-medium text-brand-neutral-650">Tier<select value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })} className={`${field} mt-1`}><option>primary</option><option>secondary</option></select></label>

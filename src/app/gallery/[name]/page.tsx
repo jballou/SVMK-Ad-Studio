@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PlatformRegistry } from "@/components/ui/platform-registry";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { ChevronLeft, CircleCheck, CircleX, Download } from "lucide-react";
@@ -16,7 +17,7 @@ import { getChecks, periodFor } from "@/lib/db/repo";
 import { loadWorkspace } from "@/lib/db/workspace";
 import { fmtCompact, fmtDate, fmtMoney, fmtPct } from "@/lib/format";
 import { MAX_POINTS, type Criterion } from "@/lib/scorecard/score";
-import { PLACEMENTS } from "@/lib/specs/platforms";
+import { allPlacements, customPlatforms } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR } from "@/lib/ui/colors";
 import { Loadable } from "@/components/ui/loadable";
 
@@ -43,7 +44,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
   const checks = await getChecks(ws.db, periodFor(ws.today));
   const card = scoreAll(ws.ads, totalsByAd(ws.daily), ws.benchmarks, checks, ws.today, ws.gate).get(name);
   const siblings = ws.ads.filter((a) => a.conceptKey === ad.conceptKey && a.name !== name);
-  const placement = PLACEMENTS.find((p) => p.key === ad.placement);
+  const placement = allPlacements().find((p) => p.key === ad.placement);
   const copy = ad.copy;
   const limit = placement?.copyLimits ?? [];
   const lim = (f: string) => limit.find((l) => l.field === f)?.max;
@@ -54,6 +55,7 @@ async function Content({ params }: { params: Promise<{ name: string }> }) {
 
   return (
     <>
+      <PlatformRegistry platforms={customPlatforms()} />
       <Link href="/gallery" className="mb-3 inline-flex items-center gap-1 text-sm text-brand-neutral-650 hover:text-brand-neutral-900"><ChevronLeft className="size-4" aria-hidden /> Ad gallery</Link>
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">

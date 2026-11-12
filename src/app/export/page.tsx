@@ -1,4 +1,6 @@
 import { connection } from "next/server";
+import { customPlatforms } from "@/lib/specs/platforms";
+import { PlatformRegistry } from "@/components/ui/platform-registry";
 import { ExportCenter } from "@/components/export/ExportCenter";
 import { PageHeader } from "@/components/ui/primitives";
 import { getDb } from "@/db";
@@ -10,7 +12,7 @@ export const metadata = { title: "Export · Ad Studio" };
 async function Content({ searchParams }: { searchParams: Promise<{ ads?: string }> }) {
   await connection();
   const [{ ads: sel }, ads] = await Promise.all([searchParams, getDb().then(listAds)]);
-  return <ExportCenter ads={ads} initial={sel ? sel.split(",").filter(Boolean) : []} />;
+  return <><PlatformRegistry platforms={customPlatforms()} /><ExportCenter ads={ads} initial={sel ? sel.split(",").filter(Boolean) : []} /></>;
 }
 
 export default function ExportPage({ searchParams }: { searchParams: Promise<{ ads?: string }> }) {

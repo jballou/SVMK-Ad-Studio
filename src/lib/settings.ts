@@ -16,6 +16,6 @@ export const DEFAULT_TAXONOMY: Taxonomy = {
   offers: ["Brand", "Demo", "Free trial", "Report", "Guide", "Webinar"],
 };
 
-export const SETTING_KEYS = { gate: "learning_gate", taxonomy: "taxonomy" } as const;
+export const SETTING_KEYS = { gate: "learning_gate", taxonomy: "taxonomy", platforms: "custom_platforms" } as const;
 export { DEFAULT_GATE };
 export type { LearningGate };
