@@ -65,6 +65,7 @@ npm run lint
 ```
 - **Database:** with `DATABASE_URL` unset, local dev uses an embedded Postgres (PGlite) in `.data/` (git-ignored), migrated and seeded on first use. `npm run db:reset` wipes it so it reseeds (do this after changing the dummy data or schema).
 - **Vercel without `DATABASE_URL`:** falls back to an in-memory demo database seeded on every cold start. Changes reset and are not shared across serverless instances. Set `DATABASE_URL` to a Postgres and run `npm run db:migrate` for anything real.
+- **Hosted database (current):** a Neon Postgres (`svmk-ad-studio-db`) on the personal Vercel account, connected through the Marketplace integration, which sets `DATABASE_URL`. Apply schema changes with `DATABASE_URL=<unpooled url> npm run db:migrate`; add `-- --seed` once on an empty database to load the sample data (already done). Pull the variables locally with `vercel env pull .env.local` (git-ignored). When hosting moves to the company team, create a database there, migrate and seed it, and swap `DATABASE_URL`; data does not move automatically.
 - **Schema changes:** edit `src/db/schema.ts`, run `npm run db:generate`, commit the new file in `drizzle/`.
 - **Figma:** `FIGMA_TOKEN=... npm run figma:discover -- "<figma url with node-id>" [--legacy]` lists frames and slots.
 
