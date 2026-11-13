@@ -1,6 +1,16 @@
 // Thin Figma REST client. Server-side only: the token never reaches the browser.
 const BASE = "https://api.figma.com/v1";
 
+export interface FigmaPaint {
+  type: string;
+  visible?: boolean;
+  opacity?: number;
+  /** 0..1 channels, present on SOLID paints. */
+  color?: { r: number; g: number; b: number; a?: number };
+  scaleMode?: string;
+  imageRef?: string;
+}
+
 export interface FigmaNode {
   id: string;
   name: string;
@@ -9,10 +19,28 @@ export interface FigmaNode {
   absoluteBoundingBox?: { x: number; y: number; width: number; height: number };
   children?: FigmaNode[];
   /** Present on nodes returned by /files/:key/nodes. */
-  fills?: { type: string; visible?: boolean }[];
+  fills?: FigmaPaint[];
+  opacity?: number;
+  cornerRadius?: number;
   clipsContent?: boolean;
   characters?: string;
-  style?: { fontSize?: number; textAutoResize?: string };
+  componentId?: string;
+  layoutMode?: "NONE" | "HORIZONTAL" | "VERTICAL";
+  itemSpacing?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  paddingTop?: number;
+  paddingBottom?: number;
+  style?: {
+    fontFamily?: string;
+    fontSize?: number;
+    fontWeight?: number;
+    lineHeightPx?: number;
+    letterSpacing?: number;
+    textAlignHorizontal?: string;
+    textAutoResize?: string;
+    textCase?: string;
+  };
 }
 
 export class FigmaError extends Error {

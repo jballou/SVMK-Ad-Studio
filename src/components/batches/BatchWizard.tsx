@@ -1,5 +1,6 @@
 "use client";
 
+import { PageFooter } from "@/components/ui/page-footer";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, CircleCheck, CircleX, FileSpreadsheet, Sparkles } from "lucide-react";
@@ -238,7 +239,7 @@ export function BatchWizard({ existing, defaultMonth, customRequestUrl }: { exis
 
       {step !== 3 && <BatchCart picked={picked} onRemove={(k) => setPicked(picked.filter((x) => x !== k))} onClear={() => setPicked([])} adsToCreate={fresh.length} alreadyExist={plan.length - fresh.length} placements={placements.length} copyErrors={copyErrors} step={step} onContinue={goNext} canContinue={canNext} reason={reason} nextLabel={STEPS[Math.min(step + 1, 4)]} />}
     </div>
-      <div className="sticky bottom-0 z-30 -mx-4 mt-6 border-t border-brand-neutral-200 bg-white/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
+      <PageFooter>
         <div className="flex items-center justify-between gap-4">
           <Button variant="outline" onClick={() => setStep((s) => s - 1)} disabled={step === 0}><ArrowLeft /> Back</Button>
           <div className="flex min-w-0 items-center gap-4">
@@ -246,7 +247,7 @@ export function BatchWizard({ existing, defaultMonth, customRequestUrl }: { exis
             {step < 4 ? <Button onClick={goNext} disabled={!canNext}>Next: {STEPS[step + 1]} <ArrowRight /></Button> : <Button onClick={submit} disabled={pending || fresh.length === 0 || designErrors > 0}><Sparkles /> {pending ? "Generating…" : `Generate ${fresh.length} ad${fresh.length === 1 ? "" : "s"}`}</Button>}
           </div>
         </div>
-      </div>
+      </PageFooter>
     </>
   );
 }

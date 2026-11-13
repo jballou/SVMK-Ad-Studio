@@ -122,7 +122,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <TopBar />
         <Suspense fallback={null}><SegIndicator /></Suspense>
         <main id="main" className="paper flex min-w-0 flex-1 flex-col">
-          <div className="page">{children}</div>
+          <div className="page flex-1">{children}</div>
+          {/* Pinned bars (see PageFooter) render here, full width of the panel. */}
+          <div id="page-footer" className="sticky bottom-0 z-30 empty:hidden" />
         </main>
       </div>
     </div>

@@ -15,7 +15,8 @@
     "db:reset": "rm -rf .data",
     "dev:fresh": "rm -rf .data && next dev",
     "figma:check": "tsx scripts/figma-check.ts",
-    "check:design": "node scripts/check-design.mjs"
+    "check:design": "node scripts/check-design.mjs",
+    "figma:extract": "tsx scripts/figma-extract.ts"
   },
   "dependencies": {
     "@ark-ui/react": "^5.40.0",
