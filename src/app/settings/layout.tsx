@@ -9,6 +9,7 @@ export default function SettingsLayout({ children }: LayoutProps<"/settings">) {
         { href: "/settings", label: "Integrations" },
         { href: "/settings/benchmarks", label: "Benchmarks" },
         { href: "/settings/scorecards", label: "Scorecard rules" },
+        { href: "/settings/templates", label: "Templates" },
         { href: "/settings/platforms", label: "Platforms" },
         { href: "/settings/tags", label: "Tags" },
         { href: "/settings/team", label: "Team" },

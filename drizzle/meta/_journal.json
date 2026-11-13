@@ -50,6 +50,13 @@
       "when": 1793907709416,
       "tag": "0006_kind_shockwave",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794533136701,
+      "tag": "0007_template_specs",
+      "breakpoints": true
     }
   ]
 }

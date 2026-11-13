@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type { Db } from "@/db";
 import * as t from "@/db/schema";
@@ -6,6 +6,7 @@ import type { AdRecord, AdStatus } from "@/lib/ads/types";
 import type { MetricRow, Totals } from "@/lib/metrics/csv";
 import type { Benchmark, ManualChecks } from "@/lib/scorecard/build";
 import { STARTER_TEMPLATES } from "@/lib/templates/intents";
+import type { TemplateSpec } from "@/lib/templates/spec";
 import { DEFAULT_CONFIG, type Benchmark as ScoreBenchmark, type FunnelStage, type KpiKey, type RawInputs, type ScoreConfig } from "@/lib/scoring/creative-score";
 import { cleanStored, type CustomPlatform } from "@/lib/specs/custom";
 import { DEFAULT_GATE, DEFAULT_TAXONOMY, SETTING_KEYS, type LearningGate, type Taxonomy } from "@/lib/settings";
@@ -351,11 +352,87 @@ export interface TemplateRow {
   status: "draft" | "published";
   layout: "left" | "center" | "bottom";
   supports: { photo: boolean; product: boolean };
+  /** Set on templates made with the creator (they carry a spec). */
+  intent?: string;
+  campaign?: string;
+  funnels: string[];
+  personas: string[];
+  icps: string[];
+  geos: string[];
+  offers: string[];
+  platforms: string[];
+  figmaUrl?: string;
+  spec?: TemplateSpec;
+  thumb?: string;
+  version: number;
+  createdBy?: string;
+  updatedAt?: string;
 }
 
 export async function listTemplates(db: Db): Promise<TemplateRow[]> {
   const rows = await db.select().from(t.templates).orderBy(t.templates.id);
-  return rows.map((r) => ({ id: r.id, slug: r.slug, name: r.name, description: r.description ?? undefined, status: r.status, layout: r.layout, supports: r.supports }));
+  return rows.map(toTemplateRow);
+}
+
+const toTemplateRow = (r: typeof t.templates.$inferSelect): TemplateRow => ({
+  id: r.id, slug: r.slug, name: r.name, description: r.description ?? undefined, status: r.status, layout: r.layout, supports: r.supports,
+  intent: r.intent ?? undefined, campaign: r.campaign ?? undefined, funnels: r.funnels, personas: r.personas, icps: r.icps, geos: r.geos, offers: r.offers, platforms: r.platforms,
+  figmaUrl: r.figmaUrl ?? undefined, spec: r.spec ?? undefined, thumb: r.thumb ?? undefined, version: r.version, createdBy: r.createdBy ?? undefined, updatedAt: r.updatedAt.toISOString(),
+});
+
+export interface NewTemplate {
+  name: string;
+  description?: string;
+  status: "draft" | "published";
+  intent: string;
+  campaign?: string;
+  funnels: string[];
+  personas: string[];
+  icps: string[];
+  geos: string[];
+  offers: string[];
+  platforms: string[];
+  figmaUrl: string;
+  spec: TemplateSpec;
+  thumb?: string;
+  createdBy: string;
+}
+
+const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+
+/** Renderer hints derived from the spec, until the editor reads the spec directly. */
+export function layoutFromSpec(spec: TemplateSpec): { layout: "left" | "center" | "bottom"; supports: { photo: boolean; product: boolean } } {
+  const f = spec.frames[0];
+  const h = f?.elements.find((e) => e.role === "headline");
+  const layout = !h ? "center" : h.box.y > 0.6 ? "bottom" : h.text?.align === "left" ? "left" : "center";
+  return { layout, supports: { photo: !!f?.elements.some((e) => e.role === "image" || e.role === "background-image"), product: !!f?.elements.some((e) => e.role === "product") } };
+}
+
+export async function createTemplate(db: Db, input: NewTemplate): Promise<TemplateRow> {
+  const base = slugify(`${input.name}`) || "template";
+  const taken = new Set((await db.select({ slug: t.templates.slug }).from(t.templates)).map((r) => r.slug));
+  let slug = base;
+  for (let i = 2; taken.has(slug); i++) slug = `${base}-${i}`;
+  const { layout, supports } = layoutFromSpec(input.spec);
+  const [row] = await db.insert(t.templates).values({
+    slug, name: input.name, description: input.description ?? null, status: input.status, layout, supports, createdBy: input.createdBy,
+    intent: input.intent, campaign: input.campaign ?? null, funnels: input.funnels, personas: input.personas, icps: input.icps, geos: input.geos, offers: input.offers, platforms: input.platforms,
+    figmaUrl: input.figmaUrl, figmaFileKey: input.spec.source.fileKey, figmaNodeId: input.spec.source.nodeId ?? null, spec: input.spec, thumb: input.thumb ?? null, syncedAt: new Date(),
+  }).returning();
+  return toTemplateRow(row);
+}
+
+export async function setTemplateStatus(db: Db, id: number, status: "draft" | "published"): Promise<boolean> {
+  const res = await db.update(t.templates).set({ status, updatedAt: new Date() }).where(eq(t.templates.id, id)).returning({ id: t.templates.id });
+  return res.length > 0;
+}
+
+/** Only templates made with the creator can be deleted; the starter intents stay. */
+export async function deleteTemplate(db: Db, id: number): Promise<boolean> {
+  const inUse = await db.select({ id: t.ads.id }).from(t.ads).where(eq(t.ads.templateId, id)).limit(1);
+  if (inUse.length) return false;
+  const res = await db.delete(t.templates).where(and(eq(t.templates.id, id), isNotNull(t.templates.spec))).returning({ id: t.templates.id });
+  return res.length > 0;
 }
 
 /** Adds any starter template that is missing (matched by slug); never overwrites designer edits. */

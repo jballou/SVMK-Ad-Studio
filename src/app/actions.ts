@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb, invalidatePlatforms } from "@/db";
-import { addBenchmark, createBatch, getCustomPlatforms, saveCustomPlatforms, deleteBenchmark, importMetricRows, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, setAssetApproved, updateAdTags, type ImportSummary } from "@/lib/db/repo";
+import { addBenchmark, createBatch, createTemplate, deleteTemplate, setTemplateStatus, getCustomPlatforms, saveCustomPlatforms, deleteBenchmark, importMetricRows, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, setAssetApproved, updateAdTags, type ImportSummary } from "@/lib/db/repo";
 import { planBatch } from "@/lib/batches/plan";
 import { artFor, conceptByKey, conceptImagery, designForConcept } from "@/lib/dummy/library";
 import { resolveComposition } from "@/lib/composition/defaults";
@@ -13,6 +13,11 @@ import { hasErrors, qaComposition } from "@/lib/composition/qa";
 import type { Design } from "@/lib/composition/types";
 import { allPlacements, isBuiltin, platformKeys } from "@/lib/specs/platforms";
 import { buildPlatform } from "@/lib/specs/custom";
+import { AssetError } from "@/lib/assets/validate";
+import { extractTemplateFromFigma, thumbnailFor, type ExtractedTemplate } from "@/lib/import/figma";
+import { STARTER_TEMPLATES } from "@/lib/templates/intents";
+import { validateSpecInput } from "@/lib/templates/validate";
+import type { TemplateSpec } from "@/lib/templates/spec";
 import { conceptIntent, THEMES } from "@/lib/dummy/concepts";
 import { getAsset, getPreset } from "@/lib/imagery/library";
 
@@ -286,4 +291,63 @@ export async function deleteAssetAction(id: unknown): Promise<{ ok: boolean }> {
   const ok = await removeAsset(await getDb(), a.data);
   revalidatePath("/library");
   return { ok };
+}
+
+// ---- Template creator ----
+
+/** Step 1: read the Figma link and describe it as a template spec. */
+export async function previewTemplate(url: unknown): Promise<{ ok: true; data: ExtractedTemplate } | { ok: false; error: string }> {
+  const parsed = z.string().trim().min(1).max(600).safeParse(url);
+  if (!parsed.success) return { ok: false, error: "Paste a link to the Figma frame, section or page." };
+  try {
+    return { ok: true, data: await extractTemplateFromFigma(parsed.data) };
+  } catch (e) {
+    return { ok: false, error: e instanceof AssetError ? e.message : "Couldn't read that Figma link. Try again in a moment." };
+  }
+}
+
+const tagList = z.array(z.string().trim().min(1).max(40)).max(30);
+const templateInput = z.object({
+  name: z.string().trim().min(2).max(80),
+  description: z.string().trim().max(400).optional(),
+  status: z.enum(["draft", "published"]),
+  intent: z.string().refine((v) => STARTER_TEMPLATES.some((t) => t.slug === v), "Pick a creative intent."),
+  campaign: z.string().trim().max(80).optional(),
+  funnels: tagList, personas: tagList, icps: tagList, geos: tagList, offers: tagList, platforms: tagList,
+  figmaUrl: z.string().trim().min(1).max(600),
+  spec: z.unknown(),
+});
+
+/** Step 3: save the confirmed template. A published template can't have blocking errors; save it as a draft instead. */
+export async function publishTemplate(input: unknown): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+  const parsed = templateInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Check the form and try again." };
+  const spec = validateSpecInput(parsed.data.spec);
+  if (!spec.ok) return { ok: false, error: spec.error };
+  const errors = spec.spec.frames.flatMap((f) => f.issues.filter((i) => i.severity === "error"));
+  if (parsed.data.status === "published" && errors.length) return { ok: false, error: `Fix ${errors.length} error${errors.length === 1 ? "" : "s"} in the specs, or save it as a draft.` };
+  const db = await getDb();
+  const first = spec.spec.frames[0];
+  const thumb = first ? await thumbnailFor(spec.spec.source.fileKey, first.nodeId, first.width, first.height) : undefined;
+  const row = await createTemplate(db, { ...parsed.data, spec: spec.spec as TemplateSpec, thumb, createdBy: "Jarrod B." });
+  revalidatePath("/settings/templates");
+  revalidatePath("/", "layout");
+  return { ok: true, id: row.id };
+}
+
+export async function changeTemplateStatus(id: unknown, status: unknown): Promise<{ ok: boolean }> {
+  const a = z.number().int().positive().safeParse(id);
+  const b = z.enum(["draft", "published"]).safeParse(status);
+  if (!a.success || !b.success) return { ok: false };
+  const ok = await setTemplateStatus(await getDb(), a.data, b.data);
+  revalidatePath("/settings/templates");
+  return { ok };
+}
+
+export async function removeTemplate(id: unknown): Promise<{ ok: boolean; error?: string }> {
+  const a = z.number().int().positive().safeParse(id);
+  if (!a.success) return { ok: false };
+  const ok = await deleteTemplate(await getDb(), a.data);
+  revalidatePath("/settings/templates");
+  return ok ? { ok } : { ok, error: "Starter templates and templates already used by ads can't be deleted. Save it as a draft instead." };
 }

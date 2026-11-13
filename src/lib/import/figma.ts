@@ -2,6 +2,8 @@ import "server-only";
 import { exportPngs, FigmaError, getNodeTree, parseFigmaUrl } from "@/lib/figma/client";
 import { AssetError, MAX_BYTES } from "@/lib/assets/validate";
 import { validateTemplate, type TemplateReport } from "@/lib/figma/validate-template";
+import { extractTemplateSpec } from "@/lib/templates/extract";
+import type { TemplateSpec } from "@/lib/templates/spec";
 
 export const figmaConfigured = () => !!process.env.FIGMA_TOKEN;
 
@@ -93,5 +95,43 @@ export async function checkTemplate(url: string, opts: { allowLegacy?: boolean }
     return { ...validateTemplate(root, opts), fileKey, nodeName: root.name };
   } catch (e) {
     friendly(e);
+  }
+}
+
+export interface ExtractedTemplate {
+  spec: TemplateSpec;
+  nodeName: string;
+  /** Short-lived Figma render links per frame node id, for the confirm screen. */
+  previews: Record<string, string>;
+}
+
+/** Reads a Figma frame, section or page and describes it as a template spec, plus preview renders of each size. */
+export async function extractTemplateFromFigma(url: string): Promise<ExtractedTemplate> {
+  const t = token();
+  const { fileKey, nodeId } = parseFigmaUrl(url);
+  if (!/^[0-9a-zA-Z]{10,}$/.test(fileKey)) throw new AssetError("That doesn't look like a Figma link.");
+  if (!nodeId) throw new AssetError("The link needs a node-id. Select the frame, section or page in Figma and copy its link.");
+  try {
+    const root = await getNodeTree(fileKey, nodeId, t);
+    const spec = extractTemplateSpec(root, { fileKey, nodeId });
+    if (spec.frames.length > 12) throw new AssetError(`That link holds ${spec.frames.length} ad frames. Link to one template (up to 12 sizes) at a time.`);
+    const previews = spec.frames.length ? await exportPngs(fileKey, spec.frames.map((f) => f.nodeId), t, 0.5) : {};
+    return { spec, nodeName: root.name, previews };
+  } catch (e) {
+    friendly(e);
+  }
+}
+
+/** A small PNG of one frame as a data URL, kept with the template because Figma's render links expire. */
+export async function thumbnailFor(fileKey: string, nodeId: string, width: number, height: number): Promise<string | undefined> {
+  const t = token();
+  try {
+    const scale = Math.min(1, 360 / Math.max(width, height, 1));
+    const urls = await exportPngs(fileKey, [nodeId], t, Math.round(scale * 100) / 100);
+    if (!urls[nodeId]) return undefined;
+    const bytes = await download(urls[nodeId]);
+    return bytes.byteLength > 400_000 ? undefined : `data:image/png;base64,${Buffer.from(bytes).toString("base64")}`;
+  } catch {
+    return undefined; // a missing thumbnail must not block publishing
   }
 }

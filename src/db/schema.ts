@@ -26,6 +26,25 @@ export const templates = pgTable("templates", {
   supports: jsonb("supports").$type<{ photo: boolean; product: boolean }>().notNull(),
   createdBy: text("created_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  // Added by the template creator. Starter templates leave these empty.
+  intent: text("intent"),
+  campaign: text("campaign"),
+  funnels: jsonb("funnels").$type<string[]>().default([]).notNull(),
+  personas: jsonb("personas").$type<string[]>().default([]).notNull(),
+  icps: jsonb("icps").$type<string[]>().default([]).notNull(),
+  geos: jsonb("geos").$type<string[]>().default([]).notNull(),
+  offers: jsonb("offers").$type<string[]>().default([]).notNull(),
+  platforms: jsonb("platforms").$type<string[]>().default([]).notNull(),
+  figmaUrl: text("figma_url"),
+  figmaFileKey: text("figma_file_key"),
+  figmaNodeId: text("figma_node_id"),
+  /** The confirmed TemplateSpec (see lib/templates/spec.ts). */
+  spec: jsonb("spec").$type<import("@/lib/templates/spec").TemplateSpec>(),
+  /** Small PNG of the first frame as a data URL; Figma's own export links expire. */
+  thumb: text("thumb"),
+  version: integer("version").default(1).notNull(),
+  syncedAt: timestamp("synced_at"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // One Figma frame = one size of a concept.

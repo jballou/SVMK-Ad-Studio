@@ -10,7 +10,7 @@ export interface Taxonomy {
 
 export const DEFAULT_TAXONOMY: Taxonomy = {
   personas: ["CX", "Marketing", "EX", "IT", "Enterprise"],
-  funnels: ["Awareness", "Consideration", "Intent"],
+  funnels: ["Awareness", "Interest", "Consideration", "Intent", "B2P", "P2T", "T2E"],
   icps: ["Enterprise", "Mid-market", "SMB"],
   geos: ["US", "UK", "CA", "AU"],
   offers: ["Brand", "Demo", "Free trial", "Report", "Guide", "Webinar"],
