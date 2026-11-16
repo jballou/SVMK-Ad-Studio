@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { CircleCheck, CircleX, Upload } from "lucide-react";
-import { importMetrics as importMetricsAction, saveManualChecks } from "@/app/actions";
+import { CircleCheck, CircleX } from "lucide-react";
+import { saveManualChecks } from "@/app/actions";
+import { PerformanceImport } from "./PerformanceImport";
 import { AdThumb } from "@/components/ads/AdThumb";
 import { BandChip, PlatformBadge, StatusChip, TooEarlyChip } from "@/components/ads/badges";
 import { Button } from "@/components/ui/button-1";
-import { Card, EmptyState, Stat } from "@/components/ui/primitives";
+import { EmptyState, Stat } from "@/components/ui/primitives";
 import type { AdRecord } from "@/lib/ads/types";
-import { importMetrics, type Totals } from "@/lib/metrics/csv";
+import type { Totals } from "@/lib/metrics/csv";
 import { buildScorecard, daysLive, type Benchmark, type ManualChecks, type ManualCriterion, type Scorecard } from "@/lib/scorecard/build";
 import { platformKeys } from "@/lib/specs/platforms";
 import { PLATFORM_LABEL } from "@/lib/ui/colors";
@@ -39,7 +39,6 @@ function Mark({ result }: { result: boolean | null }) {
 }
 
 export function Scorecards({ ads, benchmarks, totals, checks, today, gate, period }: { ads: AdRecord[]; benchmarks: Benchmark[]; totals: Record<string, Totals>; checks: Record<string, ManualChecks>; today: string; gate: LearningGate; period: string }) {
-  const router = useRouter();
   const [manual, setManual] = useState<Record<string, ManualChecks>>(checks);
   const [msg, setMsg] = useState("");
   const [platform, setPlatform] = useState("");
@@ -47,22 +46,6 @@ export function Scorecards({ ads, benchmarks, totals, checks, today, gate, perio
   const [band, setBand] = useState("");
   const [sort, setSort] = useState("score-asc");
   const [limit, setLimit] = useState(PAGE);
-
-  const onFile = async (file: File | undefined) => {
-    if (!file) return;
-    const res = importMetrics(await file.text());
-    if (res.rows.length === 0) return setMsg(`Import failed: ${res.errors[0]?.message ?? "no rows found"}`);
-    try {
-      const saved = await importMetricsAction(res.rows);
-      const bits = [`Saved ${saved.imported} rows`];
-      if (res.errors.length) bits.push(`${res.errors.length} skipped (first: line ${res.errors[0].line}, ${res.errors[0].message})`);
-      if (saved.unmatchedNames.length) bits.push(`${saved.unmatchedNames.length} unmatched ad names (e.g. ${saved.unmatchedNames[0]})`);
-      setMsg(bits.join("; "));
-      router.refresh();
-    } catch {
-      setMsg("Import failed on the server. Nothing was saved.");
-    }
-  };
 
   const toggle = async (name: string, k: ManualCriterion) => {
     const prev = manual[name] ?? {};
@@ -117,10 +100,8 @@ export function Scorecards({ ads, benchmarks, totals, checks, today, gate, perio
         </button>
       </div>
 
-      <Card title="Import performance (CSV)" description="Columns: Date, Ad Name, Spend, Impressions, Clicks, Conversions. Ad names must match Concept + MMYYYY _ WxH. Rows for an ad replace its sample numbers." actions={<Upload className="size-4 text-brand-neutral-550" aria-hidden />}>
-        <input type="file" accept=".csv,text/csv" className="text-sm" onChange={(e) => onFile(e.target.files?.[0])} aria-label="Upload performance CSV" />
-        {msg && <p className="mt-2 text-sm" role="status">{msg}</p>}
-      </Card>
+      <PerformanceImport ads={ads} />
+      {msg && <p className="text-sm" role="status">{msg}</p>}
 
       <div className="flex flex-wrap items-end gap-4 rounded-loose border border-brand-neutral-200 bg-white p-4">
         <label className="text-xs font-medium text-brand-neutral-650">Platform<select value={platform} onChange={(e) => { setPlatform(e.target.value); reset(); }} className={`${sel} mt-0 block`}><option value="">All</option>{platformKeys().map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}</select></label>

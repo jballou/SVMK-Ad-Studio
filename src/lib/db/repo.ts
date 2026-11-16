@@ -91,26 +91,77 @@ export async function getRawInputs(db: Db): Promise<Record<string, RawInputs>> {
   return Object.fromEntries(rows.map(({ name, ...raw }) => [name, raw]));
 }
 
+export interface UnmatchedAd {
+  /** What the platform calls it: its ID when the export has one, otherwise the ad name. */
+  key: string;
+  name: string;
+  externalId?: string;
+  rows: number;
+  impressions: number;
+  spend: number;
+}
+
 export interface ImportSummary {
   imported: number;
   unmatchedNames: string[];
+  unmatched: UnmatchedAd[];
 }
 
-/** Upserts daily rows by (ad, day). Sample rows for the touched ads are replaced by real data. */
-export async function importMetricRows(db: Db, rows: MetricRow[], source = "csv"): Promise<ImportSummary> {
+/**
+ * Upserts daily rows by (ad, day). Sample rows for the touched ads are replaced by real data.
+ * With a `platform`, rows are also matched through saved links (by the platform's ID, then by its name).
+ */
+export async function importMetricRows(db: Db, rows: MetricRow[], source = "csv", platform?: string): Promise<ImportSummary> {
   const names = [...new Set(rows.map((r) => r.adName))];
   const ads = names.length ? await db.select({ id: t.ads.id, name: t.ads.name }).from(t.ads).where(inArray(t.ads.name, names)) : [];
   const idByName = new Map(ads.map((a) => [a.name, a.id]));
-  const matched = rows.filter((r) => idByName.has(r.adName));
+  const idByKey = new Map<string, number>();
+  if (platform) {
+    const keys = [...new Set(rows.flatMap((r) => [r.adName, r.externalId].filter((k): k is string => !!k)))];
+    const links = keys.length ? await db.select().from(t.adAliases).where(and(eq(t.adAliases.platform, platform), inArray(t.adAliases.externalKey, keys))) : [];
+    for (const l of links) idByKey.set(l.externalKey, l.adId);
+  }
+  const resolve = (r: MetricRow) => idByName.get(r.adName) ?? (r.externalId ? idByKey.get(r.externalId) : undefined) ?? idByKey.get(r.adName);
+  const matched: { r: MetricRow; adId: number }[] = [];
+  const unmatched = new Map<string, UnmatchedAd>();
+  for (const r of rows) {
+    const adId = resolve(r);
+    if (adId !== undefined) { matched.push({ r, adId }); continue; }
+    const key = r.externalId ?? r.adName;
+    const u = unmatched.get(key) ?? { key, name: r.adName, externalId: r.externalId, rows: 0, impressions: 0, spend: 0 };
+    u.rows++; u.impressions += r.impressions; u.spend += r.spend;
+    unmatched.set(key, u);
+  }
 
+  // Several platform ads (different IDs, or the same creative in several ad sets) can map to one Ad Studio ad:
+  // add them up per (ad, day) so none overwrites another.
+  const merged = new Map<string, { r: MetricRow; adId: number }>();
+  for (const m of matched) {
+    const k = `${m.adId}|${m.r.day}`;
+    const cur = merged.get(k);
+    if (!cur) { merged.set(k, { adId: m.adId, r: { ...m.r } }); continue; }
+    cur.r.spend += m.r.spend; cur.r.impressions += m.r.impressions; cur.r.clicks += m.r.clicks; cur.r.conversions += m.r.conversions;
+    if (m.r.videoStarts !== undefined) cur.r.videoStarts = (cur.r.videoStarts ?? 0) + m.r.videoStarts;
+    if (m.r.videoCompletions !== undefined) cur.r.videoCompletions = (cur.r.videoCompletions ?? 0) + m.r.videoCompletions;
+  }
+  const touched = [...new Set(matched.map((m) => m.adId))];
   await db.transaction(async (tx) => {
-    if (ads.length) await tx.delete(t.metricsDaily).where(and(inArray(t.metricsDaily.adId, ads.map((a) => a.id)), eq(t.metricsDaily.source, "sample")));
-    for (const r of matched) {
-      const v = { adId: idByName.get(r.adName)!, day: r.day, spend: r.spend, impressions: r.impressions, clicks: r.clicks, conversions: r.conversions, videoStarts: r.videoStarts ?? null, videoCompletions: r.videoCompletions ?? null, source };
+    if (touched.length) await tx.delete(t.metricsDaily).where(and(inArray(t.metricsDaily.adId, touched), eq(t.metricsDaily.source, "sample")));
+    for (const { r, adId } of merged.values()) {
+      const v = { adId, day: r.day, spend: r.spend, impressions: r.impressions, clicks: r.clicks, conversions: r.conversions, videoStarts: r.videoStarts ?? null, videoCompletions: r.videoCompletions ?? null, source };
       await tx.insert(t.metricsDaily).values(v).onConflictDoUpdate({ target: [t.metricsDaily.adId, t.metricsDaily.day], set: v });
     }
   });
-  return { imported: matched.length, unmatchedNames: names.filter((n) => !idByName.has(n)) };
+  const list = [...unmatched.values()].sort((a, b) => b.impressions - a.impressions);
+  return { imported: merged.size, unmatchedNames: list.map((u) => u.name), unmatched: list };
+}
+
+/** Saves "this platform ad is that Ad Studio ad" so future imports match it. False when the ad doesn't exist. */
+export async function linkExternalAd(db: Db, platform: string, externalKey: string, adName: string): Promise<boolean> {
+  const [ad] = await db.select({ id: t.ads.id, platform: t.ads.platform }).from(t.ads).where(eq(t.ads.name, adName));
+  if (!ad || ad.platform !== platform) return false;
+  await db.insert(t.adAliases).values({ platform, externalKey, adId: ad.id }).onConflictDoUpdate({ target: [t.adAliases.platform, t.adAliases.externalKey], set: { adId: ad.id } });
+  return true;
 }
 
 export async function getBenchmarks(db: Db): Promise<Benchmark[]> {

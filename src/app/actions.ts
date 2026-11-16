@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb, invalidatePlatforms } from "@/db";
-import { addBenchmark, createBatch, createTemplate, deleteTemplate, setTemplateStatus, getCustomPlatforms, saveCustomPlatforms, deleteBenchmark, importMetricRows, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, setAssetApproved, updateAdTags, type ImportSummary } from "@/lib/db/repo";
+import { addBenchmark, createBatch, createTemplate, deleteTemplate, setTemplateStatus, getCustomPlatforms, saveCustomPlatforms, deleteBenchmark, importMetricRows, linkExternalAd, listAds, periodFor, saveChecks, saveGate, saveTaxonomy, setAdStatus, setAssetApproved, updateAdTags, type ImportSummary } from "@/lib/db/repo";
 import { planBatch } from "@/lib/batches/plan";
 import { artFor, conceptByKey, conceptImagery, designForConcept } from "@/lib/dummy/library";
 import { resolveComposition } from "@/lib/composition/defaults";
@@ -59,15 +59,34 @@ const rowsInput = z
       impressions: z.number().int().min(0),
       clicks: z.number().int().min(0),
       conversions: z.number().int().min(0),
+      externalId: z.string().max(100).optional(),
+      videoStarts: z.number().int().min(0).optional(),
+      videoCompletions: z.number().int().min(0).optional(),
     }),
   )
   .max(50_000);
 
-export async function importMetrics(input: unknown): Promise<ImportSummary> {
+const linkPlatformInput = z.string().regex(/^[a-z0-9-]{2,24}$/).refine((p) => platformKeys().includes(p), "Unknown platform");
+
+/** `platform` turns on matching through saved links (the platform's IDs and names), and tags rows with that source. */
+export async function importMetrics(input: unknown, platform?: string): Promise<ImportSummary> {
   const rows = rowsInput.parse(input);
-  const res = await importMetricRows(await getDb(), rows, "csv");
+  const p = platform ? linkPlatformInput.parse(platform) : undefined;
+  const res = await importMetricRows(await getDb(), rows, p ?? "csv", p);
   revalidatePath("/scorecards");
+  revalidatePath("/performance", "layout");
   return res;
+}
+
+const linksInput = z.array(z.object({ key: z.string().min(1).max(200), adName: z.string().min(1) })).min(1).max(500);
+
+/** Saves "this platform ad is that Ad Studio ad". Returns how many were saved; the ad must be on the same platform. */
+export async function linkPlatformAds(platform: string, links: unknown): Promise<{ saved: number }> {
+  const p = linkPlatformInput.parse(platform);
+  const db = await getDb();
+  let saved = 0;
+  for (const l of linksInput.parse(links)) if (await linkExternalAd(db, p, l.key, l.adName)) saved++;
+  return { saved };
 }
 
 const tagsInput = z.object({

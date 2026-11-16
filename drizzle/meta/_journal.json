@@ -57,6 +57,13 @@
       "when": 1794533136701,
       "tag": "0007_template_specs",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794614481433,
+      "tag": "0008_linkedin_aliases",
+      "breakpoints": true
     }
   ]
 }

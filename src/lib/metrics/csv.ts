@@ -1,6 +1,8 @@
 // Platform export -> per-ad daily metrics. Ads are matched on the `{ConceptKey}{MMYYYY}_{W}x{H}` ad name.
 export interface MetricRow {
   adName: string;
+  /** The platform's own ad/creative ID when the export has one (more stable than names). */
+  externalId?: string;
   day: string; // YYYY-MM-DD
   spend: number;
   impressions: number;
@@ -17,7 +19,22 @@ export interface CsvImport {
   unmatchedNames: string[];
 }
 
-export function parseCsv(text: string): string[][] {
+/** Platform exports are sometimes UTF-16 (LinkedIn) rather than UTF-8; read the byte-order mark. */
+export function decodeExport(buf: ArrayBuffer): string {
+  const b = new Uint8Array(buf);
+  if (b[0] === 0xff && b[1] === 0xfe) return new TextDecoder("utf-16le").decode(b);
+  if (b[0] === 0xfe && b[1] === 0xff) return new TextDecoder("utf-16be").decode(b);
+  return new TextDecoder("utf-8").decode(b);
+}
+
+/** Tab-separated exports are common; pick the delimiter that splits the first lines most. */
+export function detectDelimiter(text: string): string {
+  const head = text.split(/\r?\n/).slice(0, 25).join("\n");
+  const count = (d: string) => head.split(d).length;
+  return count("\t") > count(",") ? "\t" : ",";
+}
+
+export function parseCsv(text: string, delimiter = ","): string[][] {
   const out: string[][] = [];
   let row: string[] = [];
   let cell = "";
@@ -30,7 +47,7 @@ export function parseCsv(text: string): string[][] {
       else if (c === '"') quoted = false;
       else cell += c;
     } else if (c === '"') quoted = true;
-    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === delimiter) { row.push(cell); cell = ""; }
     else if (c === "\n" || c === "\r") {
       if (c === "\r" && s[i + 1] === "\n") i++;
       row.push(cell); cell = "";
@@ -45,11 +62,12 @@ export function parseCsv(text: string): string[][] {
 
 const HEADERS: Record<keyof MetricRow, RegExp> = {
   adName: /^(ad[ _]?name|ad|creative[ _]?name|name)$/i,
-  day: /^(date|day|reporting starts)$/i,
+  externalId: /^(creative|ad)[ _]?id$/i,
+  day: /^(date|day|reporting starts|start date( \(in utc\))?)$/i,
   spend: /^(spend|cost|amount spent.*|total spent)$/i,
   impressions: /^impressions$/i,
   clicks: /^(clicks|link clicks|clicks \(all\))$/i,
-  conversions: /^(conversions|leads|results|total conversions)$/i,
+  conversions: /^(conversions|results|total conversions)$/i,
   videoStarts: /^video[ _]?(starts|views)$/i,
   videoCompletions: /^video[ _]?(completions|completed views|completes)$/i,
 };
@@ -66,13 +84,21 @@ function toIso(s: string): string | null {
   return m ? `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}` : null;
 }
 
+const LEADS = /^(leads|lead form leads)$/i;
+
 export function importMetrics(text: string, knownNames: string[] = []): CsvImport {
-  const [header = [], ...body] = parseCsv(text);
+  const all = parseCsv(text, detectDelimiter(text));
+  // Exports often start with report-title lines; the header is the first row that names an ad, a date and impressions.
+  const isHeader = (r: string[]) => r.some((h) => HEADERS.impressions.test(h.trim())) && r.some((h) => HEADERS.day.test(h.trim())) && r.some((h) => HEADERS.adName.test(h.trim()));
+  const at = all.slice(0, 30).findIndex(isHeader);
+  const headerAt = at < 0 ? 0 : at;
+  const [header = [], ...body] = all.slice(headerAt);
   const idx = {} as Record<keyof MetricRow, number>;
   const errors: CsvImport["errors"] = [];
   for (const k of Object.keys(HEADERS) as (keyof MetricRow)[]) {
     idx[k] = header.findIndex((h) => HEADERS[k].test(h.trim()));
   }
+  if (idx.conversions < 0) idx.conversions = header.findIndex((h) => LEADS.test(h.trim()));
   for (const req of ["adName", "day", "impressions"] as const) {
     if (idx[req] < 0) errors.push({ line: 1, message: `Missing required column: ${req}` });
   }
@@ -80,13 +106,19 @@ export function importMetrics(text: string, knownNames: string[] = []): CsvImpor
 
   const rows: MetricRow[] = [];
   body.forEach((r, i) => {
-    const line = i + 2;
+    const line = headerAt + i + 2;
+    // A row with neither a name nor an ID is a totals or spacer row. With only an ID (a Message ad with no name), use the ID.
+    const rawName = (r[idx.adName] ?? "").trim();
+    const rawId = idx.externalId >= 0 ? (r[idx.externalId] ?? "").trim() : "";
+    if (!rawName && !rawId) return;
     const day = toIso(r[idx.day] ?? "");
     const impressions = num(r[idx.impressions]);
     if (!day) return void errors.push({ line, message: `Unrecognized date "${r[idx.day]}"` });
     if (Number.isNaN(impressions)) return void errors.push({ line, message: "Impressions is not a number" });
     const opt = (k: keyof MetricRow) => (idx[k] >= 0 ? num(r[idx[k]]) || 0 : 0);
-    const row: MetricRow = { adName: (r[idx.adName] ?? "").trim(), day, spend: opt("spend"), impressions, clicks: opt("clicks"), conversions: opt("conversions") };
+    const row: MetricRow = { adName: rawName || rawId, day, spend: opt("spend"), impressions, clicks: opt("clicks"), conversions: opt("conversions") };
+    const ext = idx.externalId >= 0 ? (r[idx.externalId] ?? "").trim() : "";
+    if (ext) row.externalId = ext;
     if (idx.videoStarts >= 0) row.videoStarts = opt("videoStarts");
     if (idx.videoCompletions >= 0) row.videoCompletions = opt("videoCompletions");
     rows.push(row);

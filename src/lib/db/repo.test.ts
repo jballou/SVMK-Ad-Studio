@@ -6,7 +6,7 @@ import * as schema from "@/db/schema";
 import type { Db } from "@/db";
 import { seedIfEmpty } from "@/db/seed";
 import { generateDummyData } from "@/lib/dummy/generate";
-import { ensureStarterTemplates, listTemplates, deleteScoreBenchmark, getRawInputs, getScoreConfig, listScoreBenchmarks, saveScoreConfig, upsertScoreBenchmark, addBenchmark, createBatch, deleteBenchmark, getBenchmarks, getGate, getTaxonomy, listBenchmarkRows, saveGate, saveTaxonomy, getChecks, getDailyMetrics, getTotals, importMetricRows, listAds, listBatches, listExperiments, periodFor, saveChecks, setAdStatus, updateAdTags } from "./repo";
+import { ensureStarterTemplates, listTemplates, deleteScoreBenchmark, getRawInputs, getScoreConfig, listScoreBenchmarks, saveScoreConfig, upsertScoreBenchmark, addBenchmark, createBatch, deleteBenchmark, getBenchmarks, getGate, getTaxonomy, listBenchmarkRows, saveGate, saveTaxonomy, getChecks, getDailyMetrics, getTotals, importMetricRows, linkExternalAd, listAds, listBatches, listExperiments, periodFor, saveChecks, setAdStatus, updateAdTags } from "./repo";
 
 vi.mock("server-only", () => ({}));
 
@@ -67,10 +67,42 @@ describe("metrics", () => {
       { adName: n, day: "2026-08-14", spend: 20, impressions: 2000, clicks: 30, conversions: 2 },
       { adName: "Ghost_1x1", day: "2026-08-14", spend: 1, impressions: 1, clicks: 0, conversions: 0 },
     ]);
-    expect(res).toEqual({ imported: 2, unmatchedNames: ["Ghost_1x1"] });
+    expect(res).toMatchObject({ imported: 2, unmatchedNames: ["Ghost_1x1"] });
+    expect(res.unmatched[0]).toMatchObject({ key: "Ghost_1x1", rows: 1, impressions: 1 });
     expect((await getTotals(db))[n]).toEqual({ spend: 30, impressions: 3000, clicks: 40, conversions: 3 });
     await importMetricRows(db, [{ adName: n, day: "2026-08-14", spend: 5, impressions: 500, clicks: 5, conversions: 0 }]);
     expect((await getTotals(db))[n].impressions).toBe(1500); // same day upserted, not duplicated
+  });
+});
+
+describe("platform links", () => {
+  it("matches a platform's own ID after it is linked, and refuses cross-platform links", async () => {
+    const ad = data.ads.find((a) => a.platform === "linkedin" && a.launchedAt)!;
+    const other = data.ads.find((a) => a.platform !== "linkedin")!;
+    const row = { adName: "Stat card", externalId: "urn:li:sponsoredCreative:9", day: "2026-09-01", spend: 5, impressions: 400, clicks: 4, conversions: 1 };
+    const first = await importMetricRows(db, [row], "linkedin", "linkedin");
+    expect(first.imported).toBe(0);
+    expect(first.unmatched[0]).toMatchObject({ key: row.externalId, name: "Stat card" });
+    expect(await linkExternalAd(db, "linkedin", row.externalId, other.name)).toBe(false);
+    expect(await linkExternalAd(db, "linkedin", row.externalId, ad.name)).toBe(true);
+    const again = await importMetricRows(db, [row], "linkedin", "linkedin");
+    expect(again).toMatchObject({ imported: 1, unmatched: [] });
+    expect((await getDailyMetrics(db)).some((d) => d.adName === ad.name && d.day === "2026-09-01" && d.impressions === 400)).toBe(true);
+  });
+});
+
+describe("several platform ads on one Ad Studio ad", () => {
+  it("adds up same-day rows instead of overwriting", async () => {
+    const ad = data.ads.find((a) => a.platform === "linkedin" && a.launchedAt)!;
+    await linkExternalAd(db, "linkedin", "111", ad.name);
+    await linkExternalAd(db, "linkedin", "222", ad.name);
+    const day = "2026-09-05";
+    const res = await importMetricRows(db, [
+      { adName: "A", externalId: "111", day, spend: 10, impressions: 100, clicks: 2, conversions: 1 },
+      { adName: "A", externalId: "222", day, spend: 5, impressions: 50, clicks: 1, conversions: 0 },
+    ], "linkedin", "linkedin");
+    expect(res.imported).toBe(1);
+    expect((await getDailyMetrics(db)).find((d) => d.adName === ad.name && d.day === day)).toMatchObject({ spend: 15, impressions: 150, clicks: 3, conversions: 1 });
   });
 });
 

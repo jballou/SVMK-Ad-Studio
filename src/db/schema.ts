@@ -117,6 +117,18 @@ export const metricsDaily = pgTable(
   (t) => [primaryKey({ columns: [t.adId, t.day] })],
 );
 
+// Links a platform's own ad name or ID (as it appears in its exports) to an Ad Studio ad.
+export const adAliases = pgTable(
+  "ad_aliases",
+  {
+    platform: text("platform").notNull(),
+    externalKey: text("external_key").notNull(),
+    adId: integer("ad_id").references(() => ads.id, { onDelete: "cascade" }).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.platform, t.externalKey] })],
+);
+
 export const benchmarks = pgTable("benchmarks", {
   id: serial("id").primaryKey(),
   platform: text("platform").notNull(),

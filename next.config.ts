@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
   // The embedded demo database loads WASM assets and the SQL migrations at runtime; make sure they ship to serverless.
   outputFileTracingIncludes: { "/**": ["./node_modules/@electric-sql/pglite/dist/**/*", "./drizzle/**/*"] },
   partialPrefetching: true,
+  // Performance exports are thousands of daily rows. Vercel itself caps request bodies at 4.5MB.
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   turbopack: {
     rules: {
       "*.css": {
