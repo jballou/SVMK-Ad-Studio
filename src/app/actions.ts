@@ -12,6 +12,8 @@ import { removeAsset } from "@/lib/assets/ingest";
 import { hasErrors, qaComposition } from "@/lib/composition/qa";
 import type { Design } from "@/lib/composition/types";
 import { runPerformanceImport, type ImportResult } from "@/lib/db/performance-import";
+import { cookies } from "next/headers";
+import { DUMMY_COOKIE } from "@/lib/dummy-mode";
 import { allPlacements, isBuiltin, platformKeys } from "@/lib/specs/platforms";
 import { buildPlatform } from "@/lib/specs/custom";
 import { AssetError } from "@/lib/assets/validate";
@@ -390,4 +392,9 @@ export async function importPerformance(input: { platform: string; rows: unknown
   const res = await runPerformanceImport(await getDb(), { platform, rows: rowsInput.parse(input.rows), ads: sourceAdInput.parse(input.ads), decisions: decisionsInput.parse(input.decisions) });
   if (res.status === "done") { revalidatePath("/", "layout"); }
   return res;
+}
+
+/** Shows or hides the demo ads and numbers for this browser only. */
+export async function setDummyData(on: boolean): Promise<void> {
+  (await cookies()).set(DUMMY_COOKIE, on ? "on" : "off", { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
 }

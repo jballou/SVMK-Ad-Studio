@@ -8,6 +8,7 @@ import { compareCtr } from "@/lib/analytics/ab";
 import { sumPoints } from "@/lib/analytics/aggregate";
 import { listExperiments } from "@/lib/db/repo";
 import { loadWorkspace } from "@/lib/db/workspace";
+import { NoData, noDataReason } from "@/components/ui/no-data";
 import { fmtCompact, fmtDate, fmtPct } from "@/lib/format";
 import type { AdRecord } from "@/lib/ads/types";
 import { Loadable } from "@/components/ui/loadable";
@@ -38,6 +39,8 @@ function winnerLift(res: { ctrA: number; ctrB: number; winner: string }) {
 async function Content({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   await connection();
   const [{ status }, ws] = await Promise.all([searchParams, loadWorkspace()]);
+  const empty = noDataReason(ws);
+  if (empty) return <NoData reason={empty} />;
   const all = await listExperiments(ws.db);
   const rows = all.flatMap((e) => {
     const a = ws.adsByName.get(e.adA);

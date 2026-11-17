@@ -26,6 +26,8 @@ export interface AdRecord {
   copy?: AdCopy;
   art?: AdArtSpec;
   composition?: Composition;
+  /** Demo data from the seed; hidden when the Dummy data switch is off. */
+  isSample?: boolean;
 }
 
 import type { Composition } from "@/lib/composition/types";

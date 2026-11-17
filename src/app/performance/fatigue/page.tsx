@@ -9,6 +9,7 @@ import { Chip } from "@/components/ui/chip";
 import { Card, EmptyState, Stat } from "@/components/ui/primitives";
 import { fatigueReport, FATIGUE_THRESHOLDS } from "@/lib/analytics/fatigue";
 import { loadWorkspace } from "@/lib/db/workspace";
+import { NoData, noDataReason } from "@/components/ui/no-data";
 import { fmtPct } from "@/lib/format";
 import { SERIES_COLORS } from "@/lib/ui/colors";
 import { daysLive } from "@/lib/scorecard/build";
@@ -19,6 +20,8 @@ export const metadata = { title: "Fatigue · Ad Studio" };
 async function Content() {
   await connection();
   const ws = await loadWorkspace();
+  const empty = noDataReason(ws);
+  if (empty) return <NoData reason={empty} />;
   const report = fatigueReport(ws.ads, ws.pointsByAd, ws.asOf);
   const fatigued = report.filter((r) => r.level === "fatigued");
   const approaching = report.filter((r) => r.level === "approaching");

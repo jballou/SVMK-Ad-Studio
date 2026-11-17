@@ -7,6 +7,7 @@ import { PanelLeft, Plus, Search } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { SegIndicator } from "@/components/ui/seg-indicator";
 import { NAV, SETTINGS_ITEM, isActive, type NavItem } from "./nav";
+import { DummyToggle } from "@/components/ui/dummy-toggle";
 
 const PREF_KEY = "sidebar-pref-v1";
 
@@ -127,6 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div id="page-footer" className="sticky bottom-0 z-30 empty:hidden" />
         </main>
       </div>
+      <DummyToggle />
     </div>
   );
 }

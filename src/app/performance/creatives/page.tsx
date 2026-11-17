@@ -8,6 +8,7 @@ import { RangePicker } from "@/components/ui/range-picker";
 import { inRange, performanceIndex, rates, sumPoints, totalsByDimension, weeklySeries } from "@/lib/analytics/aggregate";
 import { parseRange, rangeBounds } from "@/lib/analytics/range";
 import { loadWorkspace } from "@/lib/db/workspace";
+import { NoData, noDataReason } from "@/components/ui/no-data";
 import { fmtCompact, fmtMoney, fmtPct } from "@/lib/format";
 import type { AdRecord } from "@/lib/ads/types";
 import { Loadable } from "@/components/ui/loadable";
@@ -28,6 +29,8 @@ const DIMS: Record<string, { label: string; pick: (a: AdRecord) => string | stri
 async function Content({ searchParams }: { searchParams: Promise<{ range?: string; by?: string }> }) {
   await connection();
   const [{ range: r, by: byParam }, ws] = await Promise.all([searchParams, loadWorkspace()]);
+  const empty = noDataReason(ws);
+  if (empty) return <NoData reason={empty} />;
   const range = parseRange(r);
   const dimKey = byParam && DIMS[byParam] ? byParam : "concept";
   const dim = DIMS[dimKey];

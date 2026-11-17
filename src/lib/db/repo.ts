@@ -43,6 +43,7 @@ export async function listAds(db: Db): Promise<AdRecord[]> {
     copy: concept.copy ?? undefined,
     art: concept.art ?? undefined,
     composition: ad.composition ?? undefined,
+    isSample: ad.isSample,
   }));
 }
 
@@ -217,8 +218,9 @@ export async function listExperiments(db: Db) {
   return db.select().from(t.experiments).orderBy(sql`${t.experiments.startedAt} desc`);
 }
 
-export async function listBatches(db: Db) {
-  return db.select().from(t.batches).orderBy(sql`${t.batches.createdAt} desc`);
+export async function listBatches(db: Db, opts: { includeSample?: boolean } = {}) {
+  const rows = await db.select().from(t.batches).orderBy(sql`${t.batches.createdAt} desc`);
+  return opts.includeSample === false ? rows.filter((b) => !b.isSample) : rows;
 }
 
 export async function updateAdTags(db: Db, name: string, tags: AdRecord["tags"]): Promise<boolean> {

@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/primitives";
 import { totalsByAd } from "@/lib/analytics/aggregate";
 import { getChecks, periodFor } from "@/lib/db/repo";
 import { loadWorkspace } from "@/lib/db/workspace";
+import { NoData, noDataReason } from "@/components/ui/no-data";
 import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Scorecards · Ad Studio" };
@@ -14,6 +15,8 @@ export const metadata = { title: "Scorecards · Ad Studio" };
 async function Content() {
   await connection();
   const ws = await loadWorkspace();
+  const empty = noDataReason(ws);
+  if (empty) return <NoData reason={empty} />;
   const period = periodFor(ws.today);
   const checks = await getChecks(ws.db, period);
   return <><PlatformRegistry platforms={customPlatforms()} /><Scorecards ads={ws.ads} benchmarks={ws.benchmarks} totals={Object.fromEntries(totalsByAd(ws.daily))} checks={checks} today={ws.today} gate={ws.gate} period={period} /></>;

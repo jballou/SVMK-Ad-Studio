@@ -98,6 +98,8 @@ export const ads = pgTable("ads", {
   pausedAt: date("paused_at"),
   tags: jsonb("tags").$type<Record<string, unknown>>().default({}),
   composition: jsonb("composition").$type<import("@/lib/composition/types").Composition>(),
+  /** Demo data from the seed. The "Dummy data" switch hides these. */
+  isSample: boolean("is_sample").default(false).notNull(),
 });
 
 export const metricsDaily = pgTable(
@@ -190,6 +192,7 @@ export const batches = pgTable("batches", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   config: jsonb("config").$type<{ concepts: string[]; placements: string[]; deck?: string }>().notNull(),
   adCount: integer("ad_count").notNull(),
+  isSample: boolean("is_sample").default(false).notNull(),
 });
 
 export const appSettings = pgTable("app_settings", {

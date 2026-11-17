@@ -44,7 +44,7 @@ export async function seedIfEmpty(db: Db) {
     const [ad] = await db
       .insert(t.ads)
       .values({
-        creativeId: creative.id, name: a.name, platform: a.platform, placement: a.placement, templateId: templateIds.get(a.template) ?? null, adType: a.adType, stage: a.stage, geo: a.geo[0] ?? null, status: a.status,
+        creativeId: creative.id, name: a.name, platform: a.platform, placement: a.placement, templateId: templateIds.get(a.template) ?? null, adType: a.adType, stage: a.stage, geo: a.geo[0] ?? null, status: a.status, isSample: true,
         launchedAt: a.launchedAt ?? null, pausedAt: a.pausedAt ?? null,
         tags: { persona: concept.personas, funnel: concept.funnel, icp: concept.icp, geo: a.geo, offer: concept.offer },
         composition: resolveComposition(designs.get(a.conceptKey)!, a.width, a.height, a.placement),
@@ -64,6 +64,6 @@ export async function seedIfEmpty(db: Db) {
   await db.insert(t.scoreBenchmarks).values(data.scoreBenchmarks.map((b) => ({ ...b, periodEnd: data.today })));
   await db.insert(t.experiments).values(data.experiments);
   await db.insert(t.batches).values(
-    data.batches.map((b) => ({ name: b.name, status: b.status, createdBy: b.createdBy, createdAt: new Date(b.createdAt), adCount: b.adCount, config: { concepts: b.concepts, placements: b.placements } })),
+    data.batches.map((b) => ({ name: b.name, status: b.status, createdBy: b.createdBy, createdAt: new Date(b.createdAt), adCount: b.adCount, isSample: true, config: { concepts: b.concepts, placements: b.placements } })),
   );
 }

@@ -5,6 +5,7 @@ import { RangePicker } from "@/components/ui/range-picker";
 import { inRange, rates, totalsByDimension, weeklySeries } from "@/lib/analytics/aggregate";
 import { parseRange, rangeBounds } from "@/lib/analytics/range";
 import { loadWorkspace } from "@/lib/db/workspace";
+import { NoData, noDataReason } from "@/components/ui/no-data";
 import { fmtCompact, fmtInt, fmtMoney, fmtPct } from "@/lib/format";
 import { allPlacements, platformKeys, type PlatformKey } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@/lib/ui/colors";
@@ -34,6 +35,8 @@ const cols = (first: string, withAds = false) => [{ label: first }, ...(withAds 
 async function Content({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   await connection();
   const [{ range: r }, ws] = await Promise.all([searchParams, loadWorkspace()]);
+  const empty = noDataReason(ws);
+  if (empty) return <NoData reason={empty} />;
   const range = parseRange(r);
   const b = rangeBounds(range, ws.asOf);
   const pts = inRange(ws.daily, b.from, b.to);

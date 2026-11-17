@@ -13,6 +13,7 @@ import { fatigueReport } from "@/lib/analytics/fatigue";
 import { scoreAll } from "@/lib/analytics/scorecards";
 import { getChecks, listBatches, periodFor } from "@/lib/db/repo";
 import { loadWorkspace } from "@/lib/db/workspace";
+import { NoData, noDataReason } from "@/components/ui/no-data";
 import { fmtCompact, fmtDate, fmtMoney, fmtPct } from "@/lib/format";
 import { BAND_LABEL, type Band } from "@/lib/scorecard/score";
 import { platformKeys } from "@/lib/specs/platforms";
@@ -24,6 +25,8 @@ export const metadata = { title: "Dashboard · Ad Studio" };
 async function Content() {
   await connection();
   const ws = await loadWorkspace();
+  const empty = noDataReason(ws);
+  if (empty) return <><PageHeader title="Dashboard" description="Performance across your live ads." /><NoData reason={empty} /></>;
   const { ads, daily, pointsByAd, benchmarks, today, asOf, adsByName } = ws;
   const from30 = shiftDate(asOf, -29);
   const prevFrom = shiftDate(asOf, -59);
@@ -35,7 +38,7 @@ async function Content() {
   const totals = totalsByAd(daily);
   const checks = await getChecks(ws.db, periodFor(today));
   const cards = scoreAll(ads, totals, benchmarks, checks, today, ws.gate);
-  const batches = (await listBatches(ws.db)).slice(0, 5);
+  const batches = (await listBatches(ws.db, { includeSample: ws.dummy })).slice(0, 5);
 
   const live = ads.filter((a) => a.status === "live");
   const fatigue = fatigueReport(ads, pointsByAd, asOf);

@@ -75,6 +75,16 @@ describe("metrics", () => {
   });
 });
 
+describe("sample flag", () => {
+  it("marks seeded ads and batches as sample and leaves new ones real", async () => {
+    expect((await listAds(db)).every((a) => a.isSample)).toBe(true);
+    await createBatch(db, { name: "mine", createdBy: "Me", placements: ["linkedin-single-image"], concepts: [{ key: "RealOne", tags: { persona: [] } }], ads: [{ conceptKey: "RealOne", name: "RealOne062026_1200x628", platform: "linkedin", placement: "linkedin-single-image", width: 1200, height: 628, tags: { persona: [] } }] });
+    expect((await listAds(db)).find((a) => a.name === "RealOne062026_1200x628")?.isSample).toBe(false);
+    expect((await listBatches(db)).some((b) => b.isSample)).toBe(true);
+    expect((await listBatches(db, { includeSample: false })).map((b) => b.name)).toEqual(["mine"]);
+  });
+});
+
 describe("platform links", () => {
   it("matches a platform's own ID after it is linked, and refuses cross-platform links", async () => {
     const ad = data.ads.find((a) => a.platform === "linkedin" && a.launchedAt)!;

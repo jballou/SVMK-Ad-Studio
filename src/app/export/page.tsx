@@ -5,13 +5,15 @@ import { ExportCenter } from "@/components/export/ExportCenter";
 import { PageHeader } from "@/components/ui/primitives";
 import { getDb } from "@/db";
 import { listAds } from "@/lib/db/repo";
+import { dummyDataOn } from "@/lib/dummy-mode";
 import { Loadable } from "@/components/ui/loadable";
 
 export const metadata = { title: "Export · Ad Studio" };
 
 async function Content({ searchParams }: { searchParams: Promise<{ ads?: string }> }) {
   await connection();
-  const [{ ads: sel }, ads] = await Promise.all([searchParams, getDb().then(listAds)]);
+  const [{ ads: sel }, all, dummy] = await Promise.all([searchParams, getDb().then(listAds), dummyDataOn()]);
+  const ads = dummy ? all : all.filter((a) => !a.isSample);
   return <><PlatformRegistry platforms={customPlatforms()} /><ExportCenter ads={ads} initial={sel ? sel.split(",").filter(Boolean) : []} /></>;
 }
 

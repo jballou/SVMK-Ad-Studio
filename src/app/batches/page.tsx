@@ -6,6 +6,7 @@ import { Chip } from "@/components/ui/chip";
 import { Card, DataTable, PageHeader } from "@/components/ui/primitives";
 import { getDb } from "@/db";
 import { listBatches } from "@/lib/db/repo";
+import { dummyDataOn } from "@/lib/dummy-mode";
 import { fmtDate } from "@/lib/format";
 import { allPlacements } from "@/lib/specs/platforms";
 import { Loadable } from "@/components/ui/loadable";
@@ -14,7 +15,7 @@ export const metadata = { title: "Batches · Ad Studio" };
 
 async function Content() {
   await connection();
-  const batches = await listBatches(await getDb());
+  const batches = await listBatches(await getDb(), { includeSample: await dummyDataOn() });
   return (
     <Card padded={false}>
       <div className="px-4 py-4">

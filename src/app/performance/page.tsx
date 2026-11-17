@@ -8,6 +8,7 @@ import { inRange, pctChange, rates, sumPoints, totalsByAd, weeklySeries } from "
 import { fmtKpi, kpiForStage, rankByStageKpi, STAGE_KPIS } from "@/lib/analytics/kpi";
 import { customBounds, parseRange, rangeBounds } from "@/lib/analytics/range";
 import { loadWorkspace } from "@/lib/db/workspace";
+import { NoData, noDataReason } from "@/components/ui/no-data";
 import { fmtCompact, fmtMoney, fmtPct } from "@/lib/format";
 import type { PlatformKey } from "@/lib/specs/platforms";
 import { PLATFORM_COLOR, PLATFORM_LABEL } from "@/lib/ui/colors";
@@ -22,6 +23,8 @@ type Search = { range?: string; platform?: string; from?: string; to?: string };
 async function Content({ searchParams }: { searchParams: Promise<Search> }) {
   await connection();
   const [q, ws] = await Promise.all([searchParams, loadWorkspace()]);
+  const empty = noDataReason(ws);
+  if (empty) return <NoData reason={empty} />;
   const range = parseRange(q.range);
   const platform = q.platform && q.platform in PLATFORM_LABEL ? (q.platform as PlatformKey) : undefined;
   const custom = customBounds(q.from, q.to);
