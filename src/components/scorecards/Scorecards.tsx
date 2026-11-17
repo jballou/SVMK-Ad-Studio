@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CircleCheck, CircleX } from "lucide-react";
 import { saveManualChecks } from "@/app/actions";
-import { PerformanceImport } from "./PerformanceImport";
+import { UploadPerformance } from "./UploadPerformance";
 import { AdThumb } from "@/components/ads/AdThumb";
 import { BandChip, PlatformBadge, StatusChip, TooEarlyChip } from "@/components/ads/badges";
 import { Button } from "@/components/ui/button-1";
@@ -100,7 +100,10 @@ export function Scorecards({ ads, benchmarks, totals, checks, today, gate, perio
         </button>
       </div>
 
-      <PerformanceImport ads={ads} />
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-loose border border-brand-neutral-200 bg-white p-4">
+        <p className="text-sm text-brand-neutral-650">Upload a LinkedIn export and Ad Studio matches or adds the ads in it, then updates their numbers.</p>
+        <UploadPerformance />
+      </div>
       {msg && <p className="text-sm" role="status">{msg}</p>}
 
       <div className="flex flex-wrap items-end gap-4 rounded-loose border border-brand-neutral-200 bg-white p-4">

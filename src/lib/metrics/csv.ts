@@ -13,8 +13,30 @@ export interface MetricRow {
   videoCompletions?: number;
 }
 
+/** What an export says about one platform ad overall (not per day), used to create or match the ad. */
+export interface SourceAd {
+  /** The platform's ID when the export has one, otherwise the name. */
+  key: string;
+  name: string;
+  externalId?: string;
+  adSet?: string;
+  campaign?: string;
+  objective?: string;
+  /** e.g. "Sponsored Update" or "Sponsored Messaging". */
+  kind?: string;
+  /** The platform's current status for the ad, as exported ("Active", "Paused"). */
+  status?: string;
+  /** First and last day with any impressions in the file. */
+  firstDay?: string;
+  lastDay?: string;
+  impressions: number;
+}
+
 export interface CsvImport {
   rows: MetricRow[];
+  /** One entry per platform ad in the file. */
+  ads: SourceAd[];
+  headers: string[];
   errors: { line: number; message: string }[];
   unmatchedNames: string[];
 }
@@ -85,6 +107,13 @@ function toIso(s: string): string | null {
 }
 
 const LEADS = /^(leads|lead form leads)$/i;
+const META = {
+  adSet: /^ad set name$/i,
+  campaign: /^campaign name$/i,
+  objective: /^ad set objective$/i,
+  kind: /^ad set type$/i,
+  status: /^ad status$/i,
+} as const;
 
 export function importMetrics(text: string, knownNames: string[] = []): CsvImport {
   const all = parseCsv(text, detectDelimiter(text));
@@ -102,8 +131,11 @@ export function importMetrics(text: string, knownNames: string[] = []): CsvImpor
   for (const req of ["adName", "day", "impressions"] as const) {
     if (idx[req] < 0) errors.push({ line: 1, message: `Missing required column: ${req}` });
   }
-  if (errors.length) return { rows: [], errors, unmatchedNames: [] };
+  if (errors.length) return { rows: [], ads: [], headers: header, errors, unmatchedNames: [] };
 
+  const mi = Object.fromEntries(Object.entries(META).map(([k, re]) => [k, header.findIndex((h) => re.test(h.trim()))])) as Record<keyof typeof META, number>;
+  const cell = (r: string[], k: keyof typeof META) => (mi[k] >= 0 ? (r[mi[k]] ?? "").trim() || undefined : undefined);
+  const ads = new Map<string, SourceAd & { setWeight: Map<string, number>; lastSeen: string }>();
   const rows: MetricRow[] = [];
   body.forEach((r, i) => {
     const line = headerAt + i + 2;
@@ -122,10 +154,31 @@ export function importMetrics(text: string, knownNames: string[] = []): CsvImpor
     if (idx.videoStarts >= 0) row.videoStarts = opt("videoStarts");
     if (idx.videoCompletions >= 0) row.videoCompletions = opt("videoCompletions");
     rows.push(row);
+
+    const key = ext || row.adName;
+    let a = ads.get(key);
+    if (!a) { a = { key, name: row.adName, externalId: ext || undefined, impressions: 0, setWeight: new Map(), lastSeen: "" }; ads.set(key, a); }
+    a.impressions += impressions;
+    a.campaign ??= cell(r, "campaign");
+    a.objective ??= cell(r, "objective");
+    a.kind ??= cell(r, "kind");
+    const set = cell(r, "adSet");
+    if (set) a.setWeight.set(set, (a.setWeight.get(set) ?? 0) + impressions);
+    if (impressions > 0) {
+      if (!a.firstDay || day < a.firstDay) a.firstDay = day;
+      if (!a.lastDay || day > a.lastDay) a.lastDay = day;
+    }
+    if (day >= a.lastSeen) { a.lastSeen = day; a.status = cell(r, "status") ?? a.status; }
+  });
+  const sourceAds: SourceAd[] = [...ads.values()].map(({ setWeight, lastSeen, ...a }) => {
+    void lastSeen;
+    // An ad can run in several ad sets; describe it by the one that delivered the most.
+    const adSet = [...setWeight].sort((x, y) => y[1] - x[1])[0]?.[0];
+    return { ...a, adSet };
   });
   const known = new Set(knownNames);
   const unmatchedNames = knownNames.length ? [...new Set(rows.map((r) => r.adName).filter((n) => !known.has(n)))] : [];
-  return { rows, errors, unmatchedNames };
+  return { rows, ads: sourceAds, headers: header, errors, unmatchedNames };
 }
 
 export interface Totals {

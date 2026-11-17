@@ -11,6 +11,7 @@ import { hydrateAssetRefs } from "@/lib/assets/hydrate";
 import { removeAsset } from "@/lib/assets/ingest";
 import { hasErrors, qaComposition } from "@/lib/composition/qa";
 import type { Design } from "@/lib/composition/types";
+import { runPerformanceImport, type ImportResult } from "@/lib/db/performance-import";
 import { allPlacements, isBuiltin, platformKeys } from "@/lib/specs/platforms";
 import { buildPlatform } from "@/lib/specs/custom";
 import { AssetError } from "@/lib/assets/validate";
@@ -369,4 +370,24 @@ export async function removeTemplate(id: unknown): Promise<{ ok: boolean; error?
   const ok = await deleteTemplate(await getDb(), a.data);
   revalidatePath("/settings/templates");
   return ok ? { ok } : { ok, error: "Starter templates and templates already used by ads can't be deleted. Save it as a draft instead." };
+}
+
+const sourceAdInput = z.array(z.object({
+  key: z.string().min(1).max(200), name: z.string().min(1).max(300), externalId: z.string().max(100).optional(),
+  adSet: z.string().max(300).optional(), campaign: z.string().max(300).optional(), objective: z.string().max(100).optional(),
+  kind: z.string().max(100).optional(), status: z.string().max(40).optional(),
+  firstDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), lastDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  impressions: z.number().min(0),
+})).max(5000);
+const decisionsInput = z.object({ data: z.enum(["replace", "keep"]).optional(), pick: z.record(z.string(), z.string().max(300)).optional() }).optional();
+
+/**
+ * Imports a platform export in one step: matches or creates the ads it names, then saves their daily numbers.
+ * Returns the questions instead when something is ambiguous or stored numbers disagree; call again with `decisions`.
+ */
+export async function importPerformance(input: { platform: string; rows: unknown; ads: unknown; decisions?: unknown }): Promise<ImportResult> {
+  const platform = linkPlatformInput.parse(input.platform);
+  const res = await runPerformanceImport(await getDb(), { platform, rows: rowsInput.parse(input.rows), ads: sourceAdInput.parse(input.ads), decisions: decisionsInput.parse(input.decisions) });
+  if (res.status === "done") { revalidatePath("/", "layout"); }
+  return res;
 }
